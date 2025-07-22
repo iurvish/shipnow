@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import z from "zod";
 import { ZodProvider } from "@autoform/zod/v4";
+import { SubmitButton } from "../ui/autoform/components/SubmitButton";
+import { AutoForm } from "../ui/autoform";
 // import { AutoForm } from "../ui/autoform";
 // import { SubmitButton } from "../ui/autoform/components/SubmitButton";
 
@@ -57,7 +59,7 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="w-full mx-auto">
-        <CardHeader className="space-y-2 pb-8 px-4">
+        <CardHeader className="space-y-2 pb-2 px-4">
           <CardTitle className="text-2xl font-bold text-center">
             Welcome back
           </CardTitle>
@@ -65,20 +67,14 @@ export function LoginForm({
             Sign in to your account to continue
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="">
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <p className="border">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Esse
-            aperiam dolor nobis eaque, saepe fugiat, natus quos autem expedita
-            quae eveniet eius vero recusandae tempora? Molestias itaque dolorem
-            doloremque explicabo.
-          </p>
-          {/* <AutoForm
+          <AutoForm
             schema={schemaProvider}
             onSubmit={handleLogin}
             withSubmit
@@ -91,7 +87,7 @@ export function LoginForm({
                 />
               ),
             }}
-          /> */}
+          />
 
           <div className="pt-6 border-t">
             <p className="text-center text-sm text-muted-foreground">

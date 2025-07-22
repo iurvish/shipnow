@@ -41,6 +41,7 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@repo/ui": "*",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.52.0",
     "@tailwindcss/postcss": "^4.1.11",
     "class-variance-authority": "^0.7.1",
