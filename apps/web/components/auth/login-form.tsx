@@ -17,18 +17,37 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import z from "zod";
-import { ZodProvider } from "@autoform/zod/v4";
+import { ZodProvider, fieldConfig } from "@autoform/zod";
+import { buildZodFieldConfig } from "@autoform/react";
 import { SubmitButton } from "../ui/autoform/components/SubmitButton";
 import { AutoForm } from "../ui/autoform";
-// import { AutoForm } from "../ui/autoform";
-// import { SubmitButton } from "../ui/autoform/components/SubmitButton";
+
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address").describe("Email address"),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .superRefine(
+      fieldConfig({
+        label: "Email address",
+        inputProps: {
+          type: "email",
+          placeholder: "Enter your email address",
+        },
+      })
+    ),
   password: z
     .string()
     .min(6, "Password must be at least 6 characters")
-    .describe("Password"),
+    .superRefine(
+      fieldConfig({
+        label: "Password",
+        inputProps: {
+          type: "password",
+          placeholder: "Enter your password",
+        },
+      })
+    ),
 });
 
 const schemaProvider = new ZodProvider(loginSchema);
@@ -59,7 +78,7 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="w-full mx-auto">
-        <CardHeader className="space-y-2 pb-2 px-4">
+        <CardHeader className="space-y-2 ">
           <CardTitle className="text-2xl font-bold text-center">
             Welcome back
           </CardTitle>
@@ -67,7 +86,7 @@ export function LoginForm({
             Sign in to your account to continue
           </CardDescription>
         </CardHeader>
-        <CardContent className="">
+        <CardContent className="space-y-6 pt-2">
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertDescription>{error}</AlertDescription>
@@ -84,7 +103,10 @@ export function LoginForm({
                   {...props}
                   loading={isLoading}
                   disabled={isLoading}
-                />
+                  loadingText="Signing in..."
+                >
+                  Sign in
+                </SubmitButton>
               ),
             }}
           />

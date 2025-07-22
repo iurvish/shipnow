@@ -6,15 +6,16 @@ export const SubmitButton: React.FC<{
   children: React.ReactNode;
   disabled?: boolean;
   loading?: boolean;
-}> = ({ children, disabled, loading }) => (
+  loadingText?: string;
+}> = ({ children, disabled, loading, loadingText }) => (
   <Button type="submit" disabled={disabled || loading} className="w-full">
     {loading ? (
       <>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Signing in...
+        {loadingText || "Processing..."}
       </>
     ) : (
-      children || "Sign in"
+      children || "Submit"
     )}
   </Button>
 );
