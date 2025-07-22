@@ -1,6 +1,7 @@
-import { supabase } from "./supabase";
+import { createClient } from "./client";
 
 export async function signup(email: string, password: string) {
+  const supabase = createClient();
   return await supabase.auth.signUp({
     email,
     password,
@@ -8,6 +9,7 @@ export async function signup(email: string, password: string) {
 }
 
 export async function verifyOtp(email: string, otp: string) {
+  const supabase = createClient();
   return await supabase.auth.verifyOtp({
     email,
     token: otp,
@@ -16,6 +18,7 @@ export async function verifyOtp(email: string, otp: string) {
 }
 
 export async function signInWithGoogle() {
+  const supabase = createClient();
   return await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -25,6 +28,7 @@ export async function signInWithGoogle() {
 }
 
 export async function login(email: string, password: string) {
+  const supabase = createClient();
   return await supabase.auth.signInWithPassword({
     email,
     password,
@@ -32,5 +36,6 @@ export async function login(email: string, password: string) {
 }
 
 export async function logout() {
+  const supabase = createClient();
   return await supabase.auth.signOut();
 }
