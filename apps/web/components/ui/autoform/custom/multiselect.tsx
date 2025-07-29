@@ -38,11 +38,21 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
   useEffect(() => {
     // Set initial selected values from current value (for form persistence)
     const currentValues = Array.isArray(value) ? value : [];
-    const currentSelected = options.filter((option: OptionType) =>
-      currentValues.includes(option.value)
-    );
-    setSelected(currentSelected);
-  }, [value, options]);
+
+    // Only update if the values have actually changed to prevent unnecessary re-renders
+    const currentValueStrings = currentValues.sort().join(",");
+    const selectedValueStrings = selected
+      .map((s) => s.value)
+      .sort()
+      .join(",");
+
+    if (currentValueStrings !== selectedValueStrings) {
+      const currentSelected = options.filter((option: OptionType) =>
+        currentValues.includes(option.value)
+      );
+      setSelected(currentSelected);
+    }
+  }, [value, options]); // Remove selected from dependencies to prevent infinite loops
 
   const handleSelect = (item: OptionType) => {
     if (maxSelections && selected.length >= maxSelections) {
@@ -91,11 +101,12 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
               "overflow-hidden", // Change from overflow-x-auto to overflow-hidden
               error ? "border-destructive" : ""
             )}
-            style={{ borderRadius: 8 }}
             ref={selectedContainerRef}
+            role="button"
+            tabIndex={0}
           >
             {selected.length === 0 && (
-              <span className="text-muted-foreground pl-2 flex-1">
+              <span className="text-muted-foreground pl-2 w-full">
                 {placeholder}
               </span>
             )}
@@ -103,20 +114,29 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
               {selected.map((item) => (
                 <div
                   key={item.value}
-                  className="flex items-center gap-1 pl-3 pr-1 py-1 bg-white shadow-sm border h-8 shrink-0 max-w-full"
-                  style={{ borderRadius: 6 }}
+                  className="flex items-center gap-1 pl-3 pr-1 py-1 bg-secondary border border-border h-8 shrink-0 max-w-full rounded-md"
                 >
-                  <span className="text-gray-700 font-medium text-sm truncate max-w-24">
+                  <span className="text-foreground font-medium text-sm truncate max-w-24">
                     {item.label}
                   </span>
                   <button
                     onClick={(e) => {
+                      e.preventDefault(); // Prevent form submission
                       e.stopPropagation();
                       handleRemove(item);
                     }}
-                    className="p-1 rounded-full hover:bg-gray-100 flex-shrink-0"
+                    onKeyDown={(e) => {
+                      // Prevent Enter key from triggering form submission
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRemove(item);
+                      }
+                    }}
+                    type="button" // Explicitly set type to button to prevent form submission
+                    className="p-1 rounded-full hover:bg-muted flex-shrink-0"
                   >
-                    <X className="h-3 w-3 text-gray-500" />
+                    <X className="h-3 w-3 text-muted-foreground" />
                   </button>
                 </div>
               ))}
@@ -125,20 +145,17 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-full p-0"
+          className="w-full p-0 border border-border bg-popover"
           align="start"
           style={{
             width: "var(--radix-popover-trigger-width)",
             maxWidth: "var(--radix-popover-trigger-width)",
           }}
         >
-          <div
-            className="bg-white shadow-sm p-2 border w-full"
-            style={{ borderRadius: 8 }}
-          >
+          <div className="p-2 w-full rounded-md">
             <div className="flex flex-wrap gap-2 w-full">
               {options.length === 0 ? (
-                <div className="w-full flex p-3 justify-center items-center">
+                <div className="w-full flex p-3 justify-center items-center text-muted-foreground">
                   No options available
                 </div>
               ) : (
@@ -150,11 +167,23 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
                   .map((option: OptionType) => (
                     <button
                       key={option.value}
-                      className="flex items-center gap-1 px-4 py-2.5 bg-gray-100/60 rounded-full shrink-0"
-                      onClick={() => handleSelect(option)}
-                      style={{ borderRadius: 14 }}
+                      type="button" // Prevent form submission
+                      className="flex items-center gap-1 px-4 py-2.5 bg-muted hover:bg-muted/80 rounded-full shrink-0 transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent form submission
+                        e.stopPropagation();
+                        handleSelect(option);
+                      }}
+                      onKeyDown={(e) => {
+                        // Prevent Enter key from triggering form submission
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelect(option);
+                        }
+                      }}
                     >
-                      <span className="text-gray-700 font-medium">
+                      <span className="text-foreground font-medium">
                         {option.label}
                       </span>
                     </button>
