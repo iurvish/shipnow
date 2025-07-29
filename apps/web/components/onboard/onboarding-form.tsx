@@ -24,6 +24,7 @@ import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
 import { TextareaField } from "@/components/ui/autoform/components/TextareaField";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 
 // Step 1: Personal Details
 const personalDetailsSchema = z.object({
@@ -272,10 +273,19 @@ const steps = [
 ];
 
 const OnboardingForm = () => {
-  const [step, setStep] = useState(0);
-  const [previousStep, setPreviousStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+
+  // Use Zustand store for form state management
+  const {
+    formData,
+    currentStep: step,
+    updateFormData,
+    setCurrentStep,
+    resetForm,
+    getStepData,
+  } = useOnboardingStore();
+
+  const [previousStep, setPreviousStep] = useState(0);
 
   const getStepStatus = (stepIndex: number) => {
     if (stepIndex < step) return "done";
@@ -286,22 +296,17 @@ const OnboardingForm = () => {
   const handleStepSubmit = (data: any) => {
     console.log(`Step ${step + 1} data:`, data);
 
-    // Merge current step data with existing form data
-    const updatedFormData = { ...formData, ...data };
-    setFormData(updatedFormData);
-
-    // Also update the current step data immediately for the form
-    Object.keys(data).forEach((key) => {
-      formData[key] = data[key];
-    });
+    // Update form data in Zustand store
+    updateFormData(data);
 
     if (step < steps.length - 1) {
       setPreviousStep(step);
-      setStep(step + 1);
+      setCurrentStep(step + 1);
     } else {
       // Final submission
-      console.log("Complete form data:", updatedFormData);
-      handleFinalSubmit(updatedFormData);
+      const completeData = { ...formData, ...data };
+      console.log("Complete form data:", completeData);
+      handleFinalSubmit(completeData);
     }
   };
 
@@ -312,6 +317,8 @@ const OnboardingForm = () => {
       // await submitOnboardingData(completeData);
 
       setShowSuccess(true);
+      // Reset the form after successful submission
+      resetForm();
     } catch (error) {
       console.error("Error submitting onboarding data:", error);
     }
@@ -328,7 +335,7 @@ const OnboardingForm = () => {
   const prev = () => {
     if (step > 0) {
       setPreviousStep(step);
-      setStep(step - 1);
+      setCurrentStep(step - 1);
     }
   };
 
@@ -408,7 +415,7 @@ const OnboardingForm = () => {
                   <AutoForm
                     key={step} // Force re-render when step changes
                     schema={currentStepData.schema}
-                    defaultValues={formData} // Use defaultValues with key for re-rendering
+                    defaultValues={getStepData(currentStepData.fields)} // Get data for current step from store
                     formComponents={{
                       // Use built-in components and custom where needed
                       string: StringField,

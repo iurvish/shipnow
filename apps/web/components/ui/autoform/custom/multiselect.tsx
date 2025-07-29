@@ -97,7 +97,7 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
         <PopoverTrigger asChild>
           <div
             className={cn(
-              "w-full min-w-0 flex items-center justify-start gap-1.5 min-h-10 rounded-md border border-input bg-background p-1 text-base ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 md:text-sm cursor-pointer",
+              "w-full min-w-0 flex items-center justify-start gap-1.5 min-h-10 rounded-md border border-input bg-input/30 p-1 text-base ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 md:text-sm cursor-pointer",
               "overflow-hidden", // Change from overflow-x-auto to overflow-hidden
               error ? "border-destructive" : ""
             )}
