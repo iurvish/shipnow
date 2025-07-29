@@ -28,10 +28,16 @@ export const SelectField: React.FC<AutoFormFieldProps> = ({
         } as React.ChangeEvent<HTMLInputElement>;
         props.onChange(syntheticEvent);
       }}
+      value={props.value || field.default}
       defaultValue={field.default}
     >
-      <SelectTrigger id={id} className={error ? "border-destructive" : ""}>
-        <SelectValue placeholder="Select an option" />
+      <SelectTrigger
+        id={id}
+        className={`w-full ${error ? "border-destructive" : ""}  `}
+      >
+        <SelectValue
+          placeholder={inputProps.placeholder || "Select an option"}
+        />
       </SelectTrigger>
       <SelectContent>
         {(field.options || []).map(([key, label]) => (
