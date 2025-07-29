@@ -7,9 +7,9 @@ import { ZodProvider, fieldConfig } from "@autoform/zod";
 import CustomInput from "./input";
 import CustomTextArea from "./textarea";
 import CustomMultiSelect from "./multiselect";
-import CustomDatePicker from "./date-picker";
-import PhoneNumberInput from "./phone-input";
-import SelectCommand from "./select-command";
+// import CustomDatePicker from "./date-picker";
+// import PhoneNumberInput from "./phone-input";
+// import SelectCommand from "./select-command";
 import { StringField } from "../components/StringField"; // Import built-in StringField
 import { Search, Mail, User, Calendar, Phone } from "lucide-react";
 
@@ -177,9 +177,9 @@ export function CustomInputExample() {
 
           // Custom field types using fieldType in schema
           textarea: CustomTextArea,
-          "select-command": SelectCommand,
-          multiselect: CustomMultiSelect,
-          date: CustomDatePicker,
+          // "select-command": SelectCommand,
+          // multiselect: CustomMultiSelect,
+          // date: CustomDatePicker,
 
           // Built-in AutoForm component for phone (using fieldType)
           phone: StringField,
