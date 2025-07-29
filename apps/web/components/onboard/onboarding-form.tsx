@@ -32,7 +32,6 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "First Name",
-        description: "Your first name",
         inputProps: {
           placeholder: "Enter your first name",
         },
@@ -44,7 +43,6 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Last Name",
-        description: "Your last name",
         inputProps: {
           placeholder: "Enter your last name",
         },
@@ -63,7 +61,6 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Date of Birth",
-        description: "Your birth date (optional)",
         inputProps: {
           type: "date",
           placeholder: "Select your birth date",
@@ -76,7 +73,6 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "University",
-        description: "Your university or institution",
         inputProps: {
           placeholder: "Enter your university name",
         },
@@ -88,7 +84,6 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Department",
-        description: "Your department or field of study",
         inputProps: {
           placeholder: "e.g., Computer Science, Engineering",
         },
@@ -106,7 +101,6 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Degree Level",
-        description: "Your education level",
         inputProps: {
           placeholder: "Select your degree level",
         },
@@ -122,7 +116,6 @@ const technicalProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Technical Skills",
-        description: "Your main technical skills",
         fieldType: "multiselect", // Add fieldType to specify component
         inputProps: {
           placeholder: "Select skills...",
@@ -148,7 +141,6 @@ const technicalProfileSchema = z.object({
   experience: z.enum(["Beginner", "Intermediate", "Advanced"]).superRefine(
     fieldConfig({
       label: "Experience Level",
-      description: "Your overall experience level",
       inputProps: {
         placeholder: "Select your experience level",
       },
@@ -169,7 +161,6 @@ const technicalProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Github/Twitter Profile",
-        description: "Your GitHub profile (optional)",
         fieldType: "input", // Use custom input for beforeInput support
         inputProps: {
           placeholder: "github.com/username",
@@ -193,7 +184,6 @@ const technicalProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Portfolio Link",
-        description: "Your portfolio website (optional)",
         fieldType: "input", // Use custom input for beforeInput support
         inputProps: {
           placeholder: "portfolio.com",
@@ -213,7 +203,6 @@ const setupProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Username",
-        description: "Choose a unique username",
         fieldType: "input", // Use custom input for icon support
         inputProps: {
           placeholder: "username",
@@ -229,7 +218,6 @@ const setupProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Bio (Optional)",
-        description: "Tell us about yourself",
         fieldType: "textarea", // Add fieldType to specify textarea component
         inputProps: {
           placeholder: "Tell us about yourself...",
@@ -245,7 +233,6 @@ const setupProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Profile Photo",
-        description: "Upload your Profile Photo",
         fieldType: "input", // Use custom input for file upload
         inputProps: {
           type: "file",
@@ -260,7 +247,6 @@ const steps = [
     id: "step-1",
     name: "Personal Details",
     title: "Personal Details",
-    description: "Tell us about yourself",
     icon: User,
     schema: new ZodProvider(personalDetailsSchema),
     fields: [
@@ -276,7 +262,6 @@ const steps = [
     id: "step-2",
     name: "Technical Profile",
     title: "Technical Profile",
-    description: "Your skills and experience",
     icon: GraduationCap,
     schema: new ZodProvider(technicalProfileSchema),
     fields: ["skills", "experience", "github", "portfolio"],
@@ -285,7 +270,6 @@ const steps = [
     id: "step-3",
     name: "Setup Profile",
     title: "Setup Profile",
-    description: "Complete your profile",
     icon: Settings,
     schema: new ZodProvider(setupProfileSchema),
     fields: ["username", "bio", "profilePhoto"],
