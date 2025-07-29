@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { StepIndicator } from "@/components/shared/StepIndicator";
 import CustomInput from "@/components/ui/autoform/custom/input";
 import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
+import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
 import { TextareaField } from "@/components/ui/autoform/components/TextareaField";
@@ -49,24 +50,18 @@ const personalDetailsSchema = z.object({
       })
     ),
   date_of_birth: z
-    .union([z.string(), z.date()])
+    .string()
     .optional()
-    .transform((val) => {
-      if (!val) return undefined;
-      // Handle both date string and Date object
-      if (val instanceof Date) return val;
-      const date = new Date(val);
-      return isNaN(date.getTime()) ? undefined : date;
-    })
     .superRefine(
       fieldConfig({
         label: "Date of Birth",
+        fieldType: "date", // Use custom date picker
         inputProps: {
-          type: "date",
           placeholder: "Select your birth date",
         },
       })
     ),
+
   university: z
     .string()
     .min(2)
@@ -422,6 +417,7 @@ const OnboardingForm = () => {
                       input: CustomInput, // Register for fieldType: "input" (with icon support)
                       number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
+                      date: CustomDatePicker, // Register for fieldType: "date"
                     }}
                     formProps={{
                       className:
