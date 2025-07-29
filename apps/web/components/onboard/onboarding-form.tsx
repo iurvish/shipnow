@@ -21,8 +21,9 @@ import CustomInput from "@/components/ui/autoform/custom/input";
 import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
+import { TextareaField } from "@/components/ui/autoform/components/TextareaField";
 
-// Step 1: Personal Details Schema
+// Step 1: Personal Details
 const personalDetailsSchema = z.object({
   first_name: z
     .string()
@@ -63,6 +64,7 @@ const personalDetailsSchema = z.object({
         inputProps: {
           type: "tel",
           placeholder: "+1 (555) 000-0000",
+          className: "col-span-full",
         },
       })
     ),
@@ -113,7 +115,7 @@ const personalDetailsSchema = z.object({
   degree_level: z
     .enum([
       "associate",
-      "bachelor", 
+      "bachelor",
       "master",
       "doctorate",
       "bootcamp",
@@ -137,10 +139,11 @@ const technicalProfileSchema = z.object({
     .min(1)
     .superRefine(
       fieldConfig({
-        label: "Primary Skills", 
+        label: "Primary Skills",
         description: "Your main technical skills",
         inputProps: {
           placeholder: "Select your primary skills",
+          className: "col-span-full",
           options: [
             { label: "JavaScript", value: "javascript" },
             { label: "TypeScript", value: "typescript" },
@@ -176,6 +179,7 @@ const technicalProfileSchema = z.object({
         description: "Areas you're interested in",
         inputProps: {
           placeholder: "Select your interests",
+          className: "col-span-full",
           options: [
             { label: "Web Development", value: "web_dev" },
             { label: "Mobile Development", value: "mobile_dev" },
@@ -198,6 +202,7 @@ const technicalProfileSchema = z.object({
         description: "Roles you're interested in",
         inputProps: {
           placeholder: "Select preferred roles",
+          className: "col-span-full",
           options: [
             { label: "Frontend Developer", value: "frontend" },
             { label: "Backend Developer", value: "backend" },
@@ -220,6 +225,7 @@ const technicalProfileSchema = z.object({
         description: "Tools and technologies you're proficient with",
         inputProps: {
           placeholder: "Select tools you're familiar with",
+          className: "col-span-full",
           options: [
             { label: "Git", value: "git" },
             { label: "Docker", value: "docker" },
@@ -262,6 +268,7 @@ const setupProfileSchema = z.object({
         inputProps: {
           placeholder: "Write a short bio about yourself...",
           rows: 4,
+          className: "col-span-full",
         },
       })
     ),
@@ -275,6 +282,7 @@ const setupProfileSchema = z.object({
         description: "Your GitHub profile (optional)",
         inputProps: {
           placeholder: "https://github.com/yourusername",
+          className: "col-span-full",
         },
       })
     ),
@@ -288,6 +296,7 @@ const setupProfileSchema = z.object({
         description: "Your LinkedIn profile (optional)",
         inputProps: {
           placeholder: "https://linkedin.com/in/yourusername",
+          className: "col-span-full",
         },
       })
     ),
@@ -301,6 +310,7 @@ const setupProfileSchema = z.object({
         description: "Your portfolio website (optional)",
         inputProps: {
           placeholder: "https://yourportfolio.com",
+          className: "col-span-full",
         },
       })
     ),
@@ -314,20 +324,34 @@ const steps = [
     description: "Tell us about yourself",
     icon: User,
     schema: new ZodProvider(personalDetailsSchema),
-    fields: ["first_name", "last_name", "phone", "date_of_birth", "university", "department", "degree_level"],
+    fields: [
+      "first_name",
+      "last_name",
+      "phone",
+      "date_of_birth",
+      "university",
+      "department",
+      "degree_level",
+    ],
   },
   {
-    id: "step-2", 
+    id: "step-2",
     name: "Technical Profile",
     title: "Technical Profile",
     description: "Your skills and experience",
     icon: GraduationCap,
     schema: new ZodProvider(technicalProfileSchema),
-    fields: ["primary_skills", "experience_level", "interests", "preferred_roles", "tools_proficiency"],
+    fields: [
+      "primary_skills",
+      "experience_level",
+      "interests",
+      "preferred_roles",
+      "tools_proficiency",
+    ],
   },
   {
     id: "step-3",
-    name: "Setup Profile", 
+    name: "Setup Profile",
     title: "Setup Profile",
     description: "Complete your profile",
     icon: Settings,
@@ -379,7 +403,7 @@ const OnboardingForm = () => {
 
   const next = async () => {
     // Trigger form submission for current step
-    const currentForm = document.querySelector('form');
+    const currentForm = document.querySelector("form");
     if (currentForm) {
       currentForm.requestSubmit();
     }
@@ -411,12 +435,12 @@ const OnboardingForm = () => {
   return (
     <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8">
       <div className="rounded-lg w-full border h-full shadow-sm">
-        <div className="grid md:grid-cols-[300px_1fr] h-full w-full bg-primary-foreground rounded-lg">
+        <div className="grid md:grid-cols-[300px_1fr] h-full w-full  rounded-lg">
           {/* Left sidebar */}
           <div className="w-full p-6">
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold">Complete Your Profile</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm ">
                 Make your profile complete by filling out all the necessary
                 information. Please verify all details before proceeding.
               </p>
@@ -441,11 +465,11 @@ const OnboardingForm = () => {
           </div>
 
           {/* Main content */}
-          <div className="bg-background border m-3 rounded-md">
+          <div className=" border m-3 rounded-md">
             <div className="flex items-center justify-between border-b p-6 pb-4">
               <h2 className="text-lg font-medium">{currentStepData.name}</h2>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm ">
                   {step + 1}/{steps.length} completed
                 </span>
                 <Progress
@@ -471,13 +495,22 @@ const OnboardingForm = () => {
                       // Use built-in components and custom where needed
                       string: StringField,
                       select: SelectField,
+                      textarea: TextareaField,
                       multiselect: CustomMultiSelect,
                       input: CustomInput, // Use custom input only where needed
+                    }}
+                    formProps={{
+                      className:
+                        step === 0
+                          ? "grid grid-cols-2 gap-6"
+                          : step === 1
+                            ? "grid grid-cols-2 gap-6"
+                            : "grid gap-6",
                     }}
                     onSubmit={handleStepSubmit}
                     withSubmit={false} // We'll handle submission with custom buttons
                   >
-                    <div className="flex gap-2 pt-4">
+                    <div className="flex gap-2 pt-4 col-span-full">
                       {step > 0 && (
                         <Button type="button" onClick={prev} variant="outline">
                           <ChevronLeft className="mr-2 h-4 w-4" />

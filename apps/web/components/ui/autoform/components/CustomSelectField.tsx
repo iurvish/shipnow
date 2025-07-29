@@ -8,7 +8,25 @@ import {
 import { AutoFormFieldProps } from "@autoform/react";
 import React from "react";
 
-export const SelectField: React.FC<AutoFormFieldProps> = ({
+// Mapping for enum values to display labels
+const enumLabels: Record<string, Record<string, string>> = {
+  degree_level: {
+    associate: "Associate Degree",
+    bachelor: "Bachelor's Degree",
+    master: "Master's Degree",
+    doctorate: "Doctorate/PhD",
+    bootcamp: "Bootcamp",
+    self_taught: "Self-Taught",
+  },
+  experience_level: {
+    beginner: "Beginner (0-1 years)",
+    intermediate: "Intermediate (1-3 years)",
+    advanced: "Advanced (3-5 years)",
+    expert: "Expert (5+ years)",
+  },
+};
+
+export const CustomSelectField: React.FC<AutoFormFieldProps> = ({
   field,
   inputProps,
   error,
@@ -16,32 +34,17 @@ export const SelectField: React.FC<AutoFormFieldProps> = ({
 }) => {
   const { key, ...props } = inputProps;
 
-  // Get options from field.options or create from enum values
+  // Get enum options or fallback to field.options
   const getOptions = (): [string, string][] => {
-    if (field.options && Array.isArray(field.options)) {
+    if (field.options) {
       return field.options as [string, string][];
     }
 
-    // For enum fields, create proper labels
-    const enumLabels: Record<string, Record<string, string>> = {
-      degree_level: {
-        associate: "Associate Degree",
-        bachelor: "Bachelor's Degree",
-        master: "Master's Degree",
-        doctorate: "Doctorate/PhD",
-        bootcamp: "Bootcamp",
-        self_taught: "Self-Taught",
-      },
-      experience_level: {
-        beginner: "Beginner (0-1 years)",
-        intermediate: "Intermediate (1-3 years)",
-        advanced: "Advanced (3-5 years)",
-        expert: "Expert (5+ years)",
-      },
-    };
+    // For enum fields, create options from known mappings
+    const labelMap = enumLabels[field.key] || {};
 
-    const labelMap = enumLabels[field.key];
-    if (labelMap) {
+    // If we have a label mapping, use it
+    if (Object.keys(labelMap).length > 0) {
       return Object.entries(labelMap);
     }
 
