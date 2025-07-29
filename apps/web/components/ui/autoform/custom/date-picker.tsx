@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AutoFormFieldProps } from "@autoform/react";
 import { cn } from "@/lib/utils";
 import {
@@ -29,56 +29,45 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
 }) => {
   const { onChange, value, name, ...props } = inputProps;
   const [open, setOpen] = useState(false);
-
-  // Debug logging - remove in production
-  console.log("DatePicker Debug:", {
-    value,
-    name,
-    type: typeof value,
-    dateObj: value instanceof Date ? value : null,
-  });
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   // Get custom props from fieldConfig if available
   const placeholder =
     field.fieldConfig?.inputProps?.placeholder || "Pick a date";
-  const label = field.fieldConfig?.label;
 
   const CurrentYear = new Date().getFullYear();
 
-  // Better date parsing - handle both string and Date objects
-  let dateValue: Date | undefined = undefined;
-  if (value !== undefined && value !== null && value !== "") {
-    if (value instanceof Date) {
-      dateValue = isNaN(value.getTime()) ? undefined : value;
-    } else if (typeof value === "string" && value.trim() !== "") {
-      // Handle various date string formats
-      const parsedDate = new Date(value);
-      if (!isNaN(parsedDate.getTime())) {
-        dateValue = parsedDate;
+  // Sync local state with form value
+  useEffect(() => {
+    if (value) {
+      if (value instanceof Date) {
+        setDate(value);
+      } else if (typeof value === "string" && value.trim() !== "") {
+        const parsedDate = new Date(value);
+        if (!isNaN(parsedDate.getTime())) {
+          setDate(parsedDate);
+        }
       }
+    } else {
+      setDate(undefined);
     }
-  }
+  }, [value]);
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (!date) return;
+  const handleDateChange = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
 
-    // Try sending both formats to see which one works
-    const isoString = date.toISOString();
-    const formattedDate = format(date, "yyyy-MM-dd");
+    // Update local state
+    setDate(selectedDate);
 
-    // Create synthetic event
+    // Create synthetic event for the form
     const syntheticEvent = {
       target: {
-        value: isoString, // Try ISO string first
+        value: selectedDate.toISOString(), // Send as ISO string
         name: name,
       },
     } as React.ChangeEvent<HTMLInputElement>;
 
-    console.log("Sending date to onChange:", {
-      date,
-      isoString,
-      formattedDate,
-    });
+    // Notify form of the change
     onChange?.(syntheticEvent);
     setOpen(false);
   };
@@ -105,16 +94,14 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
               variant={"outline"}
               className={cn(
                 "w-full pl-3 text-left font-normal border border-gray-300 justify-start",
-                !dateValue && "text-muted-foreground",
+                !date && "text-muted-foreground",
                 error && "border-destructive",
                 props.className
               )}
-              type="button" // Prevent form submission
+              type="button"
             >
-              {dateValue ? (
-                <span className="text-foreground">
-                  {format(dateValue, "PPP")}
-                </span>
+              {date ? (
+                <span className="text-foreground">{format(date, "PPP")}</span>
               ) : (
                 <span className="text-muted-foreground">{placeholder}</span>
               )}
@@ -124,14 +111,14 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
-              selected={dateValue}
+              selected={date}
               onSelect={handleDateChange}
               className="rounded-md border-0"
               classNames={{
-                month_caption: "mx-0 px-3 pt-3",
+                month_caption: "mx-0 ",
               }}
               captionLayout="dropdown"
-              defaultMonth={dateValue || new Date()}
+              defaultMonth={date || new Date()}
               startMonth={new Date(CurrentYear - 100, 0)}
               endMonth={new Date(CurrentYear, 11)}
               hideNavigation
@@ -139,7 +126,7 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
                 DropdownNav: (props: DropdownNavProps) => {
                   const children = React.Children.toArray(props.children);
                   return (
-                    <div className="flex w-full items-center gap-2 px-3 pt-3">
+                    <div className="flex w-full items-center gap-2">
                       <div className="flex-1">
                         {children[0]} {/* Month dropdown - full width */}
                       </div>
