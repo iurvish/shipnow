@@ -29,6 +29,7 @@ export const SelectField: React.FC<AutoFormFieldProps> = ({
         props.onChange(syntheticEvent);
       }}
       value={props.value || field.default}
+      defaultValue={field.default}
     >
       <SelectTrigger
         id={id}
