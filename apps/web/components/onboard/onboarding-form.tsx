@@ -14,6 +14,7 @@ import {
   User,
   GraduationCap,
   Settings,
+  AtSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepIndicator } from "@/components/shared/StepIndicator";
@@ -46,25 +47,6 @@ const personalDetailsSchema = z.object({
         description: "Your last name",
         inputProps: {
           placeholder: "Enter your last name",
-        },
-      })
-    ),
-  phone: z
-    .string()
-    .optional()
-    .transform((val) => {
-      // Clean up empty strings to undefined
-      if (!val || val.trim() === "") return undefined;
-      return val;
-    })
-    .superRefine(
-      fieldConfig({
-        label: "Phone Number",
-        description: "Your phone number (optional)",
-        inputProps: {
-          type: "tel",
-          placeholder: "+1 (555) 000-0000",
-          className: "col-span-full",
         },
       })
     ),
@@ -134,108 +116,89 @@ const personalDetailsSchema = z.object({
 
 // Step 2: Technical Profile Schema
 const technicalProfileSchema = z.object({
-  primary_skills: z
+  skills: z
     .array(z.string())
-    .min(1)
+    .min(1, "Select at least one skill")
     .superRefine(
       fieldConfig({
-        label: "Primary Skills",
+        label: "Technical Skills",
         description: "Your main technical skills",
+        fieldType: "multiselect", // Add fieldType to specify component
         inputProps: {
-          placeholder: "Select your primary skills",
-          className: "col-span-full",
+          placeholder: "Select skills...",
+          className: "w-full",
           options: [
-            { label: "JavaScript", value: "javascript" },
-            { label: "TypeScript", value: "typescript" },
-            { label: "React", value: "react" },
-            { label: "Node.js", value: "nodejs" },
-            { label: "Python", value: "python" },
-            { label: "Java", value: "java" },
-            { label: "C++", value: "cpp" },
-            { label: "Go", value: "go" },
-            { label: "Rust", value: "rust" },
-            { label: "PHP", value: "php" },
+            { value: "react", label: "React" },
+            { value: "typescript", label: "TypeScript" },
+            { value: "node", label: "Node.js" },
+            { value: "graphql", label: "GraphQL" },
+            { value: "next", label: "Next.js" },
+            { value: "vue", label: "Vue" },
+            { value: "svelte", label: "Svelte" },
+            { value: "angular", label: "Angular" },
+            { value: "tailwind", label: "Tailwind CSS" },
+            { value: "bootstrap", label: "Bootstrap" },
+            { value: "chakra", label: "Chakra UI" },
+            { value: "material", label: "Material UI" },
+            { value: "ant", label: "Ant Design" },
           ],
         },
       })
     ),
-  experience_level: z
-    .enum(["beginner", "intermediate", "advanced", "expert"])
-    .superRefine(
-      fieldConfig({
-        label: "Experience Level",
-        description: "Your overall experience level",
-        inputProps: {
-          placeholder: "Select your experience level",
-        },
-      })
-    ),
-  interests: z
-    .array(z.string())
-    .min(1)
-    .superRefine(
-      fieldConfig({
-        label: "Interests",
-        description: "Areas you're interested in",
-        inputProps: {
-          placeholder: "Select your interests",
-          className: "col-span-full",
-          options: [
-            { label: "Web Development", value: "web_dev" },
-            { label: "Mobile Development", value: "mobile_dev" },
-            { label: "Data Science", value: "data_science" },
-            { label: "Machine Learning", value: "ml" },
-            { label: "DevOps", value: "devops" },
-            { label: "Cybersecurity", value: "security" },
-            { label: "Game Development", value: "game_dev" },
-            { label: "UI/UX Design", value: "design" },
-          ],
-        },
-      })
-    ),
-  preferred_roles: z
-    .array(z.string())
-    .min(1)
-    .superRefine(
-      fieldConfig({
-        label: "Preferred Roles",
-        description: "Roles you're interested in",
-        inputProps: {
-          placeholder: "Select preferred roles",
-          className: "col-span-full",
-          options: [
-            { label: "Frontend Developer", value: "frontend" },
-            { label: "Backend Developer", value: "backend" },
-            { label: "Full Stack Developer", value: "fullstack" },
-            { label: "Data Scientist", value: "data_scientist" },
-            { label: "DevOps Engineer", value: "devops_engineer" },
-            { label: "Product Manager", value: "pm" },
-            { label: "Designer", value: "designer" },
-            { label: "QA Engineer", value: "qa" },
-          ],
-        },
-      })
-    ),
-  tools_proficiency: z
-    .array(z.string())
+  experience: z.enum(["Beginner", "Intermediate", "Advanced"]).superRefine(
+    fieldConfig({
+      label: "Experience Level",
+      description: "Your overall experience level",
+      inputProps: {
+        placeholder: "Select your experience level",
+      },
+    })
+  ),
+  github: z
+    .string()
+    .url()
     .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      // Add https:// if not present
+      if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
+        return `https://${val}`;
+      }
+      return val;
+    })
     .superRefine(
       fieldConfig({
-        label: "Tools & Technologies",
-        description: "Tools and technologies you're proficient with",
+        label: "Github/Twitter Profile",
+        description: "Your GitHub profile (optional)",
+        fieldType: "input", // Use custom input for beforeInput support
         inputProps: {
-          placeholder: "Select tools you're familiar with",
-          className: "col-span-full",
-          options: [
-            { label: "Git", value: "git" },
-            { label: "Docker", value: "docker" },
-            { label: "AWS", value: "aws" },
-            { label: "Firebase", value: "firebase" },
-            { label: "MongoDB", value: "mongodb" },
-            { label: "PostgreSQL", value: "postgresql" },
-            { label: "Redis", value: "redis" },
-            { label: "Kubernetes", value: "k8s" },
-          ],
+          placeholder: "github.com/username",
+          beforeInput: <span className="text-muted-foreground">https://</span>,
+          className: "github-field col-span-1",
+        },
+      })
+    ),
+  portfolio: z
+    .string()
+    .url()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      // Add https:// if not present
+      if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
+        return `https://${val}`;
+      }
+      return val;
+    })
+    .superRefine(
+      fieldConfig({
+        label: "Portfolio Link",
+        description: "Your portfolio website (optional)",
+        fieldType: "input", // Use custom input for beforeInput support
+        inputProps: {
+          placeholder: "portfolio.com",
+          beforeInput: <span className="text-muted-foreground">https://</span>,
+          className: "portfolio-field col-span-1",
         },
       })
     ),
@@ -251,66 +214,42 @@ const setupProfileSchema = z.object({
       fieldConfig({
         label: "Username",
         description: "Choose a unique username",
+        fieldType: "input", // Use custom input for icon support
         inputProps: {
-          placeholder: "Enter your username",
+          placeholder: "username",
+          beforeInput: <AtSign className="h-4 w-4" />,
         },
       })
     ),
   bio: z
     .string()
-    .min(10)
-    .max(500)
+    .min(10, { message: "Minimum 10 characters" })
+    .max(200, { message: "Maximum 200 characters" })
     .optional()
     .superRefine(
       fieldConfig({
-        label: "Bio",
+        label: "Bio (Optional)",
         description: "Tell us about yourself",
+        fieldType: "textarea", // Add fieldType to specify textarea component
         inputProps: {
-          placeholder: "Write a short bio about yourself...",
-          rows: 4,
+          placeholder: "Tell us about yourself...",
+          rows: 1,
+          cols: 10,
           className: "col-span-full",
         },
       })
     ),
-  github_url: z
-    .string()
-    .url()
+  profilePhoto: z
+    .array(z.instanceof(File))
     .optional()
     .superRefine(
       fieldConfig({
-        label: "GitHub URL",
-        description: "Your GitHub profile (optional)",
+        label: "Profile Photo",
+        description: "Upload your Profile Photo",
+        fieldType: "input", // Use custom input for file upload
         inputProps: {
-          placeholder: "https://github.com/yourusername",
-          className: "col-span-full",
-        },
-      })
-    ),
-  linkedin_url: z
-    .string()
-    .url()
-    .optional()
-    .superRefine(
-      fieldConfig({
-        label: "LinkedIn URL",
-        description: "Your LinkedIn profile (optional)",
-        inputProps: {
-          placeholder: "https://linkedin.com/in/yourusername",
-          className: "col-span-full",
-        },
-      })
-    ),
-  portfolio_url: z
-    .string()
-    .url()
-    .optional()
-    .superRefine(
-      fieldConfig({
-        label: "Portfolio URL",
-        description: "Your portfolio website (optional)",
-        inputProps: {
-          placeholder: "https://yourportfolio.com",
-          className: "col-span-full",
+          type: "file",
+          placeholder: "Upload your Profile Photo",
         },
       })
     ),
@@ -327,7 +266,6 @@ const steps = [
     fields: [
       "first_name",
       "last_name",
-      "phone",
       "date_of_birth",
       "university",
       "department",
@@ -341,13 +279,7 @@ const steps = [
     description: "Your skills and experience",
     icon: GraduationCap,
     schema: new ZodProvider(technicalProfileSchema),
-    fields: [
-      "primary_skills",
-      "experience_level",
-      "interests",
-      "preferred_roles",
-      "tools_proficiency",
-    ],
+    fields: ["skills", "experience", "github", "portfolio"],
   },
   {
     id: "step-3",
@@ -356,7 +288,7 @@ const steps = [
     description: "Complete your profile",
     icon: Settings,
     schema: new ZodProvider(setupProfileSchema),
-    fields: ["username", "bio", "github_url", "linkedin_url", "portfolio_url"],
+    fields: ["username", "bio", "profilePhoto"],
   },
 ];
 
@@ -378,6 +310,11 @@ const OnboardingForm = () => {
     // Merge current step data with existing form data
     const updatedFormData = { ...formData, ...data };
     setFormData(updatedFormData);
+
+    // Also update the current step data immediately for the form
+    Object.keys(data).forEach((key) => {
+      formData[key] = data[key];
+    });
 
     if (step < steps.length - 1) {
       setPreviousStep(step);
@@ -490,26 +427,53 @@ const OnboardingForm = () => {
                   className="space-y-6 pt-6"
                 >
                   <AutoForm
+                    key={step} // Force re-render when step changes
                     schema={currentStepData.schema}
+                    defaultValues={formData} // Use defaultValues with key for re-rendering
                     formComponents={{
                       // Use built-in components and custom where needed
                       string: StringField,
                       select: SelectField,
-                      textarea: TextareaField,
-                      multiselect: CustomMultiSelect,
-                      input: CustomInput, // Use custom input only where needed
+                      textarea: TextareaField, // Register for fieldType: "textarea"
+                      input: CustomInput, // Register for fieldType: "input" (with icon support)
+                      number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
+                      multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
                     }}
                     formProps={{
                       className:
                         step === 0
                           ? "grid grid-cols-2 gap-6"
                           : step === 1
-                            ? "grid grid-cols-2 gap-6"
+                            ? "space-y-6 technical-profile-form" // Use space-y for technical profile
                             : "grid gap-6",
+                      style:
+                        step === 1
+                          ? ({
+                              "--url-fields-layout": "grid",
+                              "--url-fields-columns": "1fr 1fr",
+                              "--url-fields-gap": "1rem",
+                            } as React.CSSProperties)
+                          : undefined,
                     }}
                     onSubmit={handleStepSubmit}
                     withSubmit={false} // We'll handle submission with custom buttons
                   >
+                    {step === 1 && (
+                      <style jsx>{`
+                        .technical-profile-form {
+                          position: relative;
+                        }
+                        .technical-profile-form > div:nth-last-child(3),
+                        .technical-profile-form > div:nth-last-child(2) {
+                          display: inline-block;
+                          width: calc(50% - 0.5rem);
+                          vertical-align: top;
+                        }
+                        .technical-profile-form > div:nth-last-child(3) {
+                          margin-right: 1rem;
+                        }
+                      `}</style>
+                    )}
                     <div className="flex gap-2 pt-4 col-span-full">
                       {step > 0 && (
                         <Button type="button" onClick={prev} variant="outline">

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { AutoForm } from "../AutoForm";
 import { ZodProvider, fieldConfig } from "@autoform/zod";
 import CustomInput from "./input";
-import CustomTextArea from "./textarea";
+// import CustomTextArea from "./textarea";
 import CustomMultiSelect from "./multiselect";
 // import CustomDatePicker from "./date-picker";
 // import PhoneNumberInput from "./phone-input";
@@ -176,7 +176,7 @@ export function CustomInputExample() {
           number: CustomInput,
 
           // Custom field types using fieldType in schema
-          textarea: CustomTextArea,
+          // textarea: CustomTextArea,
           // "select-command": SelectCommand,
           // multiselect: CustomMultiSelect,
           // date: CustomDatePicker,

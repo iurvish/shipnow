@@ -22,42 +22,27 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
   id,
   field,
 }) => {
-  const { key, onChange, value, ...props } = inputProps;
+  const { key, onChange, value, className, ...props } = inputProps;
 
   // Get custom props from fieldConfig
   const options = field.fieldConfig?.inputProps?.options || [];
   const placeholder =
     field.fieldConfig?.inputProps?.placeholder || "Select options...";
   const maxSelections = field.fieldConfig?.inputProps?.maxSelections;
+  const fieldClassName = field.fieldConfig?.inputProps?.className || "";
 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<OptionType[]>([]);
   const selectedContainerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState("100%");
 
   useEffect(() => {
-    // Set initial selected values
-    const initialValues = value || [];
-    const initialSelected = options.filter((option: OptionType) =>
-      initialValues.includes(option.value)
+    // Set initial selected values from current value (for form persistence)
+    const currentValues = Array.isArray(value) ? value : [];
+    const currentSelected = options.filter((option: OptionType) =>
+      currentValues.includes(option.value)
     );
-    setSelected(initialSelected);
+    setSelected(currentSelected);
   }, [value, options]);
-
-  useEffect(() => {
-    if (selectedContainerRef.current) {
-      selectedContainerRef.current.scrollTo({
-        left: selectedContainerRef.current.scrollWidth,
-        behavior: "smooth",
-      });
-    }
-  }, [selected]);
-
-  useEffect(() => {
-    if (open && selectedContainerRef.current) {
-      setContainerWidth(`${selectedContainerRef.current.offsetWidth}px`);
-    }
-  }, [open]);
 
   const handleSelect = (item: OptionType) => {
     if (maxSelections && selected.length >= maxSelections) {
@@ -97,49 +82,54 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <div className={cn("w-full min-w-0", fieldClassName, className)}>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild className="w-full">
+        <PopoverTrigger asChild>
           <div
             className={cn(
-              "w-full flex items-center justify-start gap-1.5 h-10 rounded-md border border-input bg-background p-1 text-base ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 md:text-sm no-scrollbar cursor-pointer",
-              "overflow-x-auto no-scrollbar",
+              "w-full min-w-0 flex items-center justify-start gap-1.5 min-h-10 rounded-md border border-input bg-background p-1 text-base ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 md:text-sm cursor-pointer",
+              "overflow-hidden", // Change from overflow-x-auto to overflow-hidden
               error ? "border-destructive" : ""
             )}
             style={{ borderRadius: 8 }}
             ref={selectedContainerRef}
           >
             {selected.length === 0 && (
-              <span className="text-muted-foreground pl-2">{placeholder}</span>
+              <span className="text-muted-foreground pl-2 flex-1">
+                {placeholder}
+              </span>
             )}
-            {selected.map((item) => (
-              <div
-                key={item.value}
-                className="flex items-center gap-1 pl-3 pr-1 py-1 bg-white shadow-sm border h-full shrink-0"
-                style={{ borderRadius: 6 }}
-              >
-                <span className="text-gray-700 font-medium">{item.label}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemove(item);
-                  }}
-                  className="p-1 rounded-full"
+            <div className="flex flex-wrap gap-1 w-full min-w-0">
+              {selected.map((item) => (
+                <div
+                  key={item.value}
+                  className="flex items-center gap-1 pl-3 pr-1 py-1 bg-white shadow-sm border h-8 shrink-0 max-w-full"
+                  style={{ borderRadius: 6 }}
                 >
-                  <X className="h-4 w-4 text-gray-500" />
-                </button>
-              </div>
-            ))}
+                  <span className="text-gray-700 font-medium text-sm truncate max-w-24">
+                    {item.label}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemove(item);
+                    }}
+                    className="p-1 rounded-full hover:bg-gray-100 flex-shrink-0"
+                  >
+                    <X className="h-3 w-3 text-gray-500" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </PopoverTrigger>
 
         <PopoverContent
-          forceMount
-          className="w-full custom-popover-content p-0"
+          className="w-full p-0"
           align="start"
           style={{
-            width: containerWidth,
-            maxWidth: "none",
+            width: "var(--radix-popover-trigger-width)",
+            maxWidth: "var(--radix-popover-trigger-width)",
           }}
         >
           <div
