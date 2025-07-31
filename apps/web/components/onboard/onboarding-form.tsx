@@ -23,8 +23,6 @@ import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
-import { TextareaField } from "@/components/ui/autoform/components/TextareaField";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 
 // Step 1: Personal Details
 const personalDetailsSchema = z.object({
@@ -273,19 +271,10 @@ const steps = [
 ];
 
 const OnboardingForm = () => {
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  // Use Zustand store for form state management
-  const {
-    formData,
-    currentStep: step,
-    updateFormData,
-    setCurrentStep,
-    resetForm,
-    getStepData,
-  } = useOnboardingStore();
-
+  const [step, setStep] = useState(0);
   const [previousStep, setPreviousStep] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
   const getStepStatus = (stepIndex: number) => {
     if (stepIndex < step) return "done";
@@ -293,20 +282,37 @@ const OnboardingForm = () => {
     return "pending";
   };
 
+  // Get current step's data from formData for defaultValues
+  const getCurrentStepData = () => {
+    const currentStepData = steps[step];
+    if (!currentStepData) return {};
+    
+    const currentFields = currentStepData.fields;
+    const stepData: Record<string, any> = {};
+
+    currentFields.forEach((field) => {
+      if (formData[field] !== undefined) {
+        stepData[field] = formData[field];
+      }
+    });
+
+    return stepData;
+  };
+
   const handleStepSubmit = (data: any) => {
     console.log(`Step ${step + 1} data:`, data);
 
-    // Update form data in Zustand store
-    updateFormData(data);
+    // Merge current step data with existing form data
+    const updatedFormData = { ...formData, ...data };
+    setFormData(updatedFormData);
 
     if (step < steps.length - 1) {
       setPreviousStep(step);
-      setCurrentStep(step + 1);
+      setStep(step + 1);
     } else {
       // Final submission
-      const completeData = { ...formData, ...data };
-      console.log("Complete form data:", completeData);
-      handleFinalSubmit(completeData);
+      console.log("Complete form data:", updatedFormData);
+      handleFinalSubmit(updatedFormData);
     }
   };
 
@@ -317,8 +323,6 @@ const OnboardingForm = () => {
       // await submitOnboardingData(completeData);
 
       setShowSuccess(true);
-      // Reset the form after successful submission
-      resetForm();
     } catch (error) {
       console.error("Error submitting onboarding data:", error);
     }
@@ -335,7 +339,7 @@ const OnboardingForm = () => {
   const prev = () => {
     if (step > 0) {
       setPreviousStep(step);
-      setCurrentStep(step - 1);
+      setStep(step - 1);
     }
   };
 
@@ -415,12 +419,12 @@ const OnboardingForm = () => {
                   <AutoForm
                     key={step} // Force re-render when step changes
                     schema={currentStepData.schema}
-                    defaultValues={getStepData(currentStepData.fields)} // Get data for current step from store
+                    defaultValues={getCurrentStepData()} // Get data for current step
                     formComponents={{
                       // Use built-in components and custom where needed
                       string: StringField,
                       select: SelectField,
-                      textarea: TextareaField, // Register for fieldType: "textarea"
+                      textarea: StringField, // Use StringField for textareas
                       input: CustomInput, // Register for fieldType: "input" (with icon support)
                       number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
