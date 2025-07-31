@@ -39,11 +39,34 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
 
   // Sync local state with form value
   useEffect(() => {
-    if (value) {
-      if (value instanceof Date) {
-        setDate(value);
-      } else if (typeof value === "string" && value.trim() !== "") {
-        const parsedDate = new Date(value);
+    let initialValue = value;
+
+    // If no value from props, try to get it from form data in DOM
+    if (!initialValue) {
+      const formElement = document.querySelector("form");
+      if (formElement) {
+        const formDataAttr = formElement.getAttribute("data-form-values");
+        if (formDataAttr) {
+          try {
+            const formData = JSON.parse(formDataAttr);
+            if (formData[field.key]) {
+              initialValue = formData[field.key];
+            }
+          } catch (e) {
+            // Ignore JSON parse errors
+          }
+        }
+      }
+    }
+
+    if (initialValue) {
+      if (initialValue instanceof Date) {
+        setDate(initialValue);
+      } else if (
+        typeof initialValue === "string" &&
+        initialValue.trim() !== ""
+      ) {
+        const parsedDate = new Date(initialValue);
         if (!isNaN(parsedDate.getTime())) {
           setDate(parsedDate);
         }
@@ -51,7 +74,16 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
     } else {
       setDate(undefined);
     }
-  }, [value]);
+
+    // Debug logging
+    if (field.key === "date_of_birth" && initialValue) {
+      console.log(`DatePicker ${field.key} initialized with:`, {
+        propsValue: value,
+        formDataValue: initialValue,
+        parsedDate: new Date(initialValue),
+      });
+    }
+  }, [value, field.key]);
 
   const handleDateChange = (selectedDate: Date | undefined) => {
     if (!selectedDate) return;

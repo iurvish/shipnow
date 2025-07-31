@@ -37,7 +37,25 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
 
   useEffect(() => {
     // Set initial selected values from current value (for form persistence)
-    const currentValues = Array.isArray(value) ? value : [];
+    let currentValues = Array.isArray(value) ? value : [];
+
+    // If no value from props, try to get it from form data in DOM
+    if (currentValues.length === 0) {
+      const formElement = document.querySelector("form");
+      if (formElement) {
+        const formDataAttr = formElement.getAttribute("data-form-values");
+        if (formDataAttr) {
+          try {
+            const formData = JSON.parse(formDataAttr);
+            if (formData[field.key] && Array.isArray(formData[field.key])) {
+              currentValues = formData[field.key];
+            }
+          } catch (e) {
+            // Ignore JSON parse errors
+          }
+        }
+      }
+    }
 
     // Only update if the values have actually changed to prevent unnecessary re-renders
     const currentValueStrings = currentValues.sort().join(",");
@@ -51,8 +69,17 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
         currentValues.includes(option.value)
       );
       setSelected(currentSelected);
+
+      // Debug logging
+      if (field.key === "skills" && currentValues.length > 0) {
+        console.log(`MultiSelect ${field.key} initialized with:`, {
+          propsValue: value,
+          formDataValue: currentValues,
+          selectedOptions: currentSelected,
+        });
+      }
     }
-  }, [value, options]); // Remove selected from dependencies to prevent infinite loops
+  }, [value, options, field.key]); // Remove selected from dependencies to prevent infinite loops
 
   const handleSelect = (item: OptionType) => {
     if (maxSelections && selected.length >= maxSelections) {
