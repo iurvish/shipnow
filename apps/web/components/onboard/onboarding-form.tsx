@@ -397,8 +397,65 @@ const OnboardingForm = () => {
     }
   };
 
+  // Add a ref to track form instances and their current values
+  const formRef = useRef<HTMLFormElement>(null);
+  const currentFormValues = useRef<Record<string, any>>({});
+
+  // Add a state to track current step's form values in real-time
   const prev = () => {
     if (step > 0) {
+      // Force save current form state by gathering data from DOM elements
+      const currentForm = document.querySelector("form");
+      if (currentForm) {
+        const currentStepData: Record<string, any> = {};
+
+        // Get all form inputs and their current values
+        const inputs = currentForm.querySelectorAll("input, select, textarea");
+        inputs.forEach((input: any) => {
+          if (input.name && input.value !== "") {
+            if (input.type === "file") {
+              if (input.files && input.files.length > 0) {
+                currentStepData[input.name] = Array.from(input.files);
+              }
+            } else {
+              currentStepData[input.name] = input.value;
+            }
+          }
+        });
+
+        // Special handling for our custom components that might store data differently
+        // Check multiselect values from data attributes
+        const formDataAttr = currentForm.getAttribute("data-form-values");
+        if (formDataAttr) {
+          try {
+            const existingFormData = JSON.parse(formDataAttr);
+            // Merge any existing values that aren't empty
+            Object.keys(existingFormData).forEach((key) => {
+              const value = existingFormData[key];
+              if (
+                value &&
+                (typeof value === "string" || Array.isArray(value)) &&
+                value.length > 0 &&
+                !currentStepData[key]
+              ) {
+                currentStepData[key] = value;
+              }
+            });
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+
+        // Save if we found any data
+        if (Object.keys(currentStepData).length > 0) {
+          console.log(
+            `Saving Step ${step + 1} data before going back:`,
+            currentStepData
+          );
+          setFormData((prev) => ({ ...prev, ...currentStepData }));
+        }
+      }
+
       setPreviousStep(step);
       setStep(step - 1);
     }
