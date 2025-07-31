@@ -140,19 +140,21 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
               id={id}
               variant={"outline"}
               className={cn(
-                "w-full pl-3 text-left font-normal border border-gray-300 justify-start",
+                "w-full pl-3 pr-3 text-left font-normal border border-gray-300 justify-between",
                 !date && "text-muted-foreground",
                 error && "border-destructive",
                 props.className
               )}
               type="button"
             >
-              {date ? (
-                <span className="text-foreground">{format(date, "PPP")}</span>
-              ) : (
-                <span className="text-muted-foreground">{placeholder}</span>
-              )}
-              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+              <span className="truncate flex-1 mr-2">
+                {date ? (
+                  <span className="text-foreground">{format(date, "PPP")}</span>
+                ) : (
+                  <span className="text-muted-foreground">{placeholder}</span>
+                )}
+              </span>
+              <CalendarIcon className="h-4 w-4 opacity-50 flex-shrink-0" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">

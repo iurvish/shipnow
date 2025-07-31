@@ -423,18 +423,20 @@ const OnboardingForm = () => {
   return (
     <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8">
       <div className="rounded-lg w-full border h-full shadow-sm">
-        <div className="grid md:grid-cols-[300px_1fr] h-full w-full  rounded-lg">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] h-full w-full rounded-lg">
           {/* Left sidebar */}
-          <div className="w-full p-6">
+          <div className="w-full p-4 md:p-6 border-b lg:border-b-0 lg:border-r">
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold">Complete Your Profile</h1>
-              <p className="text-sm ">
+              <h1 className="text-xl md:text-2xl font-semibold">
+                Complete Your Profile
+              </h1>
+              <p className="text-sm">
                 Make your profile complete by filling out all the necessary
                 information. Please verify all details before proceeding.
               </p>
             </div>
 
-            <div className="mt-8 space-y-2">
+            <div className="mt-6 md:mt-8 space-y-2">
               {steps.map((s, i) => (
                 <div
                   key={s.id}
@@ -453,11 +455,11 @@ const OnboardingForm = () => {
           </div>
 
           {/* Main content */}
-          <div className=" border m-3 rounded-md">
-            <div className="flex items-center justify-between border-b p-6 pb-4">
+          <div className="border-0 lg:border lg:m-3 lg:rounded-md">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b p-4 md:p-6 pb-4 gap-4">
               <h2 className="text-lg font-medium">{currentStepData.name}</h2>
               <div className="flex items-center gap-4">
-                <span className="text-sm ">
+                <span className="text-sm">
                   {step + 1}/{steps.length} completed
                 </span>
                 <Progress
@@ -467,7 +469,7 @@ const OnboardingForm = () => {
               </div>
             </div>
 
-            <div className="w-full p-6">
+            <div className="w-full p-4 md:p-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
@@ -494,10 +496,10 @@ const OnboardingForm = () => {
                     formProps={{
                       className:
                         step === 0
-                          ? "grid grid-cols-2 gap-6"
+                          ? "grid grid-cols-1 md:grid-cols-2 gap-6"
                           : step === 1
                             ? "space-y-6 technical-profile-form" // Use space-y for technical profile
-                            : "grid gap-6",
+                            : "grid grid-cols-1 gap-6",
                       style:
                         step === 1
                           ? ({
@@ -519,20 +521,38 @@ const OnboardingForm = () => {
                         .technical-profile-form {
                           position: relative;
                         }
-                        .technical-profile-form > div:nth-last-child(3),
-                        .technical-profile-form > div:nth-last-child(2) {
-                          display: inline-block;
-                          width: calc(50% - 0.5rem);
-                          vertical-align: top;
+
+                        /* Desktop layout for URL fields */
+                        @media (min-width: 768px) {
+                          .technical-profile-form > div:nth-last-child(3),
+                          .technical-profile-form > div:nth-last-child(2) {
+                            display: inline-block;
+                            width: calc(50% - 0.5rem);
+                            vertical-align: top;
+                          }
+                          .technical-profile-form > div:nth-last-child(3) {
+                            margin-right: 1rem;
+                          }
                         }
-                        .technical-profile-form > div:nth-last-child(3) {
-                          margin-right: 1rem;
+
+                        /* Mobile layout - full width */
+                        @media (max-width: 767px) {
+                          .technical-profile-form > div {
+                            width: 100% !important;
+                            margin-right: 0 !important;
+                            display: block !important;
+                          }
                         }
                       `}</style>
                     )}
-                    <div className="flex gap-2 pt-4 col-span-full">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-4 col-span-full">
                       {step > 0 && (
-                        <Button type="button" onClick={prev} variant="outline">
+                        <Button
+                          type="button"
+                          onClick={prev}
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                        >
                           <ChevronLeft className="mr-2 h-4 w-4" />
                           Back
                         </Button>
@@ -541,14 +561,17 @@ const OnboardingForm = () => {
                         <Button
                           type="button"
                           onClick={next}
-                          className="ml-auto"
+                          className="ml-auto w-full sm:w-auto"
                         >
                           Next Step
                           <ChevronRight className="ml-2 h-4 w-4" />
                         </Button>
                       )}
                       {step === steps.length - 1 && (
-                        <Button type="submit" className="ml-auto">
+                        <Button
+                          type="submit"
+                          className="ml-auto w-full sm:w-auto"
+                        >
                           Complete
                         </Button>
                       )}
