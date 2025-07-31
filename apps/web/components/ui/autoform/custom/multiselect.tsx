@@ -70,6 +70,17 @@ const CustomMultiSelect: React.FC<AutoFormFieldProps> = ({
       );
       setSelected(currentSelected);
 
+      // Immediately sync with form state by triggering onChange
+      if (currentValues.length > 0) {
+        const syntheticEvent = {
+          target: {
+            value: currentValues,
+            name: field.key,
+          },
+        } as any;
+        onChange?.(syntheticEvent);
+      }
+
       // Debug logging
       if (field.key === "skills" && currentValues.length > 0) {
         console.log(`MultiSelect ${field.key} initialized with:`, {

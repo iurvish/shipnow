@@ -60,16 +60,31 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
     }
 
     if (initialValue) {
+      let dateToSet: Date | undefined;
+
       if (initialValue instanceof Date) {
-        setDate(initialValue);
+        dateToSet = initialValue;
       } else if (
         typeof initialValue === "string" &&
         initialValue.trim() !== ""
       ) {
         const parsedDate = new Date(initialValue);
         if (!isNaN(parsedDate.getTime())) {
-          setDate(parsedDate);
+          dateToSet = parsedDate;
         }
+      }
+
+      if (dateToSet) {
+        setDate(dateToSet);
+
+        // Immediately sync with form state by triggering onChange
+        const syntheticEvent = {
+          target: {
+            value: dateToSet.toISOString(),
+            name: name,
+          },
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange?.(syntheticEvent);
       }
     } else {
       setDate(undefined);

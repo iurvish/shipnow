@@ -222,8 +222,28 @@ const setupProfileSchema = z.object({
       })
     ),
   profilePhoto: z
-    .array(z.instanceof(File))
+    .any()
     .optional()
+    .transform((val) => {
+      // Handle file input: if no file selected, return empty array
+      if (!val || val === null || val === undefined) {
+        return [];
+      }
+      // If it's already an array, return as is
+      if (Array.isArray(val)) {
+        return val;
+      }
+      // If it's a FileList or single file, convert to array
+      if (val instanceof FileList) {
+        return Array.from(val);
+      }
+      if (val instanceof File) {
+        return [val];
+      }
+      // Default to empty array for any other case
+      return [];
+    })
+    .pipe(z.array(z.instanceof(File)))
     .superRefine(
       fieldConfig({
         label: "Profile Photo",

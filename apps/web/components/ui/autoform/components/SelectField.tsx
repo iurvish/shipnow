@@ -43,6 +43,15 @@ export const SelectField: React.FC<AutoFormFieldProps> = ({
     if (initialValue && initialValue !== selectValue) {
       setSelectValue(initialValue);
 
+      // Immediately sync with form state by triggering onChange
+      const syntheticEvent = {
+        target: {
+          value: initialValue,
+          name: field.key,
+        },
+      } as React.ChangeEvent<HTMLInputElement>;
+      props.onChange(syntheticEvent);
+
       // Debug only for degree_level to reduce console noise
       if (field.key === "degree_level") {
         console.log(`SelectField ${field.key} initialized with:`, {

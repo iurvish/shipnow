@@ -29,6 +29,24 @@ const CustomInput: React.FC<AutoFormFieldProps> = ({
 
   const hasAfter = !!afterInput;
 
+  // Handle file input changes to convert FileList to array
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (customType === "file" && e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const syntheticEvent = {
+        ...e,
+        target: {
+          ...e.target,
+          value: filesArray,
+          name: field.key,
+        },
+      };
+      onChange(syntheticEvent as any);
+    } else {
+      onChange(e);
+    }
+  };
+
   return (
     <div className="relative">
       {beforeInput ? (
@@ -57,6 +75,7 @@ const CustomInput: React.FC<AutoFormFieldProps> = ({
             )}
             placeholder={placeholder || props.placeholder}
             type={customType || props.type || "text"}
+            onChange={handleFileChange}
           />
         </div>
       ) : (
@@ -70,6 +89,7 @@ const CustomInput: React.FC<AutoFormFieldProps> = ({
           }}
           placeholder={placeholder || props.placeholder}
           type={customType || props.type || "text"}
+          onChange={handleFileChange}
         />
       )}
 
