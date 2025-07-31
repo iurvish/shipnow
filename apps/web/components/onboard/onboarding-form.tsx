@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { z } from "zod";
 import { ZodProvider, fieldConfig } from "@autoform/zod";
 import { AutoForm } from "@/components/ui/autoform";
@@ -286,18 +286,57 @@ const OnboardingForm = () => {
   const getCurrentStepData = () => {
     const currentStepData = steps[step];
     if (!currentStepData) return {};
-    
+
     const currentFields = currentStepData.fields;
     const stepData: Record<string, any> = {};
 
     currentFields.forEach((field) => {
       if (formData[field] !== undefined) {
-        stepData[field] = formData[field];
+        let value = formData[field];
+
+        // Handle type conversions for specific fields
+        if (field === "date_of_birth" && typeof value === "string") {
+          // Keep as string since the date picker expects ISO string
+          stepData[field] = value;
+        } else if (field === "skills" && Array.isArray(value)) {
+          // Ensure skills array is properly formatted
+          stepData[field] = value;
+        } else {
+          stepData[field] = value;
+        }
       }
     });
 
+    console.log(`Step ${step + 1} current data:`, stepData);
     return stepData;
   };
+
+  // Sanitize form data before passing to DOM
+  const sanitizeFormData = (data: Record<string, any>) => {
+    const sanitized: Record<string, any> = {};
+    Object.entries(data).forEach(([key, value]) => {
+      // Only include safe, expected fields
+      if (
+        typeof value === "string" ||
+        typeof value === "number" ||
+        Array.isArray(value)
+      ) {
+        sanitized[key] = value;
+      }
+    });
+    return sanitized;
+  };
+
+  // Get current step form data
+  const currentStepFormData = useMemo(() => {
+    return getCurrentStepData();
+  }, [step, formData]);
+
+  // Get a stable key for the form that forces re-render when data changes
+  const formKey = useMemo(() => {
+    const dataString = JSON.stringify(currentStepFormData);
+    return `form-step-${step}-${dataString}`;
+  }, [step, currentStepFormData]);
 
   const handleStepSubmit = (data: any) => {
     console.log(`Step ${step + 1} data:`, data);
@@ -305,6 +344,8 @@ const OnboardingForm = () => {
     // Merge current step data with existing form data
     const updatedFormData = { ...formData, ...data };
     setFormData(updatedFormData);
+
+    console.log("Updated form data:", updatedFormData);
 
     if (step < steps.length - 1) {
       setPreviousStep(step);
@@ -417,9 +458,9 @@ const OnboardingForm = () => {
                   className="space-y-6 pt-6"
                 >
                   <AutoForm
-                    key={step} // Force re-render when step changes
+                    key={formKey} // Force complete re-render when step or data changes
                     schema={currentStepData.schema}
-                    defaultValues={getCurrentStepData()} // Get data for current step
+                    defaultValues={currentStepFormData} // Get data for current step
                     formComponents={{
                       // Use built-in components and custom where needed
                       string: StringField,
@@ -445,6 +486,10 @@ const OnboardingForm = () => {
                               "--url-fields-gap": "1rem",
                             } as React.CSSProperties)
                           : undefined,
+                      // Pass sanitized form data through data attributes
+                      "data-form-values": JSON.stringify(
+                        sanitizeFormData(currentStepFormData)
+                      ),
                     }}
                     onSubmit={handleStepSubmit}
                     withSubmit={false} // We'll handle submission with custom buttons
