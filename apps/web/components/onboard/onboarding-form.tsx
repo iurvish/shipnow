@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { z } from "zod";
 import { ZodProvider, fieldConfig } from "@autoform/zod";
 import { AutoForm } from "@/components/ui/autoform";
@@ -23,8 +23,6 @@ import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
-import { TextareaField } from "@/components/ui/autoform/components/TextareaField";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 
 // Step 1: Personal Details
 const personalDetailsSchema = z.object({
@@ -224,8 +222,28 @@ const setupProfileSchema = z.object({
       })
     ),
   profilePhoto: z
-    .array(z.instanceof(File))
+    .any()
     .optional()
+    .transform((val) => {
+      // Handle file input: if no file selected, return empty array
+      if (!val || val === null || val === undefined) {
+        return [];
+      }
+      // If it's already an array, return as is
+      if (Array.isArray(val)) {
+        return val;
+      }
+      // If it's a FileList or single file, convert to array
+      if (val instanceof FileList) {
+        return Array.from(val);
+      }
+      if (val instanceof File) {
+        return [val];
+      }
+      // Default to empty array for any other case
+      return [];
+    })
+    .pipe(z.array(z.instanceof(File)))
     .superRefine(
       fieldConfig({
         label: "Profile Photo",
@@ -273,19 +291,10 @@ const steps = [
 ];
 
 const OnboardingForm = () => {
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  // Use Zustand store for form state management
-  const {
-    formData,
-    currentStep: step,
-    updateFormData,
-    setCurrentStep,
-    resetForm,
-    getStepData,
-  } = useOnboardingStore();
-
+  const [step, setStep] = useState(0);
   const [previousStep, setPreviousStep] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
   const getStepStatus = (stepIndex: number) => {
     if (stepIndex < step) return "done";
@@ -293,20 +302,78 @@ const OnboardingForm = () => {
     return "pending";
   };
 
+  // Get current step's data from formData for defaultValues
+  const getCurrentStepData = () => {
+    const currentStepData = steps[step];
+    if (!currentStepData) return {};
+
+    const currentFields = currentStepData.fields;
+    const stepData: Record<string, any> = {};
+
+    currentFields.forEach((field) => {
+      if (formData[field] !== undefined) {
+        let value = formData[field];
+
+        // Handle type conversions for specific fields
+        if (field === "date_of_birth" && typeof value === "string") {
+          // Keep as string since the date picker expects ISO string
+          stepData[field] = value;
+        } else if (field === "skills" && Array.isArray(value)) {
+          // Ensure skills array is properly formatted
+          stepData[field] = value;
+        } else {
+          stepData[field] = value;
+        }
+      }
+    });
+
+    console.log(`Step ${step + 1} current data:`, stepData);
+    return stepData;
+  };
+
+  // Sanitize form data before passing to DOM
+  const sanitizeFormData = (data: Record<string, any>) => {
+    const sanitized: Record<string, any> = {};
+    Object.entries(data).forEach(([key, value]) => {
+      // Only include safe, expected fields
+      if (
+        typeof value === "string" ||
+        typeof value === "number" ||
+        Array.isArray(value)
+      ) {
+        sanitized[key] = value;
+      }
+    });
+    return sanitized;
+  };
+
+  // Get current step form data
+  const currentStepFormData = useMemo(() => {
+    return getCurrentStepData();
+  }, [step, formData]);
+
+  // Get a stable key for the form that forces re-render when data changes
+  const formKey = useMemo(() => {
+    const dataString = JSON.stringify(currentStepFormData);
+    return `form-step-${step}-${dataString}`;
+  }, [step, currentStepFormData]);
+
   const handleStepSubmit = (data: any) => {
     console.log(`Step ${step + 1} data:`, data);
 
-    // Update form data in Zustand store
-    updateFormData(data);
+    // Merge current step data with existing form data
+    const updatedFormData = { ...formData, ...data };
+    setFormData(updatedFormData);
+
+    console.log("Updated form data:", updatedFormData);
 
     if (step < steps.length - 1) {
       setPreviousStep(step);
-      setCurrentStep(step + 1);
+      setStep(step + 1);
     } else {
       // Final submission
-      const completeData = { ...formData, ...data };
-      console.log("Complete form data:", completeData);
-      handleFinalSubmit(completeData);
+      console.log("Complete form data:", updatedFormData);
+      handleFinalSubmit(updatedFormData);
     }
   };
 
@@ -317,8 +384,6 @@ const OnboardingForm = () => {
       // await submitOnboardingData(completeData);
 
       setShowSuccess(true);
-      // Reset the form after successful submission
-      resetForm();
     } catch (error) {
       console.error("Error submitting onboarding data:", error);
     }
@@ -332,10 +397,67 @@ const OnboardingForm = () => {
     }
   };
 
+  // Add a ref to track form instances and their current values
+  const formRef = useRef<HTMLFormElement>(null);
+  const currentFormValues = useRef<Record<string, any>>({});
+
+  // Add a state to track current step's form values in real-time
   const prev = () => {
     if (step > 0) {
+      // Force save current form state by gathering data from DOM elements
+      const currentForm = document.querySelector("form");
+      if (currentForm) {
+        const currentStepData: Record<string, any> = {};
+
+        // Get all form inputs and their current values
+        const inputs = currentForm.querySelectorAll("input, select, textarea");
+        inputs.forEach((input: any) => {
+          if (input.name && input.value !== "") {
+            if (input.type === "file") {
+              if (input.files && input.files.length > 0) {
+                currentStepData[input.name] = Array.from(input.files);
+              }
+            } else {
+              currentStepData[input.name] = input.value;
+            }
+          }
+        });
+
+        // Special handling for our custom components that might store data differently
+        // Check multiselect values from data attributes
+        const formDataAttr = currentForm.getAttribute("data-form-values");
+        if (formDataAttr) {
+          try {
+            const existingFormData = JSON.parse(formDataAttr);
+            // Merge any existing values that aren't empty
+            Object.keys(existingFormData).forEach((key) => {
+              const value = existingFormData[key];
+              if (
+                value &&
+                (typeof value === "string" || Array.isArray(value)) &&
+                value.length > 0 &&
+                !currentStepData[key]
+              ) {
+                currentStepData[key] = value;
+              }
+            });
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+
+        // Save if we found any data
+        if (Object.keys(currentStepData).length > 0) {
+          console.log(
+            `Saving Step ${step + 1} data before going back:`,
+            currentStepData
+          );
+          setFormData((prev) => ({ ...prev, ...currentStepData }));
+        }
+      }
+
       setPreviousStep(step);
-      setCurrentStep(step - 1);
+      setStep(step - 1);
     }
   };
 
@@ -358,18 +480,20 @@ const OnboardingForm = () => {
   return (
     <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8">
       <div className="rounded-lg w-full border h-full shadow-sm">
-        <div className="grid md:grid-cols-[300px_1fr] h-full w-full  rounded-lg">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] h-full w-full rounded-lg">
           {/* Left sidebar */}
-          <div className="w-full p-6">
+          <div className="w-full p-4 md:p-6 border-b lg:border-b-0 lg:border-r">
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold">Complete Your Profile</h1>
-              <p className="text-sm ">
+              <h1 className="text-xl md:text-2xl font-semibold">
+                Complete Your Profile
+              </h1>
+              <p className="text-sm">
                 Make your profile complete by filling out all the necessary
                 information. Please verify all details before proceeding.
               </p>
             </div>
 
-            <div className="mt-8 space-y-2">
+            <div className="mt-6 md:mt-8 space-y-2">
               {steps.map((s, i) => (
                 <div
                   key={s.id}
@@ -388,11 +512,11 @@ const OnboardingForm = () => {
           </div>
 
           {/* Main content */}
-          <div className=" border m-3 rounded-md">
-            <div className="flex items-center justify-between border-b p-6 pb-4">
+          <div className="border-0 lg:border lg:m-3 lg:rounded-md">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b p-4 md:p-6 pb-4 gap-4">
               <h2 className="text-lg font-medium">{currentStepData.name}</h2>
               <div className="flex items-center gap-4">
-                <span className="text-sm ">
+                <span className="text-sm">
                   {step + 1}/{steps.length} completed
                 </span>
                 <Progress
@@ -402,7 +526,7 @@ const OnboardingForm = () => {
               </div>
             </div>
 
-            <div className="w-full p-6">
+            <div className="w-full p-4 md:p-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
@@ -413,14 +537,14 @@ const OnboardingForm = () => {
                   className="space-y-6 pt-6"
                 >
                   <AutoForm
-                    key={step} // Force re-render when step changes
+                    key={formKey} // Force complete re-render when step or data changes
                     schema={currentStepData.schema}
-                    defaultValues={getStepData(currentStepData.fields)} // Get data for current step from store
+                    defaultValues={currentStepFormData} // Get data for current step
                     formComponents={{
                       // Use built-in components and custom where needed
                       string: StringField,
                       select: SelectField,
-                      textarea: TextareaField, // Register for fieldType: "textarea"
+                      textarea: StringField, // Use StringField for textareas
                       input: CustomInput, // Register for fieldType: "input" (with icon support)
                       number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
@@ -429,10 +553,10 @@ const OnboardingForm = () => {
                     formProps={{
                       className:
                         step === 0
-                          ? "grid grid-cols-2 gap-6"
+                          ? "grid grid-cols-1 md:grid-cols-2 gap-6"
                           : step === 1
                             ? "space-y-6 technical-profile-form" // Use space-y for technical profile
-                            : "grid gap-6",
+                            : "grid grid-cols-1 gap-6",
                       style:
                         step === 1
                           ? ({
@@ -441,6 +565,10 @@ const OnboardingForm = () => {
                               "--url-fields-gap": "1rem",
                             } as React.CSSProperties)
                           : undefined,
+                      // Pass sanitized form data through data attributes
+                      "data-form-values": JSON.stringify(
+                        sanitizeFormData(currentStepFormData)
+                      ),
                     }}
                     onSubmit={handleStepSubmit}
                     withSubmit={false} // We'll handle submission with custom buttons
@@ -450,20 +578,38 @@ const OnboardingForm = () => {
                         .technical-profile-form {
                           position: relative;
                         }
-                        .technical-profile-form > div:nth-last-child(3),
-                        .technical-profile-form > div:nth-last-child(2) {
-                          display: inline-block;
-                          width: calc(50% - 0.5rem);
-                          vertical-align: top;
+
+                        /* Desktop layout for URL fields */
+                        @media (min-width: 768px) {
+                          .technical-profile-form > div:nth-last-child(3),
+                          .technical-profile-form > div:nth-last-child(2) {
+                            display: inline-block;
+                            width: calc(50% - 0.5rem);
+                            vertical-align: top;
+                          }
+                          .technical-profile-form > div:nth-last-child(3) {
+                            margin-right: 1rem;
+                          }
                         }
-                        .technical-profile-form > div:nth-last-child(3) {
-                          margin-right: 1rem;
+
+                        /* Mobile layout - full width */
+                        @media (max-width: 767px) {
+                          .technical-profile-form > div {
+                            width: 100% !important;
+                            margin-right: 0 !important;
+                            display: block !important;
+                          }
                         }
                       `}</style>
                     )}
-                    <div className="flex gap-2 pt-4 col-span-full">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-4 col-span-full">
                       {step > 0 && (
-                        <Button type="button" onClick={prev} variant="outline">
+                        <Button
+                          type="button"
+                          onClick={prev}
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                        >
                           <ChevronLeft className="mr-2 h-4 w-4" />
                           Back
                         </Button>
@@ -472,14 +618,17 @@ const OnboardingForm = () => {
                         <Button
                           type="button"
                           onClick={next}
-                          className="ml-auto"
+                          className="ml-auto w-full sm:w-auto"
                         >
                           Next Step
                           <ChevronRight className="ml-2 h-4 w-4" />
                         </Button>
                       )}
                       {step === steps.length - 1 && (
-                        <Button type="submit" className="ml-auto">
+                        <Button
+                          type="submit"
+                          className="ml-auto w-full sm:w-auto"
+                        >
                           Complete
                         </Button>
                       )}
