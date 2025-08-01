@@ -22,6 +22,7 @@ import CustomInput from "@/components/ui/autoform/custom/input";
 import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import SelectCommand from "@/components/ui/autoform/custom/select-command";
+import ProfilePhotoField from "@/components/ui/autoform/custom/profile-photo";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
 
@@ -286,7 +287,7 @@ const technicalProfileSchema = z.object({
         inputProps: {
           placeholder: "github.com/username",
           beforeInput: <span className="text-muted-foreground">https://</span>,
-          className: "github-field col-span-1",
+          className: "url-field-github",
         },
       })
     ),
@@ -309,7 +310,7 @@ const technicalProfileSchema = z.object({
         inputProps: {
           placeholder: "portfolio.com",
           beforeInput: <span className="text-muted-foreground">https://</span>,
-          className: "portfolio-field col-span-1",
+          className: "url-field-portfolio",
         },
       })
     ),
@@ -317,6 +318,39 @@ const technicalProfileSchema = z.object({
 
 // Step 3: Setup Profile Schema
 const setupProfileSchema = z.object({
+  profilePhoto: z
+    .any()
+    .optional()
+    .transform((val) => {
+      // Handle file input: if no file selected, return empty array
+      if (!val || val === null || val === undefined) {
+        return [];
+      }
+      // If it's already an array, return as is
+      if (Array.isArray(val)) {
+        return val;
+      }
+      // If it's a FileList or single file, convert to array
+      if (val instanceof FileList) {
+        return Array.from(val);
+      }
+      if (val instanceof File) {
+        return [val];
+      }
+      // Default to empty array for any other case
+      return [];
+    })
+    .pipe(z.array(z.instanceof(File)))
+    .superRefine(
+      fieldConfig({
+        label: "Profile Photo",
+        fieldType: "profile-photo", // Use custom profile photo component
+        inputProps: {
+          accept: "image/*",
+          className: "profile-photo-field",
+        },
+      })
+    ),
   username: z
     .string()
     .min(3)
@@ -345,39 +379,6 @@ const setupProfileSchema = z.object({
           rows: 1,
           cols: 10,
           className: "col-span-full",
-        },
-      })
-    ),
-  profilePhoto: z
-    .any()
-    .optional()
-    .transform((val) => {
-      // Handle file input: if no file selected, return empty array
-      if (!val || val === null || val === undefined) {
-        return [];
-      }
-      // If it's already an array, return as is
-      if (Array.isArray(val)) {
-        return val;
-      }
-      // If it's a FileList or single file, convert to array
-      if (val instanceof FileList) {
-        return Array.from(val);
-      }
-      if (val instanceof File) {
-        return [val];
-      }
-      // Default to empty array for any other case
-      return [];
-    })
-    .pipe(z.array(z.instanceof(File)))
-    .superRefine(
-      fieldConfig({
-        label: "Profile Photo",
-        fieldType: "input", // Use custom input for file upload
-        inputProps: {
-          type: "file",
-          placeholder: "Upload your Profile Photo",
         },
       })
     ),
@@ -413,7 +414,7 @@ const steps = [
     title: "Setup Profile",
     icon: Settings,
     schema: new ZodProvider(setupProfileSchema),
-    fields: ["username", "bio", "profilePhoto"],
+    fields: ["profilePhoto", "username", "bio"],
   },
 ];
 
@@ -677,22 +678,17 @@ const OnboardingForm = () => {
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
                       date: CustomDatePicker, // Register for fieldType: "date"
                       "select-command": SelectCommand, // Register for fieldType: "select-command"
+                      "profile-photo": ProfilePhotoField, // Register for fieldType: "profile-photo"
                     }}
                     formProps={{
                       className:
                         step === 0
                           ? "grid grid-cols-1 md:grid-cols-2 gap-6"
                           : step === 1
-                            ? "space-y-6 technical-profile-form" // Use space-y for technical profile
-                            : "grid grid-cols-1 gap-6",
-                      style:
-                        step === 1
-                          ? ({
-                              "--url-fields-layout": "grid",
-                              "--url-fields-columns": "1fr 1fr",
-                              "--url-fields-gap": "1rem",
-                            } as React.CSSProperties)
-                          : undefined,
+                            ? "technical-profile-form space-y-6"
+                            : step === 2
+                              ? "setup-profile-form space-y-6"
+                              : "grid grid-cols-1 gap-6",
                       // Pass sanitized form data through data attributes
                       "data-form-values": JSON.stringify(
                         sanitizeFormData(currentStepFormData)
@@ -701,35 +697,35 @@ const OnboardingForm = () => {
                     onSubmit={handleStepSubmit}
                     withSubmit={false} // We'll handle submission with custom buttons
                   >
-                    {step === 1 && (
-                      <style jsx>{`
+                    <style jsx global>{`
+                      /* Step 2: Technical Profile - URL Fields Side by Side */
+                      @media (min-width: 768px) {
                         .technical-profile-form {
                           position: relative;
                         }
 
-                        /* Desktop layout for URL fields */
-                        @media (min-width: 768px) {
-                          .technical-profile-form > div:nth-last-child(3),
-                          .technical-profile-form > div:nth-last-child(2) {
-                            display: inline-block;
-                            width: calc(50% - 0.5rem);
-                            vertical-align: top;
-                          }
-                          .technical-profile-form > div:nth-last-child(3) {
-                            margin-right: 1rem;
-                          }
+                        /* Target the last two form fields (GitHub and Portfolio) */
+                        .technical-profile-form > div:nth-last-child(3),
+                        .technical-profile-form > div:nth-last-child(2) {
+                          display: inline-block;
+                          width: calc(50% - 0.5rem);
+                          vertical-align: top;
                         }
 
-                        /* Mobile layout - full width */
-                        @media (max-width: 767px) {
-                          .technical-profile-form > div {
-                            width: 100% !important;
-                            margin-right: 0 !important;
-                            display: block !important;
-                          }
+                        .technical-profile-form > div:nth-last-child(3) {
+                          margin-right: 1rem;
                         }
-                      `}</style>
-                    )}
+                      }
+
+                      /* Mobile responsive */
+                      @media (max-width: 767px) {
+                        .technical-profile-form > div {
+                          width: 100% !important;
+                          margin-right: 0 !important;
+                          display: block !important;
+                        }
+                      }
+                    `}</style>
                     <div className="flex flex-col sm:flex-row gap-2 pt-4 col-span-full">
                       {step > 0 && (
                         <Button
