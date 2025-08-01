@@ -579,27 +579,27 @@ const OnboardingForm = () => {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8 md:border-0 lg:border lg:px-0">
+    <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8 md:border-l md:border-r lg:px-0">
       <div className=" w-full border lg:border-l-0 lg:border-r-0  h-full ">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] h-full w-full rounded-lg">
           {/* Left sidebar */}
           <div className="w-full p-4 md:p-6 border-b lg:border-b-0 lg:border-r">
             <div className="space-y-2">
               <h1 className="text-xl md:text-2xl font-semibold">
-                Complete Your Profile
+                Let’s Get You Set Up!
               </h1>
               <p className="text-sm">
-                Make your profile complete by filling out all the necessary
-                information. Please verify all details before proceeding.
+                Just a few details to unlock your profile. Double-check before
+                you go!
               </p>
             </div>
 
-            <div className="mt-6 md:mt-8 space-y-2">
+            <div className="mt-6 md:mt-8 space-y-2 md:space-y-0 md:flex md:space-x-2 lg:block lg:space-x-0 lg:space-y-2">
               {steps.map((s, i) => (
                 <div
                   key={s.id}
                   className={cn(
-                    "flex items-center gap-3 rounded-md p-3 transition-colors",
+                    "flex items-center gap-3 rounded-md p-3 transition-colors md:flex-1 lg:flex-none",
                     step === i && "bg-secondary"
                   )}
                 >
