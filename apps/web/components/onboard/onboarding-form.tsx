@@ -21,6 +21,7 @@ import { StepIndicator } from "@/components/shared/StepIndicator";
 import CustomInput from "@/components/ui/autoform/custom/input";
 import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
+import SelectCommand from "@/components/ui/autoform/custom/select-command";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
 
@@ -67,8 +68,42 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "University",
+        fieldType: "select-command", // Use SelectCommand instead of input
         inputProps: {
-          placeholder: "Enter your university name",
+          placeholder: "Search and select your university",
+          options: [
+            { value: "harvard", label: "Harvard University" },
+            { value: "mit", label: "Massachusetts Institute of Technology" },
+            { value: "stanford", label: "Stanford University" },
+            { value: "berkeley", label: "University of California, Berkeley" },
+            { value: "caltech", label: "California Institute of Technology" },
+            { value: "princeton", label: "Princeton University" },
+            { value: "yale", label: "Yale University" },
+            { value: "columbia", label: "Columbia University" },
+            { value: "chicago", label: "University of Chicago" },
+            { value: "upenn", label: "University of Pennsylvania" },
+            { value: "cornell", label: "Cornell University" },
+            { value: "northwestern", label: "Northwestern University" },
+            { value: "johns-hopkins", label: "Johns Hopkins University" },
+            { value: "duke", label: "Duke University" },
+            { value: "brown", label: "Brown University" },
+            { value: "vanderbilt", label: "Vanderbilt University" },
+            { value: "rice", label: "Rice University" },
+            { value: "notre-dame", label: "University of Notre Dame" },
+            { value: "ucla", label: "University of California, Los Angeles" },
+            { value: "michigan", label: "University of Michigan" },
+            { value: "virginia", label: "University of Virginia" },
+            { value: "emory", label: "Emory University" },
+            { value: "carnegie-mellon", label: "Carnegie Mellon University" },
+            { value: "georgetown", label: "Georgetown University" },
+            { value: "wake-forest", label: "Wake Forest University" },
+            { value: "tufts", label: "Tufts University" },
+            { value: "boston-college", label: "Boston College" },
+            { value: "nyu", label: "New York University" },
+            { value: "brandeis", label: "Brandeis University" },
+            { value: "case-western", label: "Case Western Reserve University" },
+            { value: "other", label: "Other (Please specify in next field)" },
+          ],
         },
       })
     ),
@@ -78,8 +113,100 @@ const personalDetailsSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Department",
+        fieldType: "select-command", // Use SelectCommand with conditional options
         inputProps: {
-          placeholder: "e.g., Computer Science, Engineering",
+          placeholder: "Select your department",
+          conditionalOptions: {
+            fieldName: "university",
+            fn: async (universityValue: string) => {
+              // Simulate API call delay
+              await new Promise((resolve) => setTimeout(resolve, 300));
+
+              // Common departments for most universities
+              const commonDepartments = [
+                { value: "computer-science", label: "Computer Science" },
+                { value: "engineering", label: "Engineering" },
+                { value: "business", label: "Business Administration" },
+                { value: "mathematics", label: "Mathematics" },
+                { value: "physics", label: "Physics" },
+                { value: "chemistry", label: "Chemistry" },
+                { value: "biology", label: "Biology" },
+                { value: "psychology", label: "Psychology" },
+                { value: "economics", label: "Economics" },
+                { value: "english", label: "English Literature" },
+                { value: "history", label: "History" },
+                { value: "political-science", label: "Political Science" },
+                { value: "art", label: "Art & Design" },
+                { value: "music", label: "Music" },
+                { value: "philosophy", label: "Philosophy" },
+                { value: "sociology", label: "Sociology" },
+                { value: "anthropology", label: "Anthropology" },
+                {
+                  value: "environmental-science",
+                  label: "Environmental Science",
+                },
+                { value: "medicine", label: "Medicine" },
+                { value: "law", label: "Law" },
+              ];
+
+              // Special departments for tech-focused universities
+              const techDepartments = [
+                { value: "computer-science", label: "Computer Science" },
+                {
+                  value: "software-engineering",
+                  label: "Software Engineering",
+                },
+                {
+                  value: "electrical-engineering",
+                  label: "Electrical Engineering",
+                },
+                {
+                  value: "mechanical-engineering",
+                  label: "Mechanical Engineering",
+                },
+                { value: "civil-engineering", label: "Civil Engineering" },
+                {
+                  value: "aerospace-engineering",
+                  label: "Aerospace Engineering",
+                },
+                {
+                  value: "biomedical-engineering",
+                  label: "Biomedical Engineering",
+                },
+                {
+                  value: "chemical-engineering",
+                  label: "Chemical Engineering",
+                },
+                { value: "data-science", label: "Data Science" },
+                {
+                  value: "artificial-intelligence",
+                  label: "Artificial Intelligence",
+                },
+                { value: "cybersecurity", label: "Cybersecurity" },
+                { value: "robotics", label: "Robotics" },
+                { value: "information-systems", label: "Information Systems" },
+                { value: "mathematics", label: "Mathematics" },
+                { value: "physics", label: "Physics" },
+                { value: "statistics", label: "Statistics" },
+              ];
+
+              // Return departments based on university
+              switch (universityValue) {
+                case "mit":
+                case "caltech":
+                case "stanford":
+                case "carnegie-mellon":
+                  return techDepartments;
+                case "other":
+                  return [
+                    ...commonDepartments,
+                    { value: "other", label: "Other (Please specify)" },
+                  ];
+                default:
+                  return commonDepartments;
+              }
+            },
+          },
         },
       })
     ),
@@ -549,6 +676,7 @@ const OnboardingForm = () => {
                       number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
                       date: CustomDatePicker, // Register for fieldType: "date"
+                      "select-command": SelectCommand, // Register for fieldType: "select-command"
                     }}
                     formProps={{
                       className:
