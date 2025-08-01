@@ -211,23 +211,14 @@ const personalDetailsSchema = z.object({
         },
       })
     ),
-  degree_level: z
-    .enum([
-      "associate",
-      "bachelor",
-      "master",
-      "doctorate",
-      "bootcamp",
-      "self_taught",
-    ])
-    .superRefine(
-      fieldConfig({
-        label: "Degree Level",
-        inputProps: {
-          placeholder: "Select your degree level",
-        },
-      })
-    ),
+  degree_level: z.enum(["bachelor", "master", "self_taught"]).superRefine(
+    fieldConfig({
+      label: "Degree Level",
+      inputProps: {
+        placeholder: "Select your degree level",
+      },
+    })
+  ),
 });
 
 // Step 2: Technical Profile Schema
@@ -319,28 +310,10 @@ const technicalProfileSchema = z.object({
 // Step 3: Setup Profile Schema
 const setupProfileSchema = z.object({
   profilePhoto: z
-    .any()
+    .string()
+    .url("Please provide a valid image URL")
     .optional()
-    .transform((val) => {
-      // Handle file input: if no file selected, return empty array
-      if (!val || val === null || val === undefined) {
-        return [];
-      }
-      // If it's already an array, return as is
-      if (Array.isArray(val)) {
-        return val;
-      }
-      // If it's a FileList or single file, convert to array
-      if (val instanceof FileList) {
-        return Array.from(val);
-      }
-      if (val instanceof File) {
-        return [val];
-      }
-      // Default to empty array for any other case
-      return [];
-    })
-    .pipe(z.array(z.instanceof(File)))
+    .or(z.literal(""))
     .superRefine(
       fieldConfig({
         label: "Profile Photo",

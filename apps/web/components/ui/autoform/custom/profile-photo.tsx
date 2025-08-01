@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { AutoFormFieldProps } from "@autoform/react";
 import { User, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/client";
 
 const ProfilePhotoField: React.FC<AutoFormFieldProps> = ({
   inputProps,
@@ -13,11 +14,60 @@ const ProfilePhotoField: React.FC<AutoFormFieldProps> = ({
 }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
   const { onChange, key, name, value, ...restProps } = inputProps;
 
-  const handleFileChange = (files: FileList | null) => {
+  const uploadToSupabase = async (file: File): Promise<string | null> => {
+    try {
+      setUploading(true);
+
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Please sign in to upload photos");
+        return null;
+      }
+
+      // Create unique filename
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Upload file to Supabase storage
+      const { data, error } = await supabase.storage
+        .from("profile-photos")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("Error uploading file:", error);
+        alert("Error uploading file: " + error.message);
+        return null;
+      }
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("profile-photos").getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error in uploadToSupabase:", error);
+      alert("Error uploading file");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileChange = async (files: FileList | null) => {
     if (files && files[0]) {
       const file = files[0];
 
@@ -40,14 +90,19 @@ const ProfilePhotoField: React.FC<AutoFormFieldProps> = ({
       };
       reader.readAsDataURL(file);
 
-      // Update form field - convert to array as expected by schema
-      const syntheticEvent = {
-        target: {
-          value: [file],
-          name: field.key,
-        },
-      };
-      onChange(syntheticEvent as any);
+      // Upload to Supabase and get URL
+      const photoUrl = await uploadToSupabase(file);
+
+      if (photoUrl) {
+        // Update form field with the URL instead of file
+        const syntheticEvent = {
+          target: {
+            value: photoUrl,
+            name: field.key,
+          },
+        };
+        onChange(syntheticEvent as any);
+      }
     }
   };
 
@@ -71,7 +126,7 @@ const ProfilePhotoField: React.FC<AutoFormFieldProps> = ({
     setPreview(null);
     const syntheticEvent = {
       target: {
-        value: [],
+        value: null,
         name: field.key,
       },
     };
@@ -175,8 +230,9 @@ const ProfilePhotoField: React.FC<AutoFormFieldProps> = ({
               openFileDialog();
             }}
             className="text-xs flex-1 md:flex-none"
+            disabled={uploading}
           >
-            Upload new picture
+            {uploading ? "Uploading..." : "Upload new picture"}
           </Button>
           <Button
             type="button"
