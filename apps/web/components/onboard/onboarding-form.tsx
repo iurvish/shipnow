@@ -579,8 +579,8 @@ const OnboardingForm = () => {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8">
-      <div className="rounded-lg w-full border h-full shadow-sm">
+    <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8 md:border-0 lg:border lg:px-0">
+      <div className=" w-full border lg:border-l-0 lg:border-r-0  h-full ">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] h-full w-full rounded-lg">
           {/* Left sidebar */}
           <div className="w-full p-4 md:p-6 border-b lg:border-b-0 lg:border-r">
@@ -613,7 +613,7 @@ const OnboardingForm = () => {
           </div>
 
           {/* Main content */}
-          <div className="border-0 lg:border lg:m-3 lg:rounded-md">
+          <div className="">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b p-4 md:p-6 pb-4 gap-4">
               <h2 className="text-lg font-medium">{currentStepData.name}</h2>
               <div className="flex items-center gap-4">
