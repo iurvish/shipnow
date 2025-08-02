@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, Search, Database, Network, Clock } from "lucide-react";
+import { ChevronDown, Database, Network, Clock, Check } from "lucide-react";
 import { useState } from "react";
 
 interface SearchOption {
@@ -53,16 +53,15 @@ export function ChatNavbar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="h-9 gap-2 rounded-none">
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4" />
-                <span className="font-medium">{selectedOption.name}</span>
-              </div>
+              <span className="font-medium">{selectedOption.name}</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80 rounded-none">
             <div className="p-2">
-              <div className="text-sm font-medium mb-2">Search Options</div>
+              <div className="text-sm font-medium mb-3 text-foreground">
+                Search Options
+              </div>
               {searchOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.id}
@@ -72,26 +71,20 @@ export function ChatNavbar() {
                   }`}
                   disabled={!option.available}
                 >
-                  <div className="flex-1">
+                  <option.icon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <option.icon className="h-4 w-4" />
                       <span className="font-medium text-sm">{option.name}</span>
                       {!option.available && (
                         <Badge
                           variant="secondary"
-                          className="text-xs rounded-none bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                          className="text-[10px] px-1.5 py-0.5 rounded-none bg-muted text-muted-foreground border-0"
                         >
-                          <Clock className="h-3 w-3 mr-1" />
                           Coming Soon
                         </Badge>
                       )}
                       {selectedOption.id === option.id && option.available && (
-                        <Badge
-                          variant="default"
-                          className="text-xs rounded-none"
-                        >
-                          Selected
-                        </Badge>
+                        <Check className="h-3.5 w-3.5 text-primary" />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">

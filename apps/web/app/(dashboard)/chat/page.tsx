@@ -1,12 +1,12 @@
 export default function DashboardPage() {
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full">
       {/* Chat Messages Area */}
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Welcome Message */}
           <div className="flex justify-center">
-            <div className="bg-muted rounded-lg p-4 max-w-md text-center">
+            <div className="bg-muted rounded-none p-4 max-w-md text-center">
               <h3 className="font-semibold mb-2">Welcome to Chatbot</h3>
               <p className="text-sm text-muted-foreground">
                 Start a conversation by typing a message below.
@@ -23,7 +23,7 @@ export default function DashboardPage() {
             <div className="flex-1 relative">
               <textarea
                 placeholder="Type your message here..."
-                className="w-full min-h-[50px] max-h-[200px] p-3 pr-12 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full min-h-[50px] max-h-[200px] p-3 pr-12 border border-border rounded-none resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                 rows={1}
               />
               <button className="absolute right-2 bottom-2 p-2 text-muted-foreground hover:text-foreground transition-colors">
