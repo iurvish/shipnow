@@ -27,6 +27,8 @@ const onboardingSchema = z.object({
   bio: z.string().min(10, "Bio must be at least 10 characters").max(200, "Bio must be at most 200 characters").optional(),
 });
 
+
+
 export type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
 interface ActionResult {

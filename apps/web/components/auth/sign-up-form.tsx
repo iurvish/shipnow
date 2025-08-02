@@ -92,33 +92,17 @@ export function SignUpForm({
     setError(null);
 
     try {
-      console.log("Starting signup with:", values.email);
-
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/onboarding`,
+          emailRedirectTo: `${window.location.origin}/protected`,
         },
       });
+      if (error) throw error;
 
-      console.log("Signup response:", { data, error });
-
-      if (error) {
-        console.error("Signup error details:", error);
-        throw error;
-      }
-
-      // If signup successful and user exists, trigger will handle profile creation
-      if (data.user) {
-        console.log("User signed up successfully:", data.user.id);
-        console.log("Database trigger will create user profile automatically");
-      }
-
-      console.log("Signup successful, redirecting...");
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      console.error("Caught error:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
@@ -131,23 +115,14 @@ export function SignUpForm({
     setError(null);
 
     try {
-      console.log("Starting Google signup...");
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/onboarding`,
+          redirectTo: `${window.location.origin}/protected`,
         },
       });
-
-      console.log("Google signup response:", { data, error });
-
-      if (error) {
-        console.error("Google signup error:", error);
-        throw error;
-      }
+      if (error) throw error;
     } catch (error: unknown) {
-      console.error("Google signup error:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsGoogleLoading(false);
