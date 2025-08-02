@@ -155,7 +155,7 @@ const ProfilePhotoField: React.FC<AutoFormFieldProps> = ({
 
   return (
     <div className="profile-photo-container">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-4 bg-muted/50 rounded-lg border gap-4 md:gap-0">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between py-2 gap-4 md:gap-0">
         {/* Left side - Photo and Info */}
         <div className="flex items-center gap-4">
           {/* Photo Preview Circle with Drag & Drop */}

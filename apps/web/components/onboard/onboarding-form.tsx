@@ -8,6 +8,7 @@ import { SuccessAnimation } from "../shared/SuccessAnimation";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,6 +16,7 @@ import {
   GraduationCap,
   Settings,
   AtSign,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepIndicator } from "@/components/shared/StepIndicator";
@@ -211,14 +213,16 @@ const personalDetailsSchema = z.object({
         },
       })
     ),
-  degree_level: z.enum(["bachelor", "master", "self_taught"]).superRefine(
-    fieldConfig({
-      label: "Degree Level",
-      inputProps: {
-        placeholder: "Select your degree level",
-      },
-    })
-  ),
+  degree_level: z
+    .enum(["Bachelor", "Master", "Self_taught", "Diploma", "Other"])
+    .superRefine(
+      fieldConfig({
+        label: "Degree Level",
+        inputProps: {
+          placeholder: "Select your degree level",
+        },
+      })
+    ),
 });
 
 // Step 2: Technical Profile Schema
@@ -251,14 +255,16 @@ const technicalProfileSchema = z.object({
         },
       })
     ),
-  experience: z.enum(["Beginner", "Intermediate", "Advanced"]).superRefine(
-    fieldConfig({
-      label: "Experience Level",
-      inputProps: {
-        placeholder: "Select your experience level",
-      },
-    })
-  ),
+  experience: z
+    .enum(["Beginner", "Intermediate", "Advanced", "Expert"])
+    .superRefine(
+      fieldConfig({
+        label: "Experience Level",
+        inputProps: {
+          placeholder: "Select your experience level",
+        },
+      })
+    ),
   github: z
     .string()
     .url()
@@ -396,6 +402,7 @@ const OnboardingForm = () => {
   const [previousStep, setPreviousStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getStepStatus = (stepIndex: number) => {
     if (stepIndex < step) return "done";
@@ -469,6 +476,15 @@ const OnboardingForm = () => {
     console.log("Updated form data:", updatedFormData);
 
     if (step < steps.length - 1) {
+      // Show success toast for step completion
+      const currentStepName = steps[step]?.name || "Step";
+      const nextStepName = steps[step + 1]?.name || "Next step";
+
+      toast.success(`${currentStepName} completed! ✅`, {
+        description: `Moving to ${nextStepName}...`,
+        duration: 2000,
+      });
+
       setPreviousStep(step);
       setStep(step + 1);
     } else {
@@ -479,14 +495,43 @@ const OnboardingForm = () => {
   };
 
   const handleFinalSubmit = async (completeData: any) => {
+    setIsSubmitting(true);
     try {
       console.log("Submitting complete onboarding data:", completeData);
-      // Here you would make your API call to save the data
-      // await submitOnboardingData(completeData);
 
-      setShowSuccess(true);
+      // Import the server action
+      const { submitOnboardingForm } = await import("@/lib/actions/onboarding");
+
+      // Submit the data using server action
+      const result = await submitOnboardingForm(completeData);
+
+      if (result.success) {
+        toast.success("Onboarding completed successfully! 🎉", {
+          description: "Redirecting you to your dashboard...",
+          duration: 3000,
+        });
+        setShowSuccess(true);
+
+        // Redirect to protected area after 3 seconds
+        setTimeout(() => {
+          window.location.href = "/protected";
+        }, 3000);
+      } else {
+        throw new Error(result.error || "Failed to submit onboarding data");
+      }
     } catch (error) {
       console.error("Error submitting onboarding data:", error);
+
+      // Show error toast instead of alert
+      toast.error("Failed to complete onboarding", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred. Please try again.",
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -498,9 +543,8 @@ const OnboardingForm = () => {
     }
   };
 
-  // Add a ref to track form instances and their current values
-  const formRef = useRef<HTMLFormElement>(null);
-  const currentFormValues = useRef<Record<string, any>>({});
+  // const formRef = useRef<HTMLFormElement>(null);
+  // const currentFormValues = useRef<Record<string, any>>({});
 
   // Add a state to track current step's form values in real-time
   const prev = () => {
@@ -725,8 +769,16 @@ const OnboardingForm = () => {
                         <Button
                           type="submit"
                           className="ml-auto w-full sm:w-auto"
+                          disabled={isSubmitting}
                         >
-                          Complete
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Completing...
+                            </>
+                          ) : (
+                            "Complete"
+                          )}
                         </Button>
                       )}
                     </div>

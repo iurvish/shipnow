@@ -1,29 +1,25 @@
 // User schema types for comprehensive recommendation system
 
 export type DegreeLevel =
-  | "associate"
-  | "bachelor"
-  | "master"
-  | "doctorate"
-  | "bootcamp"
-  | "self_taught";
+  | "Bachelor"
+  | "Master"
+  | "Self_taught"
+  | "Diploma"
+  | "Other";
 
 export type ExperienceLevel =
-  | "beginner"
-  | "intermediate"
-  | "advanced"
-  | "expert";
+  | "Beginner"
+  | "Intermediate"
+  | "Advanced"
+  | "Expert";
 
 // Main User table (extends auth.users) - clean with only basic info
 export interface User {
   id: string;
-  first_name: string;
-  last_name: string;
   email: string;
-  username: string;
-  bio?: string;
-  date_of_birth?: string;
-  profile_picture: string; // moved from personal_details
+  username?: string;
+  avatar_url?: string;
+  bio?: string; // Bio is stored in users table
   onboarded: boolean;
   created_at: string;
   updated_at: string;
@@ -33,26 +29,24 @@ export interface User {
 export interface PersonalDetails {
   id: string;
   user_id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string;
   university: string;
   department: string;
   degree_level: DegreeLevel;
-  phone?: string;
   created_at: string;
   updated_at: string;
 }
 
-// Technical profile table (linked to users)
+// Technical profile table (linked to users) - bio removed, it's in users table
 export interface TechnicalProfile {
   id: string;
   user_id: string;
-  primary_skills: string[];
-  experience_level: ExperienceLevel;
-  interests: string[];
-  preferred_roles: string[];
-  github_url?: string;
-  linkedin_url?: string;
-  portfolio_url?: string;
-  tools_proficiency: string[];
+  experience: ExperienceLevel;
+  skills: string[];
+  github?: string;
+  portfolio?: string;
   created_at: string;
   updated_at: string;
 }
@@ -65,40 +59,33 @@ export interface CompleteUser extends User {
 
 // For form inputs and API requests
 export interface CreatePersonalDetailsInput {
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string;
   university: string;
   department: string;
   degree_level: DegreeLevel;
-  phone?: string;
 }
 
 export interface CreateTechnicalProfileInput {
-  primary_skills: string[];
-  experience_level: ExperienceLevel;
-  interests: string[];
-  preferred_roles: string[];
-  github_url?: string;
-  linkedin_url?: string;
-  portfolio_url?: string;
-  tools_proficiency: string[];
+  skills: string[];
+  experience: ExperienceLevel;
+  github?: string;
+  portfolio?: string;
 }
 
 export interface UpdateUserInput {
-  first_name?: string;
-  last_name?: string;
   username?: string;
-  bio?: string;
-  date_of_birth?: string;
-  profile_picture?: string;
+  avatar_url?: string;
+  bio?: string; // Bio can be updated in users table
   onboarded?: boolean;
 }
 
 // For recommendation system
 export interface UserRecommendationData {
   id: string;
-  primary_skills: string[];
+  skills: string[];
   experience_level: ExperienceLevel;
-  interests: string[];
-  preferred_roles: string[];
   university: string;
   department: string;
   degree_level: DegreeLevel;
