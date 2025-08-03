@@ -164,3 +164,51 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+  -webkit-appearance: none;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+  -webkit-box-shadow: none;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+  border: none;
+  -webkit-box-shadow: none;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.scrollbar-thin::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-button {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* Force scrollbar to always show on desktop when content overflows */
+@media (min-width: 1024px) {
+  .scrollbar-thin {
+    overflow-y: auto;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 3px;
+  }
+}
