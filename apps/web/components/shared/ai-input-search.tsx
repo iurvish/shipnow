@@ -20,8 +20,8 @@ export default function AI_Input_Search() {
   };
 
   return (
-    <div className="w-full py-4">
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl mx-auto px-4">
+    <div className="w-full py-2">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl mx-auto px-4 max-sm:px-0">
         {/* Main Input Container with cut corners */}
         <div
           className="relative bg-input/30"

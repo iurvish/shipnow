@@ -19,13 +19,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Chat Input Area */}
-      <div className="border-t border-border/40 p-4">
+      <div className=" p-4">
         <div className="max-w-4xl mx-auto">
           <AI_Input_Search />
-          <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
-            <span>Press Enter to send, Shift + Enter for new line</span>
-            <span>0 / 4000</span>
-          </div>
         </div>
       </div>
     </div>
