@@ -1,35 +1,18 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { PersonSuggestion } from "@/lib/actions/chat-actions";
+import { DatabasePerson } from "@/lib/actions/chat-actions";
 import { MapPin, Briefcase, Clock, User } from "lucide-react";
 
 interface PersonCardProps {
-  person: PersonSuggestion;
+  person: DatabasePerson;
 }
 
 export function PersonCard({ person }: PersonCardProps) {
-  const getAvailabilityColor = (availability: string) => {
-    switch (availability) {
-      case "available":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "busy":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
-
-  const getAvailabilityText = (availability: string) => {
-    switch (availability) {
-      case "available":
-        return "Available";
-      case "busy":
-        return "Busy";
-      default:
-        return "Not Specified";
-    }
-  };
+  const fullName = `${person.first_name} ${person.last_name}`;
+  const skills = person.technical_profile?.skills || [];
+  const experience = person.technical_profile?.experience || "Not specified";
+  const university = person.personal_details?.university || "Not specified";
 
   return (
     <div
@@ -53,28 +36,28 @@ export function PersonCard({ person }: PersonCardProps) {
           </div>
           <div>
             <h3 className="font-semibold text-lg text-foreground">
-              {person.name}
+              {fullName}
             </h3>
-            <p className="text-sm text-muted-foreground">{person.title}</p>
+            <p className="text-sm text-muted-foreground">
+              {person.personal_details?.department || "Developer"}
+            </p>
           </div>
         </div>
-        <Badge
-          className={`text-xs rounded-none ${getAvailabilityColor(person.availability)}`}
-        >
+        <Badge className="text-xs rounded-none bg-muted text-muted-foreground">
           <Clock className="w-3 h-3 mr-1" />
-          {getAvailabilityText(person.availability)}
+          {experience}
         </Badge>
       </div>
 
-      {/* Company and Location */}
+      {/* University and Email */}
       <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1">
           <Briefcase className="w-4 h-4" />
-          <span>{person.company}</span>
+          <span>{university}</span>
         </div>
         <div className="flex items-center gap-1">
           <MapPin className="w-4 h-4" />
-          <span>{person.location}</span>
+          <span>{person.email}</span>
         </div>
       </div>
 
@@ -83,21 +66,19 @@ export function PersonCard({ person }: PersonCardProps) {
         <span className="text-sm font-medium text-foreground">
           Experience:{" "}
         </span>
-        <span className="text-sm text-muted-foreground">
-          {person.experience}
-        </span>
+        <span className="text-sm text-muted-foreground">{experience}</span>
       </div>
 
       {/* Bio */}
       <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-        {person.bio}
+        {person.bio || "No bio available"}
       </p>
 
       {/* Skills */}
       <div>
         <h4 className="text-sm font-medium text-foreground mb-2">Skills</h4>
         <div className="flex flex-wrap gap-2">
-          {person.skills.map((skill, index) => (
+          {skills.map((skill, index) => (
             <Badge
               key={index}
               variant="secondary"
