@@ -18,6 +18,27 @@ const QueryGenerationSchema = z.object({
   skills_mapping: z.array(z.string()).describe('The specific technologies/skills being searched for'),
 });
 
+// Type for raw Supabase data
+type SupabaseUserData = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  bio: string | null;
+  personal_details: Array<{
+    university: string;
+    department: string;
+    degree_level: string;
+    date_of_birth: string | null;
+  }>;
+  technical_profiles: Array<{
+    skills: string[];
+    experience: string;
+    github: string | null;
+    portfolio: string | null;
+  }>;
+};
+
 // Schema for person from database
 const DatabasePersonSchema = z.object({
   id: z.string(),
@@ -29,15 +50,13 @@ const DatabasePersonSchema = z.object({
     university: z.string(),
     department: z.string(),
     degree_level: z.string(),
-    phone: z.string().nullable(),
+    date_of_birth: z.string().nullable(),
   }).nullable(),
   technical_profile: z.object({
-    primary_skills: z.array(z.string()),
-    experience_level: z.string(),
-    interests: z.array(z.string()),
-    preferred_roles: z.array(z.string()),
-    github_url: z.string().nullable(),
-    linkedin_url: z.string().nullable(),
+    skills: z.array(z.string()),
+    experience: z.string(),
+    github: z.string().nullable(),
+    portfolio: z.string().nullable(),
   }).nullable(),
 });
 
@@ -153,17 +172,15 @@ export async function generatePeopleSuggestions(
         - university (text)
         - department (text)
         - degree_level (text) // values: 'UNDERGRADUATE', 'GRADUATE', 'PHD'
-        - phone (text, nullable)
+        - date_of_birth (date, nullable)
         
         Table: technical_profiles
         - id (text, primary key)
         - user_id (text, foreign key to users.id)
-        - primary_skills (text[]) // array of skills
-        - experience_level (text) // values: 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'
-        - interests (text[]) // array of interests
-        - preferred_roles (text[]) // array of preferred roles
-        - github_url (text, nullable)
-        - linkedin_url (text, nullable)
+        - skills (text[]) // array of skills
+        - experience (text) // values: 'BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'SENIOR'
+        - github (text, nullable)
+        - portfolio (text, nullable)
         
         TECHNOLOGY MAPPINGS:
         - For "web development" or "web developers", search for: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Angular", "Vue", "Next.js", "Node.js"]
@@ -192,8 +209,8 @@ export async function generatePeopleSuggestions(
         FROM users u
         LEFT JOIN personal_details pd ON u.id = pd.user_id
         LEFT JOIN technical_profiles tp ON u.id = tp.user_id
-        WHERE tp.primary_skills && ARRAY['React', 'JavaScript', 'TypeScript']
-        AND tp.experience_level IN ('INTERMEDIATE', 'ADVANCED')
+        WHERE tp.skills && ARRAY['React', 'JavaScript', 'TypeScript']
+        AND tp.experience IN ('INTERMEDIATE', 'ADVANCED')
         LIMIT 10;
         
         User query: "${message}"
@@ -227,8 +244,8 @@ export async function generatePeopleSuggestions(
         .from('users')
         .select(`
           id, first_name, last_name, email, bio,
-          personal_details (university, department, degree_level, phone),
-          technical_profiles (primary_skills, experience_level, interests, preferred_roles, github_url, linkedin_url)
+          personal_details (university, department, degree_level, date_of_birth),
+          technical_profiles (skills, experience, github, portfolio)
         `)
         .limit(10);
 
@@ -239,7 +256,7 @@ export async function generatePeopleSuggestions(
       onStatusUpdate?.({ step: 'search', message: 'Search completed', completed: true });
 
       // Transform the data to match our schema
-      const transformedData = fallbackData?.map(user => {
+      const transformedData = (fallbackData as SupabaseUserData[])?.map(user => {
         const personalDetail = Array.isArray(user.personal_details) && user.personal_details.length > 0 
           ? user.personal_details[0] 
           : null;
@@ -257,21 +274,15 @@ export async function generatePeopleSuggestions(
             university: String(personalDetail.university || ''),
             department: String(personalDetail.department || ''),
             degree_level: String(personalDetail.degree_level || ''),
-            phone: personalDetail.phone ? String(personalDetail.phone) : null,
+            date_of_birth: personalDetail.date_of_birth ? String(personalDetail.date_of_birth) : null,
           } : null,
           technical_profile: technicalProfile ? {
-            primary_skills: Array.isArray(technicalProfile.primary_skills) 
-              ? technicalProfile.primary_skills.map(String)
+            skills: Array.isArray(technicalProfile.skills) 
+              ? technicalProfile.skills.map(String)
               : [],
-            experience_level: String(technicalProfile.experience_level || ''),
-            interests: Array.isArray(technicalProfile.interests)
-              ? technicalProfile.interests.map(String)
-              : [],
-            preferred_roles: Array.isArray(technicalProfile.preferred_roles)
-              ? technicalProfile.preferred_roles.map(String)
-              : [],
-            github_url: technicalProfile.github_url ? String(technicalProfile.github_url) : null,
-            linkedin_url: technicalProfile.linkedin_url ? String(technicalProfile.linkedin_url) : null,
+            experience: String(technicalProfile.experience || ''),
+            github: technicalProfile.github ? String(technicalProfile.github) : null,
+            portfolio: technicalProfile.portfolio ? String(technicalProfile.portfolio) : null,
           } : null,
         };
       }) || [];

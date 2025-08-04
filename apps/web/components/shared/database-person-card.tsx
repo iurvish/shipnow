@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Github, Linkedin, MapPin, GraduationCap, Mail, Phone } from 'lucide-react';
+import { Github, Linkedin, MapPin, GraduationCap, Mail } from 'lucide-react';
 import { DatabasePerson } from '@/lib/actions/chat-actions';
 
 interface DatabasePersonCardProps {
@@ -36,8 +36,7 @@ const getDegreeLevelIcon = (level: string) => {
 
 export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
   const fullName = `${person.first_name} ${person.last_name}`;
-  const skills = person.technical_profile?.primary_skills || [];
-  const interests = person.technical_profile?.interests || [];
+  const skills = person.technical_profile?.skills || [];
 
   return (
     <div 
@@ -52,18 +51,13 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
           <h3 className="text-lg font-semibold text-foreground mb-1">
             {fullName}
           </h3>
-          {person.technical_profile?.preferred_roles && person.technical_profile.preferred_roles.length > 0 && (
-            <p className="text-sm text-muted-foreground mb-2">
-              {person.technical_profile.preferred_roles[0]}
-            </p>
-          )}
-          {person.technical_profile?.experience_level && (
+          {person.technical_profile?.experience && (
             <Badge 
               variant="outline" 
-              className={`text-xs ${getExperienceBadgeColor(person.technical_profile.experience_level)}`}
+              className={`text-xs ${getExperienceBadgeColor(person.technical_profile.experience)}`}
               style={{ borderRadius: '0px' }}
             >
-              {person.technical_profile.experience_level}
+              {person.technical_profile.experience}
             </Badge>
           )}
         </div>
@@ -124,46 +118,12 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
         </div>
       )}
 
-      {/* Interests */}
-      {interests.length > 0 && (
-        <div className="mb-4">
-          <h4 className="text-sm font-medium mb-2 text-foreground">Interests</h4>
-          <div className="flex flex-wrap gap-1.5">
-            {interests.slice(0, 4).map((interest, index) => (
-              <Badge
-                key={index}
-                variant="outline"
-                className="text-xs px-2 py-1 border-muted-foreground/30"
-                style={{ borderRadius: '0px' }}
-              >
-                {interest}
-              </Badge>
-            ))}
-            {interests.length > 4 && (
-              <Badge
-                variant="outline"
-                className="text-xs px-2 py-1"
-                style={{ borderRadius: '0px' }}
-              >
-                +{interests.length - 4} more
-              </Badge>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Contact Info */}
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Mail className="h-3 w-3" />
           <span className="truncate">{person.email}</span>
         </div>
-        {person.personal_details?.phone && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Phone className="h-3 w-3" />
-            <span>{person.personal_details.phone}</span>
-          </div>
-        )}
       </div>
 
       {/* Action Buttons */}
@@ -181,7 +141,7 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
         
         {/* Social Links */}
         <div className="flex gap-1">
-          {person.technical_profile?.github_url && (
+          {person.technical_profile?.github && (
             <Button
               variant="outline"
               size="sm"
@@ -191,12 +151,12 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
               }}
               asChild
             >
-              <a href={person.technical_profile.github_url} target="_blank" rel="noopener noreferrer">
+              <a href={person.technical_profile.github} target="_blank" rel="noopener noreferrer">
                 <Github className="h-4 w-4" />
               </a>
             </Button>
           )}
-          {person.technical_profile?.linkedin_url && (
+          {person.technical_profile?.portfolio && (
             <Button
               variant="outline"
               size="sm"
@@ -206,7 +166,7 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
               }}
               asChild
             >
-              <a href={person.technical_profile.linkedin_url} target="_blank" rel="noopener noreferrer">
+              <a href={person.technical_profile.portfolio} target="_blank" rel="noopener noreferrer">
                 <Linkedin className="h-4 w-4" />
               </a>
             </Button>
