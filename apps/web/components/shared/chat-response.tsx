@@ -41,7 +41,11 @@ export function ChatResponseComponent({ response }: ChatResponseProps) {
     );
   }
 
-  if (response.query_type === "people_search" && response.people && response.people.length > 0) {
+  if (
+    response.query_type === "people_search" &&
+    response.people &&
+    response.people.length > 0
+  ) {
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -59,7 +63,8 @@ export function ChatResponseComponent({ response }: ChatResponseProps) {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Here are professionals from our database that match your requirements
+            Here are professionals from our database that match your
+            requirements
           </p>
         </div>
 
@@ -76,10 +81,11 @@ export function ChatResponseComponent({ response }: ChatResponseProps) {
 
         {/* Query Information */}
         {response.explanation && (
-          <div 
-            className="p-3 bg-muted/50 border border-muted" 
+          <div
+            className="p-3 bg-muted/50 border border-muted"
             style={{
-              clipPath: "polygon(6px 0%, 100% 0%, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0% 100%, 0% 6px)",
+              clipPath:
+                "polygon(6px 0%, 100% 0%, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0% 100%, 0% 6px)",
             }}
           >
             <p className="text-xs text-muted-foreground">
@@ -91,20 +97,29 @@ export function ChatResponseComponent({ response }: ChatResponseProps) {
     );
   }
 
-  if (response.query_type === "people_search" && response.people && response.people.length === 0) {
+  if (
+    response.query_type === "people_search" &&
+    response.people &&
+    response.people.length === 0
+  ) {
     return (
       <div className="space-y-6">
         {/* No Results Message */}
-        <div 
-          className="flex flex-col items-center justify-center p-8 bg-muted/30 border border-muted text-center" 
+        <div
+          className="flex flex-col items-center justify-center p-8 bg-muted/30 border border-muted text-center"
           style={{
-            clipPath: "polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px)",
+            clipPath:
+              "polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px)",
           }}
         >
           <Search className="h-12 w-12 text-muted-foreground mb-4" />
-          <h4 className="text-lg font-medium text-foreground mb-2">No People Found</h4>
+          <h4 className="text-lg font-medium text-foreground mb-2">
+            No People Found
+          </h4>
           <p className="text-sm text-muted-foreground max-w-md">
-            No people found matching your criteria. Try adjusting your search terms or be more specific about the skills and experience level you're looking for.
+            No people found matching your criteria. Try adjusting your search
+            terms or be more specific about the skills and experience level
+            you're looking for.
           </p>
         </div>
       </div>

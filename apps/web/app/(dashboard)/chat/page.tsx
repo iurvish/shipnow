@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState } from 'react';
-import ChatItem from '@/components/shared/chat-item';
-import AIInputSearch from '@/components/shared/ai-input-search';
-import { ChatResponse } from '@/lib/actions/chat-actions';
+import React, { useState } from "react";
+import ChatItem from "@/components/shared/chat-item";
+import AIInputSearch from "@/components/shared/ai-input-search";
+import { ChatResponse } from "@/lib/actions/chat-actions";
 
 interface ChatMessage {
   id: string;
   content: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   chatResponse?: ChatResponse;
   timestamp: Date;
 }
@@ -21,37 +21,41 @@ export default function ChatPage() {
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       content,
-      role: 'user',
+      role: "user",
       timestamp: new Date(),
     };
-    
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
   };
 
   const handleAIResponse = (response: ChatResponse) => {
     setIsLoading(false);
-    
+
     const aiMessage: ChatMessage = {
       id: `ai-${Date.now()}`,
-      content: response.message || (response.query_type === 'people_search' ? 'Here are the people I found:' : ''),
-      role: 'assistant',
+      content:
+        response.message ||
+        (response.query_type === "people_search"
+          ? "Here are the people I found:"
+          : ""),
+      role: "assistant",
       chatResponse: response,
       timestamp: new Date(),
     };
-    
-    setMessages(prev => [...prev, aiMessage]);
+
+    setMessages((prev) => [...prev, aiMessage]);
   };
 
   const handleRegenerate = async (messageId: string) => {
     // Find the user message that preceded this AI response
-    const messageIndex = messages.findIndex(m => m.id === messageId);
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex > 0) {
       const userMessage = messages[messageIndex - 1];
-      if (userMessage && userMessage.role === 'user') {
+      if (userMessage && userMessage.role === "user") {
         setIsLoading(true);
         // Remove the old AI response
-        setMessages(prev => prev.filter(m => m.id !== messageId));
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
         // Regenerate with the original user message
         handleUserMessage(userMessage.content);
       }
@@ -66,13 +70,21 @@ export default function ChatPage() {
           {messages.length === 0 && !isLoading ? (
             /* Welcome Message */
             <div className="flex justify-center pt-20">
-              <div className="bg-muted/30 p-8 max-w-md text-center" style={{ borderRadius: '0px' }}>
-                <h3 className="font-semibold mb-3 text-lg">Welcome to People Finder</h3>
+              <div
+                className="bg-muted/30 p-8 max-w-md text-center"
+                style={{ borderRadius: "0px" }}
+              >
+                <h3 className="font-semibold mb-3 text-lg">
+                  Welcome to People Finder
+                </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Tell me about the kind of people you're looking for and I'll search our database to find the perfect matches!
+                  Tell me about the kind of people you're looking for and I'll
+                  search our database to find the perfect matches!
                 </p>
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p><strong>Try asking:</strong></p>
+                  <p>
+                    <strong>Try asking:</strong>
+                  </p>
                   <p>"Find me React developers"</p>
                   <p>"I need experienced UX designers"</p>
                   <p>"Suggest some data scientists"</p>
@@ -88,10 +100,14 @@ export default function ChatPage() {
                   content={message.content}
                   role={message.role}
                   chatResponse={message.chatResponse}
-                  onRegenerate={message.role === 'assistant' ? () => handleRegenerate(message.id) : undefined}
+                  onRegenerate={
+                    message.role === "assistant"
+                      ? () => handleRegenerate(message.id)
+                      : undefined
+                  }
                 />
               ))}
-              
+
               {/* Loading State */}
               {isLoading && (
                 <ChatItem

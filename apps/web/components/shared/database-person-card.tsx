@@ -1,8 +1,8 @@
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Github, Linkedin, MapPin, GraduationCap, Mail } from 'lucide-react';
-import { DatabasePerson } from '@/lib/actions/chat-actions';
+import React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Github, Linkedin, MapPin, GraduationCap, Mail } from "lucide-react";
+import { DatabasePerson } from "@/lib/actions/chat-actions";
 
 interface DatabasePersonCardProps {
   person: DatabasePerson;
@@ -10,27 +10,27 @@ interface DatabasePersonCardProps {
 
 const getExperienceBadgeColor = (level: string) => {
   switch (level.toUpperCase()) {
-    case 'BEGINNER':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'INTERMEDIATE':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'ADVANCED':
-      return 'bg-purple-100 text-purple-800 border-purple-200';
+    case "BEGINNER":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "INTERMEDIATE":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "ADVANCED":
+      return "bg-purple-100 text-purple-800 border-purple-200";
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return "bg-gray-100 text-gray-800 border-gray-200";
   }
 };
 
 const getDegreeLevelIcon = (level: string) => {
   switch (level.toUpperCase()) {
-    case 'PHD':
-      return '🎓';
-    case 'GRADUATE':
-      return '📚';
-    case 'UNDERGRADUATE':
-      return '📖';
+    case "PHD":
+      return "🎓";
+    case "GRADUATE":
+      return "📚";
+    case "UNDERGRADUATE":
+      return "📖";
     default:
-      return '🎓';
+      return "🎓";
   }
 };
 
@@ -39,10 +39,11 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
   const skills = person.technical_profile?.skills || [];
 
   return (
-    <div 
+    <div
       className="bg-card border border-border p-6 transition-all duration-200 hover:shadow-md hover:border-muted-foreground/20"
       style={{
-        clipPath: 'polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px)',
+        clipPath:
+          "polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px)",
       }}
     >
       {/* Header */}
@@ -52,10 +53,10 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
             {fullName}
           </h3>
           {person.technical_profile?.experience && (
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={`text-xs ${getExperienceBadgeColor(person.technical_profile.experience)}`}
-              style={{ borderRadius: '0px' }}
+              style={{ borderRadius: "0px" }}
             >
               {person.technical_profile.experience}
             </Badge>
@@ -65,20 +66,23 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
 
       {/* Education Info */}
       {person.personal_details && (
-        <div 
-          className="mb-4 p-3 bg-muted/30 border border-muted" 
-          style={{ 
-            clipPath: 'polygon(6px 0%, 100% 0%, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0% 100%, 0% 6px)',
+        <div
+          className="mb-4 p-3 bg-muted/30 border border-muted"
+          style={{
+            clipPath:
+              "polygon(6px 0%, 100% 0%, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0% 100%, 0% 6px)",
           }}
         >
           <div className="flex items-center gap-2 mb-2">
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">
-              {getDegreeLevelIcon(person.personal_details.degree_level)} {person.personal_details.degree_level}
+              {getDegreeLevelIcon(person.personal_details.degree_level)}{" "}
+              {person.personal_details.degree_level}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            {person.personal_details.department} at {person.personal_details.university}
+            {person.personal_details.department} at{" "}
+            {person.personal_details.university}
           </p>
         </div>
       )}
@@ -100,7 +104,7 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
                 key={index}
                 variant="secondary"
                 className="text-xs px-2 py-1 bg-muted text-muted-foreground hover:bg-muted-foreground hover:text-muted"
-                style={{ borderRadius: '0px' }}
+                style={{ borderRadius: "0px" }}
               >
                 {skill}
               </Badge>
@@ -109,7 +113,7 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
               <Badge
                 variant="outline"
                 className="text-xs px-2 py-1"
-                style={{ borderRadius: '0px' }}
+                style={{ borderRadius: "0px" }}
               >
                 +{skills.length - 6} more
               </Badge>
@@ -132,13 +136,14 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
           variant="outline"
           size="sm"
           className="flex-1 border-muted-foreground/20 hover:bg-muted"
-          style={{ 
-            clipPath: 'polygon(4px 0%, 100% 0%, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0% 100%, 0% 4px)',
+          style={{
+            clipPath:
+              "polygon(4px 0%, 100% 0%, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0% 100%, 0% 4px)",
           }}
         >
           Contact
         </Button>
-        
+
         {/* Social Links */}
         <div className="flex gap-1">
           {person.technical_profile?.github && (
@@ -146,12 +151,17 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
               variant="outline"
               size="sm"
               className="p-2 border-muted-foreground/20 hover:bg-muted"
-              style={{ 
-                clipPath: 'polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)',
+              style={{
+                clipPath:
+                  "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
               }}
               asChild
             >
-              <a href={person.technical_profile.github} target="_blank" rel="noopener noreferrer">
+              <a
+                href={person.technical_profile.github}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Github className="h-4 w-4" />
               </a>
             </Button>
@@ -161,12 +171,17 @@ export function DatabasePersonCard({ person }: DatabasePersonCardProps) {
               variant="outline"
               size="sm"
               className="p-2 border-muted-foreground/20 hover:bg-muted"
-              style={{ 
-                clipPath: 'polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)',
+              style={{
+                clipPath:
+                  "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
               }}
               asChild
             >
-              <a href={person.technical_profile.portfolio} target="_blank" rel="noopener noreferrer">
+              <a
+                href={person.technical_profile.portfolio}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Linkedin className="h-4 w-4" />
               </a>
             </Button>

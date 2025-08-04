@@ -105,9 +105,21 @@ export async function generatePeopleSuggestions(
       throw new Error('Message is required');
     }
 
+    // Check environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL environment variable is not set');
+    }
+    
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable is not set');
+    }
+
+    console.log('Starting people suggestions with message:', message);
+
     // Step 1: Classify query type
     onStatusUpdate?.({ step: 'classify', message: 'Analyzing your query...', completed: false });
 
+    console.log('Calling Google AI for classification...');
     const classification = await generateObject({
       model: google('models/gemini-1.5-flash'),
       schema: z.object({
@@ -138,6 +150,8 @@ export async function generatePeopleSuggestions(
         User query: "${message}"
       `,
     });
+    
+    console.log('Classification result:', classification.object);
 
     onStatusUpdate?.({ step: 'classify', message: 'Query analyzed', completed: true });
 
@@ -315,6 +329,18 @@ export async function generatePeopleSuggestions(
     
   } catch (error) {
     console.error('Chat action error:', error);
-    throw new Error('Failed to generate suggestions');
+    
+    // Log more detailed error information
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Return a more informative error response instead of throwing
+    return {
+      query_type: 'general_question' as const,
+      reasoning: 'An error occurred while processing your request',
+      message: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or check your environment configuration.`,
+    };
   }
 }

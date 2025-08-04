@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import { generatePeopleSuggestions, ToolStatus, ChatResponse } from '@/lib/actions/chat-actions';
-import { ToolStatusIndicator } from './tool-status-indicator';
+import React, { useState, useRef, useEffect } from "react";
+import { Send, Loader2 } from "lucide-react";
+import {
+  generatePeopleSuggestions,
+  ToolStatus,
+  ChatResponse,
+} from "@/lib/actions/chat-actions";
+import { ToolStatusIndicator } from "./tool-status-indicator";
 import { cn } from "@/lib/utils";
 
 interface AIInputSearchProps {
@@ -13,22 +17,22 @@ interface AIInputSearchProps {
   placeholder?: string;
 }
 
-export default function AIInputSearch({ 
-  onResponse, 
-  onUserMessage, 
-  disabled = false, 
-  placeholder = "Tell me about the kind of people you're looking for..."
+export default function AIInputSearch({
+  onResponse,
+  onUserMessage,
+  disabled = false,
+  placeholder = "Tell me about the kind of people you're looking for...",
 }: AIInputSearchProps) {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toolStatuses, setToolStatuses] = useState<ToolStatus[]>([]);
-  const [currentStep, setCurrentStep] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleStatusUpdate = (status: ToolStatus) => {
     setCurrentStep(status.step);
-    setToolStatuses(prev => {
-      const existingIndex = prev.findIndex(s => s.step === status.step);
+    setToolStatuses((prev) => {
+      const existingIndex = prev.findIndex((s) => s.step === status.step);
       if (existingIndex >= 0) {
         const updated = [...prev];
         updated[existingIndex] = status;
@@ -41,38 +45,42 @@ export default function AIInputSearch({
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    
+
     if (!input.trim() || isLoading || disabled) return;
 
     const userMessage = input.trim();
-    setInput('');
+    setInput("");
     setIsLoading(true);
     setToolStatuses([]);
-    setCurrentStep('');
+    setCurrentStep("");
 
     // Notify parent about user message
     onUserMessage?.(userMessage);
 
     try {
-      const response = await generatePeopleSuggestions(userMessage, handleStatusUpdate);
+      const response = await generatePeopleSuggestions(
+        userMessage,
+        handleStatusUpdate
+      );
       onResponse?.(response);
     } catch (error) {
-      console.error('Error generating suggestions:', error);
+      console.error("Error generating suggestions:", error);
       // Handle error state
       onResponse?.({
-        query_type: 'general_question',
-        reasoning: 'Error occurred',
-        message: 'Sorry, something went wrong while searching for people. Please try again.',
+        query_type: "general_question",
+        reasoning: "Error occurred",
+        message:
+          "Sorry, something went wrong while searching for people. Please try again.",
       });
     } finally {
       setIsLoading(false);
       setToolStatuses([]);
-      setCurrentStep('');
+      setCurrentStep("");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -81,7 +89,7 @@ export default function AIInputSearch({
   // Auto-resize textarea
   const adjustHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
   };
@@ -95,7 +103,10 @@ export default function AIInputSearch({
       {/* Tool Status Indicator */}
       {isLoading && toolStatuses.length > 0 && (
         <div className="mb-4">
-          <ToolStatusIndicator statuses={toolStatuses} currentStep={currentStep} />
+          <ToolStatusIndicator
+            statuses={toolStatuses}
+            currentStep={currentStep}
+          />
         </div>
       )}
 
@@ -161,17 +172,18 @@ export default function AIInputSearch({
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="text-xs text-muted-foreground mr-2">Try:</span>
             {[
-              'React developers',
-              'UX designers',
-              'Backend engineers',
-              'Data scientists',
+              "React developers",
+              "UX designers",
+              "Backend engineers",
+              "Data scientists",
             ].map((example) => (
               <button
                 key={example}
                 onClick={() => setInput(`Find me ${example}`)}
                 className="text-xs px-2 py-1 bg-muted text-muted-foreground hover:bg-muted-foreground hover:text-muted transition-colors"
-                style={{ 
-                  clipPath: "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
+                style={{
+                  clipPath:
+                    "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
                 }}
               >
                 {example}
