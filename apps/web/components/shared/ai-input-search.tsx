@@ -58,10 +58,7 @@ export default function AIInputSearch({
     onUserMessage?.(userMessage);
 
     try {
-      const response = await generatePeopleSuggestions(
-        userMessage,
-        handleStatusUpdate
-      );
+      const response = await generatePeopleSuggestions(userMessage);
       onResponse?.(response);
     } catch (error) {
       console.error("Error generating suggestions:", error);

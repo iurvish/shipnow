@@ -95,8 +95,7 @@ function isSqlQuerySafe(query: string): boolean {
 }
 
 export async function generatePeopleSuggestions(
-  message: string,
-  onStatusUpdate?: (status: ToolStatus) => void
+  message: string
 ): Promise<ChatResponse> {
   try {
     if (!message || message.trim().length === 0) {
@@ -115,8 +114,6 @@ export async function generatePeopleSuggestions(
     console.log('Starting people suggestions with message:', message);
 
     // Step 1: Classify query type (simplified for testing)
-    onStatusUpdate?.({ step: 'classify', message: 'Analyzing your query...', completed: false });
-
     console.log('Classifying query:', message);
     
     // Simple classification logic for testing
@@ -134,20 +131,23 @@ export async function generatePeopleSuggestions(
       };
     }
 
-    onStatusUpdate?.({ step: 'classify', message: 'Query analyzed', completed: true });
+    console.log('Query analyzed - classified as search query');
 
     // Step 2: Skip SQL generation for now and go directly to database query
-    onStatusUpdate?.({ step: 'generate', message: 'Generating database query...', completed: false });
-    
     console.log('Skipping AI SQL generation, using fallback query');
-    
-    onStatusUpdate?.({ step: 'generate', message: 'Database query generated', completed: true });
-    onStatusUpdate?.({ step: 'validate', message: 'Query validated', completed: true });
 
     // Step 4: Execute query (using fallback query directly)
-    onStatusUpdate?.({ step: 'search', message: 'Searching database...', completed: false });
-
     console.log('Executing fallback database query...');
+    
+    // Define the query for logging
+    const queryString = `
+      SELECT id, first_name, last_name, email, bio,
+             personal_details (university, department, degree_level, date_of_birth),
+             technical_profiles (skills, experience, github, portfolio)
+      FROM users
+      LIMIT 10`;
+    
+    console.log('Generated SQL Query:', queryString);
     
     // Skip RPC call and go directly to fallback query
     const { data: fallbackData, error: fallbackError } = await supabase
@@ -163,7 +163,7 @@ export async function generatePeopleSuggestions(
       throw new Error(`Database query failed: ${fallbackError.message}`);
     }
 
-    onStatusUpdate?.({ step: 'search', message: 'Search completed', completed: true });
+    console.log('Search completed, transforming data...');
 
     // Transform the data to match our schema
     const transformedData = (fallbackData as SupabaseUserData[])?.map(user => {
@@ -197,7 +197,7 @@ export async function generatePeopleSuggestions(
       };
     }) || [];
 
-    onStatusUpdate?.({ step: 'format', message: 'Results formatted', completed: true });
+    console.log('Results formatted successfully');
 
     return {
       query_type: 'people_search',
