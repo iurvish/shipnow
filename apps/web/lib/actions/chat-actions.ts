@@ -150,7 +150,7 @@ export async function generatePeopleSuggestions(
       - user_id (text, foreign key to users.id)
       - university (text)
       - department (text)
-      - degree_level (text) // UNDERGRADUATE, GRADUATE, PHD
+      - degree_level (text) // Diploma, Master, Bachelor, Other
       - date_of_birth (date)
       
       Table: technical_profiles
@@ -160,28 +160,35 @@ export async function generatePeopleSuggestions(
       - github (text)
       - portfolio (text)
       
-      IMPORTANT: The database stores skills with specific technology names, not generic categories.
+      CRITICAL DATA FORMATTING RULES:
+      1. University names: Use proper title case (e.g., "Stanford University", "Harvard University", "MIT")
+      2. Skills array: Use double quotes for strings (e.g., ["Python", "Machine Learning", "TensorFlow"])
+      3. For case-insensitive searches, use .ilike() instead of .eq() for text fields
+      4. Always capitalize first letter of each word in university names
       
       TECHNOLOGY MAPPINGS:
       - For "web development" or "web developers", search for: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Angular", "Vue", "Next.js", "Node.js"]
       - For "mobile development", search for: ["React Native", "Flutter", "Swift", "Kotlin", "Android", "iOS"]
-      - For "data science", search for: ["Python", "R", "SQL", "TensorFlow", "PyTorch", "Pandas", "NumPy"]
+      - For "data science", search for: ["Python", "R", "SQL", "TensorFlow", "PyTorch", "Pandas", "NumPy", "Machine Learning", "Data Analysis", "Scikit-learn"]
       - For "cloud", search for: ["AWS", "Azure", "GCP", "Docker", "Kubernetes"]
       - For "backend", search for: ["Node.js", "Java", "Python", "C#", "Go", "Ruby", "PHP", "Express"]
       - For "frontend", search for: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Angular", "Vue"]
       
       Your task is to create a Supabase query that:
       1. Maps general categories to specific technologies
-      2. Uses the overlaps operator for array searches
+      2. Uses the overlaps operator for array searches with proper double quotes
       3. Always searches for specific technologies, not generic terms
-      4. Limit results to 10 users
-      5. Include joins with personal_details and technical_profiles
+      4. Use .ilike() for case-insensitive text searches (university, department names)
+      5. Use proper title case for university names
+      6. Limit results to 10 users
+      7. Include joins with personal_details and technical_profiles
       
       For experience levels:
       - "experienced" or "with experience" should filter for "Senior" or "Mid-level"
       - "beginners" should filter for "Beginner"
       
-      Return only a valid Supabase JavaScript query like:
+      EXAMPLE QUERIES:
+      For skills search:
       supabase
         .from('users')
         .select(\`
@@ -189,10 +196,22 @@ export async function generatePeopleSuggestions(
           personal_details (university, department, degree_level, date_of_birth),
           technical_profiles (skills, experience, github, portfolio)
         \`)
-        .eq('technical_profiles.skills', 'cs.{React,JavaScript,TypeScript}')
+        .overlaps('technical_profiles.skills', ["React", "JavaScript", "TypeScript"])
         .limit(10)
         
-      For skills searches, always use the overlaps operator with an array of technologies.
+      For university search (case-insensitive):
+      supabase
+        .from('users')
+        .select(\`
+          id, first_name, last_name, email, bio,
+          personal_details (university, department, degree_level, date_of_birth),
+          technical_profiles (skills, experience, github, portfolio)
+        \`)
+        .ilike('personal_details.university', '%Stanford University%')
+        .limit(10)  
+        
+      For skills searches, always use the overlaps operator with an array of technologies using double quotes.
+      For text searches (university, department), always use .ilike() for case-insensitive matching.
       If no specific skills are mentioned, return all users.`,
       messages: [
         {
