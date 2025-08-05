@@ -163,8 +163,10 @@ export async function generatePeopleSuggestions(
       CRITICAL DATA FORMATTING RULES:
       1. University names: Use proper title case (e.g., "Stanford University", "Harvard University", "MIT")
       2. Skills array: Use double quotes for strings (e.g., ["Python", "Machine Learning", "TensorFlow"])
-      3. For case-insensitive searches, use .ilike() instead of .eq() for text fields
+      3. For filtering nested relationships, use .not('table', 'is', null) first, then use .eq() with exact values
       4. Always capitalize first letter of each word in university names
+      5. For university searches, use .eq() with exact university name instead of .ilike()
+      6. For case sensitivity, ensure exact matches in the database
       
       TECHNOLOGY MAPPINGS:
       - For "web development" or "web developers", search for: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Angular", "Vue", "Next.js", "Node.js"]
@@ -178,10 +180,11 @@ export async function generatePeopleSuggestions(
       1. Maps general categories to specific technologies
       2. Uses the overlaps operator for array searches with proper double quotes
       3. Always searches for specific technologies, not generic terms
-      4. Use .ilike() for case-insensitive text searches (university, department names)
-      5. Use proper title case for university names
-      6. Limit results to 10 users
-      7. Include joins with personal_details and technical_profiles
+      4. Use .not('personal_details', 'is', null) to ensure users have personal details
+      5. Use .eq() for exact matches on nested fields like university and degree_level
+      6. Use proper title case for university names
+      7. Limit results to 10 users
+      8. Include joins with personal_details and technical_profiles
       
       For experience levels:
       - "experienced" or "with experience" should filter for "Senior" or "Mid-level"
@@ -207,11 +210,13 @@ export async function generatePeopleSuggestions(
           personal_details (university, department, degree_level, date_of_birth),
           technical_profiles (skills, experience, github, portfolio)
         \`)
-        .ilike('personal_details.university', '%Stanford University%')
+        .not('personal_details', 'is', null)
+        .eq('personal_details.university', 'Stanford University')
+        .eq('personal_details.degree_level', 'Diploma')
         .limit(10)  
         
       For skills searches, always use the overlaps operator with an array of technologies using double quotes.
-      For text searches (university, department), always use .ilike() for case-insensitive matching.
+      For text searches (university, department), always use .eq() for exact matching with proper capitalization.
       If no specific skills are mentioned, return all users.`,
       messages: [
         {
@@ -255,17 +260,20 @@ export async function generatePeopleSuggestions(
 
       // Transform the data to match our schema
       const transformedData = (results || []).map((user: any) => {
+        // Handle personal_details - it could be an array or single object
         const personalDetail = Array.isArray(user.personal_details) && user.personal_details.length > 0 
           ? user.personal_details[0] 
-          : null;
+          : user.personal_details || null;
+        
+        // Handle technical_profiles - it could be an array or single object  
         const technicalProfile = Array.isArray(user.technical_profiles) && user.technical_profiles.length > 0 
           ? user.technical_profiles[0] 
-          : null;
+          : user.technical_profiles || null;
 
         return {
           id: String(user.id),
-          first_name: String(user.first_name),
-          last_name: String(user.last_name),
+          first_name: user.first_name ? String(user.first_name) : null,
+          last_name: user.last_name ? String(user.last_name) : null,
           email: String(user.email),
           bio: user.bio ? String(user.bio) : null,
           personal_details: personalDetail ? {
