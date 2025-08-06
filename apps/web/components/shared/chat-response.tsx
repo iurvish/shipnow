@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { Users, Search } from 'lucide-react';
 import { ChatResponse } from '@/lib/actions/chat-actions';
-import { UserPreview } from '@/components/user-preview';
+import { MemoizedUserCard } from '@/components/user-card';
 import { useUserArtifact } from '@/hooks/use-user-artifact';
 
 interface ChatResponseComponentProps {
@@ -13,7 +13,7 @@ interface ChatResponseComponentProps {
 export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
   response,
 }) => {
-  const { setUserArtifact } = useUserArtifact();
+  const { userArtifact, setUserArtifact } = useUserArtifact();
 
   // Auto-open panel with first user when people are found
   useEffect(() => {
@@ -70,19 +70,13 @@ export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
         <div className="overflow-x-auto pb-4">
           <div className="flex gap-4 min-w-max">
             {response.people.map((person) => {
-              const displayName = person.first_name && person.last_name
-                ? `${person.first_name} ${person.last_name}`
-                : person.first_name || person.last_name || 'Unknown User';
+              const isSelected = userArtifact.userId === person.id;
               
               return (
                 <div key={person.id} className="flex-shrink-0 w-80">
-                  <UserPreview
-                    result={{
-                      id: person.id,
-                      title: displayName,
-                      userData: person,
-                    }}
-                    isReadonly={false}
+                  <MemoizedUserCard 
+                    person={person}
+                    isSelected={isSelected}
                   />
                 </div>
               );
