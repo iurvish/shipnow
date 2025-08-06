@@ -1,92 +1,100 @@
-"use client";
+'use client';
 
-import { DatabasePersonCard } from "./database-person-card";
-import { ChatResponse } from "@/lib/actions/chat-actions";
-import { AlertCircle, Users, Search } from "lucide-react";
+import React, { useEffect } from 'react';
+import { Users, Search } from 'lucide-react';
+import { ChatResponse } from '@/lib/actions/chat-actions';
+import { UserPreview } from '@/components/user-preview';
+import { useUserArtifact } from '@/hooks/use-user-artifact';
 
-interface ChatResponseProps {
+interface ChatResponseComponentProps {
   response: ChatResponse;
 }
 
-export function ChatResponseComponent({ response }: ChatResponseProps) {
-  if (response.query_type === "general_question") {
-    return (
-      <div
-        className="bg-muted/30 border border-border p-6 max-w-md mx-auto"
-        style={{
-          clipPath:
-            "polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px)",
-        }}
-      >
-        <div className="flex items-start gap-3">
-          <div
-            className="w-10 h-10 bg-orange-100 dark:bg-orange-900 flex items-center justify-center flex-shrink-0"
-            style={{
-              clipPath:
-                "polygon(4px 0%, 100% 0%, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0% 100%, 0% 4px)",
-            }}
-          >
-            <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          </div>
-          <div>
-            <h3 className="font-medium text-foreground mb-2">
-              Not a People Search
-            </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {response.message}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
+  response,
+}) => {
+  const { setUserArtifact } = useUserArtifact();
 
-  if (
-    response.query_type === "people_search" &&
-    response.people &&
-    response.people.length > 0
-  ) {
+  // Auto-open panel with first user when people are found
+  useEffect(() => {
+    if (response.query_type === "people_search" && 
+        response.people && 
+        response.people.length > 0) {
+      
+      const firstPerson = response.people[0];
+      if (!firstPerson) return;
+      
+      const displayName = firstPerson.first_name && firstPerson.last_name
+        ? `${firstPerson.first_name} ${firstPerson.last_name}`
+        : firstPerson.first_name || firstPerson.last_name || 'Unknown User';
+
+      // Small delay to allow the component to mount
+      setTimeout(() => {
+        setUserArtifact((artifact) => ({
+          ...artifact,
+          userId: firstPerson.id,
+          title: displayName,
+          userData: {
+            id: firstPerson.id,
+            firstName: firstPerson.first_name,
+            lastName: firstPerson.last_name,
+            email: firstPerson.email,
+            bio: firstPerson.bio,
+            personalDetails: firstPerson.personal_details ? {
+              university: firstPerson.personal_details.university,
+              department: firstPerson.personal_details.department,
+              degreeLevel: firstPerson.personal_details.degree_level,
+              dateOfBirth: firstPerson.personal_details.date_of_birth,
+            } : null,
+            technicalProfile: firstPerson.technical_profile,
+          },
+          isVisible: true,
+          status: 'idle',
+        }));
+      }, 100);
+    }
+  }, [response, setUserArtifact]);
+
+  // Database People Results
+  if (response.query_type === "people_search" && response.people && response.people.length > 0) {
     return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div
-          className="bg-primary/5 border border-primary/20 p-4"
-          style={{
-            clipPath:
-              "polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px)",
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">
-              Found {response.people.length} People in Database
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Here are professionals from our database that match your
-            requirements
-          </p>
+      <div className="mt-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="h-4 w-4 text-primary" />
+          <h4 className="text-sm font-medium text-foreground">
+            Found {response.people.length} people in database
+          </h4>
         </div>
 
         {/* Horizontal Scrollable Cards */}
         <div className="overflow-x-auto pb-4">
           <div className="flex gap-4 min-w-max">
-            {response.people.map((person) => (
-              <div key={person.id} className="flex-shrink-0 w-80">
-                <DatabasePersonCard person={person} />
-              </div>
-            ))}
+            {response.people.map((person) => {
+              const displayName = person.first_name && person.last_name
+                ? `${person.first_name} ${person.last_name}`
+                : person.first_name || person.last_name || 'Unknown User';
+              
+              return (
+                <div key={person.id} className="flex-shrink-0 w-80">
+                  <UserPreview
+                    result={{
+                      id: person.id,
+                      title: displayName,
+                      userData: person,
+                    }}
+                    isReadonly={false}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Query Information */}
         {response.explanation && (
           <div
-            className="p-3 bg-muted/50 border border-muted"
-            style={{
-              clipPath:
-                "polygon(6px 0%, 100% 0%, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0% 100%, 0% 6px)",
-            }}
+            className="mt-4 p-3 bg-muted/50 border border-muted"
+            style={{ borderRadius: "0px" }}
           >
             <p className="text-xs text-muted-foreground">
               <strong>Search explanation:</strong> {response.explanation}
@@ -97,20 +105,13 @@ export function ChatResponseComponent({ response }: ChatResponseProps) {
     );
   }
 
-  if (
-    response.query_type === "people_search" &&
-    response.people &&
-    response.people.length === 0
-  ) {
+  // No Results Message
+  if (response.query_type === "people_search" && response.people && response.people.length === 0) {
     return (
-      <div className="space-y-6">
-        {/* No Results Message */}
+      <div className="mt-6">
         <div
           className="flex flex-col items-center justify-center p-8 bg-muted/30 border border-muted text-center"
-          style={{
-            clipPath:
-              "polygon(10px 0%, 100% 0%, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% 10px)",
-          }}
+          style={{ borderRadius: "0px" }}
         >
           <Search className="h-12 w-12 text-muted-foreground mb-4" />
           <h4 className="text-lg font-medium text-foreground mb-2">
@@ -126,5 +127,17 @@ export function ChatResponseComponent({ response }: ChatResponseProps) {
     );
   }
 
+  // General Question Response
+  if (response.query_type === "general_question" && response.message) {
+    return (
+      <div
+        className="mt-4 p-4 bg-muted/30 border border-muted"
+        style={{ borderRadius: "0px" }}
+      >
+        <p className="text-sm text-muted-foreground">{response.message}</p>
+      </div>
+    );
+  }
+
   return null;
-}
+};

@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import ChatItem from '@/components/shared/chat-item';
-import AIInputSearch from '@/components/shared/ai-input-search';
-import { UserArtifactProvider } from '@/hooks/use-user-artifact';
-import { UserDetailPanel } from '@/components/user-side-panel';
-import { ChatResponse } from '@/lib/actions/chat-actions';
+import React, { useState } from "react";
+import ChatItem from "@/components/shared/chat-item";
+import AIInputSearch from "@/components/shared/ai-input-search";
+import {
+  UserDetailProvider,
+  UserDetailPanel,
+  useUserDetail,
+} from "@/components/user-details";
+import { ChatResponse } from "@/lib/actions/chat-actions";
 
 interface ChatMessage {
   id: string;
   content: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   chatResponse?: ChatResponse;
   timestamp: Date;
 }
@@ -18,12 +21,13 @@ interface ChatMessage {
 function ChatPageContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { selectedUser, isDetailPanelOpen, closeDetailPanel } = useUserDetail();
 
   const handleUserMessage = (content: string) => {
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       content,
-      role: 'user',
+      role: "user",
       timestamp: new Date(),
     };
 
@@ -38,10 +42,10 @@ function ChatPageContent() {
       id: `ai-${Date.now()}`,
       content:
         response.message ||
-        (response.query_type === 'people_search'
-          ? 'Here are the people I found:'
-          : ''),
-      role: 'assistant',
+        (response.query_type === "people_search"
+          ? "Here are the people I found:"
+          : ""),
+      role: "assistant",
       chatResponse: response,
       timestamp: new Date(),
     };
@@ -54,7 +58,7 @@ function ChatPageContent() {
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex > 0) {
       const userMessage = messages[messageIndex - 1];
-      if (userMessage && userMessage.role === 'user') {
+      if (userMessage && userMessage.role === "user") {
         setIsLoading(true);
         // Remove the old AI response
         setMessages((prev) => prev.filter((m) => m.id !== messageId));
@@ -74,7 +78,7 @@ function ChatPageContent() {
             <div className="flex justify-center pt-20">
               <div
                 className="bg-muted/30 p-8 max-w-md text-center"
-                style={{ borderRadius: '0px' }}
+                style={{ borderRadius: "0px" }}
               >
                 <h3 className="font-semibold mb-3 text-lg">
                   Welcome to People Finder
@@ -103,7 +107,7 @@ function ChatPageContent() {
                   role={message.role}
                   chatResponse={message.chatResponse}
                   onRegenerate={
-                    message.role === 'assistant'
+                    message.role === "assistant"
                       ? () => handleRegenerate(message.id)
                       : undefined
                   }
@@ -139,16 +143,20 @@ function ChatPageContent() {
         </div>
       </div>
 
-      {/* User Detail Side Panel */}
-      <UserDetailPanel />
+      {/* User Detail Panel */}
+      <UserDetailPanel
+        isOpen={isDetailPanelOpen}
+        onClose={closeDetailPanel}
+        user={selectedUser}
+      />
     </div>
   );
 }
 
 export default function ChatPage() {
   return (
-    <UserArtifactProvider>
+    <UserDetailProvider>
       <ChatPageContent />
-    </UserArtifactProvider>
+    </UserDetailProvider>
   );
 }

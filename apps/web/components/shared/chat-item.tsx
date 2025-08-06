@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Check, RefreshCw, User, Bot, Users, Search } from "lucide-react";
-import { DatabasePersonCard } from "./database-person-card";
+import { Copy, Check, RefreshCw, User, Bot } from "lucide-react";
+import { ChatResponseComponent } from "./chat-response";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
 interface ChatItemProps {
@@ -106,78 +106,12 @@ const ChatItem: React.FC<ChatItemProps> = ({
               )}
             </div>
 
-            {/* Database People Results */}
-            {chatResponse?.query_type === "people_search" &&
-              chatResponse.people &&
-              chatResponse.people.length > 0 && (
-                <div className="mt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Users className="h-4 w-4 text-primary" />
-                    <h4 className="text-sm font-medium text-foreground">
-                      Found {chatResponse.people.length} people in database
-                    </h4>
-                  </div>
-
-                  {/* Horizontal Scrollable Cards */}
-                  <div className="overflow-x-auto pb-4">
-                    <div className="flex gap-4 min-w-max">
-                      {chatResponse.people.map((person) => (
-                        <div key={person.id} className="flex-shrink-0 w-80">
-                          <DatabasePersonCard person={person} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Query Information */}
-                  {chatResponse.explanation && (
-                    <div
-                      className="mt-4 p-3 bg-muted/50 border border-muted"
-                      style={{ borderRadius: "0px" }}
-                    >
-                      <p className="text-xs text-muted-foreground">
-                        <strong>Search explanation:</strong>{" "}
-                        {chatResponse.explanation}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-            {/* No Results Message */}
-            {chatResponse?.query_type === "people_search" &&
-              chatResponse.people &&
-              chatResponse.people.length === 0 && (
-                <div className="mt-6">
-                  <div
-                    className="flex flex-col items-center justify-center p-8 bg-muted/30 border border-muted text-center"
-                    style={{ borderRadius: "0px" }}
-                  >
-                    <Search className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h4 className="text-lg font-medium text-foreground mb-2">
-                      No People Found
-                    </h4>
-                    <p className="text-sm text-muted-foreground max-w-md">
-                      No people found matching your criteria. Try adjusting your
-                      search terms or be more specific about the skills and
-                      experience level you're looking for.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-            {/* General Question Response */}
-            {chatResponse?.query_type === "general_question" &&
-              chatResponse.message && (
-                <div
-                  className="mt-4 p-4 bg-muted/30 border border-muted"
-                  style={{ borderRadius: "0px" }}
-                >
-                  <p className="text-sm text-muted-foreground">
-                    {chatResponse.message}
-                  </p>
-                </div>
-              )}
+            {/* Chat Response Component */}
+            {chatResponse && (
+              <div className="mt-6">
+                <ChatResponseComponent response={chatResponse} />
+              </div>
+            )}
           </div>
         )}
 
