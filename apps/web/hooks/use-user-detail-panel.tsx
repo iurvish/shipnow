@@ -34,15 +34,17 @@ interface SimpleArtifactContextType {
   openArtifact: (data: ArtifactData) => void;
   closeArtifact: () => void;
   setMessages: (messages: ChatMessage[]) => void;
+  sendMessage?: (content: string) => void;
 }
 
 const SimpleArtifactContext = createContext<
   SimpleArtifactContextType | undefined
 >(undefined);
 
-export const SimpleArtifactProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const SimpleArtifactProvider: React.FC<{
+  children: ReactNode;
+  sendMessage?: (content: string) => void;
+}> = ({ children, sendMessage }) => {
   // Simple artifact provider for user details
   const [isVisible, setIsVisible] = useState(false);
   const [artifactData, setArtifactData] = useState<ArtifactData | null>(null);
@@ -72,6 +74,7 @@ export const SimpleArtifactProvider: React.FC<{ children: ReactNode }> = ({
         openArtifact,
         closeArtifact,
         setMessages,
+        sendMessage,
       }}
     >
       {children}

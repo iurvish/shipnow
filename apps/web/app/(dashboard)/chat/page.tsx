@@ -18,45 +18,29 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-function ChatPageContent() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+interface ChatPageContentProps {
+  messages: ChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  handleUserMessage: (content: string) => void;
+  handleAIResponse: (response: ChatResponse) => void;
+}
+
+function ChatPageContent({
+  messages,
+  setMessages,
+  isLoading,
+  setIsLoading,
+  handleUserMessage,
+  handleAIResponse,
+}: ChatPageContentProps) {
   const { setMessages: setArtifactMessages } = useSimpleArtifact();
 
   // Update artifact context with messages whenever they change
   useEffect(() => {
     setArtifactMessages(messages);
   }, [messages, setArtifactMessages]);
-
-  const handleUserMessage = (content: string) => {
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      content,
-      role: "user",
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-  };
-
-  const handleAIResponse = (response: ChatResponse) => {
-    setIsLoading(false);
-
-    const aiMessage: ChatMessage = {
-      id: `ai-${Date.now()}`,
-      content:
-        response.message ||
-        (response.query_type === "people_search"
-          ? "Here are the people I found:"
-          : ""),
-      role: "assistant",
-      chatResponse: response,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, aiMessage]);
-  };
 
   const handleRegenerate = async (messageId: string) => {
     // Find the user message that preceded this AI response
@@ -158,9 +142,49 @@ function ChatPageContent() {
 }
 
 export default function ChatPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUserMessage = (content: string) => {
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      content,
+      role: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+  };
+
+  const handleAIResponse = (response: ChatResponse) => {
+    setIsLoading(false);
+
+    const aiMessage: ChatMessage = {
+      id: `ai-${Date.now()}`,
+      content:
+        response.message ||
+        (response.query_type === "people_search"
+          ? "Here are the people I found:"
+          : ""),
+      role: "assistant",
+      chatResponse: response,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, aiMessage]);
+  };
+
   return (
-    <SimpleArtifactProvider>
-      <ChatPageContent />
+    <SimpleArtifactProvider sendMessage={handleUserMessage}>
+      <ChatPageContent
+        messages={messages}
+        setMessages={setMessages}
+        isLoading={isLoading}
+        setIsLoading={setIsLoading}
+        handleUserMessage={handleUserMessage}
+        handleAIResponse={handleAIResponse}
+      />
     </SimpleArtifactProvider>
   );
 }

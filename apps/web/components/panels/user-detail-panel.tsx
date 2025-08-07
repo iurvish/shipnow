@@ -3,15 +3,39 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 import { useWindowSize } from "usehooks-ts";
-import { X, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { X, MessageCircle, Send } from "lucide-react";
 import ChatItem from "../shared/chat-item";
 import { ScrollArea } from "../ui/scroll-area";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
 
 export function SimpleArtifactPanel() {
-  const { isVisible, artifactData, closeArtifact, messages } =
+  const { isVisible, artifactData, closeArtifact, messages, sendMessage } =
     useSimpleArtifact();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const isMobile = windowWidth ? windowWidth < 768 : false;
+
+  // Chat input state
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    // Send message through the main chat system
+    if (sendMessage) {
+      sendMessage(input);
+    }
+    setInput("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   if (!artifactData) return null;
 
@@ -74,28 +98,56 @@ export function SimpleArtifactPanel() {
                 </p>
               </div>
 
-              {/* Chat Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.length > 0 ? (
-                    messages.map((message) => (
-                      <ChatItem
-                        key={message.id}
-                        content={message.content}
-                        role={message.role}
-                        chatResponse={message.chatResponse}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                      <p className="text-sm text-muted-foreground">
-                        No messages yet. Start a conversation in the main chat!
-                      </p>
-                    </div>
-                  )}
+              {/* Chat Messages - with fixed height to leave room for input */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {messages.length > 0 ? (
+                      messages.map((message) => (
+                        <ChatItem
+                          key={message.id}
+                          content={message.content}
+                          role={message.role}
+                          chatResponse={message.chatResponse}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                        <p className="text-sm text-muted-foreground">
+                          No messages yet. Start a conversation in the main
+                          chat!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+
+                {/* Fixed Chat Input */}
+                <div className="p-4 border-t border-border bg-background/95 backdrop-blur-sm">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Continue the conversation..."
+                      className="min-h-[40px] max-h-[120px] resize-none flex-1"
+                      disabled={isLoading}
+                    />
+                    <Button
+                      onClick={handleSend}
+                      disabled={!input.trim() || isLoading}
+                      size="sm"
+                      className="px-3"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Press Enter to send, Shift + Enter for new line
+                  </p>
                 </div>
-              </ScrollArea>
+              </div>
             </motion.div>
           )}
 
