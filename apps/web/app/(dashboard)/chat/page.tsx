@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ChatItem from "@/components/shared/chat-item";
 import AIInputSearch from "@/components/shared/ai-input-search";
-import { SimpleArtifactProvider } from "../../../hooks/use-user-detail-panel";
+import {
+  SimpleArtifactProvider,
+  useSimpleArtifact,
+} from "../../../hooks/use-user-detail-panel";
 import { SimpleArtifactPanel } from "@/components/panels/user-detail-panel";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
@@ -18,6 +21,12 @@ interface ChatMessage {
 function ChatPageContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { setMessages: setArtifactMessages } = useSimpleArtifact();
+
+  // Update artifact context with messages whenever they change
+  useEffect(() => {
+    setArtifactMessages(messages);
+  }, [messages, setArtifactMessages]);
 
   const handleUserMessage = (content: string) => {
     const userMessage: ChatMessage = {

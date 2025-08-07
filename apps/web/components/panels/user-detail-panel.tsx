@@ -3,10 +3,13 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 import { useWindowSize } from "usehooks-ts";
-import { X } from "lucide-react";
+import { X, MessageCircle } from "lucide-react";
+import ChatItem from "../shared/chat-item";
+import { ScrollArea } from "../ui/scroll-area";
 
 export function SimpleArtifactPanel() {
-  const { isVisible, artifactData, closeArtifact } = useSimpleArtifact();
+  const { isVisible, artifactData, closeArtifact, messages } =
+    useSimpleArtifact();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const isMobile = windowWidth ? windowWidth < 768 : false;
 
@@ -37,10 +40,10 @@ export function SimpleArtifactPanel() {
             />
           )}
 
-          {/* Desktop: Left panel (400px) */}
+          {/* Desktop: Left panel (400px) - Chat Messages */}
           {!isMobile && (
             <motion.div
-              className="relative w-[400px] bg-muted dark:bg-background h-dvh shrink-0"
+              className="relative w-[400px] bg-muted dark:bg-background h-dvh shrink-0 border-r border-border flex flex-col"
               initial={{ opacity: 0, x: 10, scale: 1 }}
               animate={{
                 opacity: 1,
@@ -60,12 +63,39 @@ export function SimpleArtifactPanel() {
                 transition: { duration: 0 },
               }}
             >
-              <div className="flex flex-col h-full justify-center items-center p-8">
-                <h3 className="text-lg font-semibold mb-4">User Cards</h3>
-                <p className="text-sm text-muted-foreground text-center">
-                  Click on any user card to see their profile details
+              {/* Chat Header */}
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Chat History</h3>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your conversation with the AI assistant
                 </p>
               </div>
+
+              {/* Chat Messages */}
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {messages.length > 0 ? (
+                    messages.map((message) => (
+                      <ChatItem
+                        key={message.id}
+                        content={message.content}
+                        role={message.role}
+                        chatResponse={message.chatResponse}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                      <p className="text-sm text-muted-foreground">
+                        No messages yet. Start a conversation in the main chat!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
             </motion.div>
           )}
 
@@ -156,22 +186,89 @@ export function SimpleArtifactPanel() {
               </button>
             </div>
 
-            {/* Simple content - just email for now */}
+            {/* Simple content - enhanced user profile */}
             <div className="flex-1 p-6">
               <div className="max-w-2xl mx-auto">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                      Email
+                <div className="space-y-8">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">
+                      Basic Information
                     </h3>
-                    <p className="text-lg">{artifactData.data.email}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          First Name
+                        </label>
+                        <p className="text-base mt-1">
+                          {artifactData.data.first_name || "Not provided"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Last Name
+                        </label>
+                        <p className="text-base mt-1">
+                          {artifactData.data.last_name || "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Email Address
+                      </label>
+                      <p className="text-base mt-1">
+                        {artifactData.data.email}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="pt-8 text-center">
-                    <p className="text-sm text-muted-foreground italic">
-                      More profile details like GitHub URL, portfolio, and other
-                      information will be added here...
-                    </p>
+                  {/* Professional Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">
+                      Professional Profile
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          GitHub Profile
+                        </label>
+                        <p className="text-base mt-1 text-muted-foreground italic">
+                          Coming soon...
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Portfolio
+                        </label>
+                        <p className="text-base mt-1 text-muted-foreground italic">
+                          Coming soon...
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Skills & Expertise
+                        </label>
+                        <p className="text-base mt-1 text-muted-foreground italic">
+                          Coming soon...
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">
+                      Additional Information
+                    </h3>
+                    <div className="bg-muted/30 p-4 rounded-lg">
+                      <p className="text-sm text-muted-foreground">
+                        This profile view shows user information in a dedicated
+                        panel, similar to Vercel AI's artifact system.
+                        Additional profile fields and interactive features will
+                        be added here.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -6,7 +6,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import type { DatabasePerson } from "@/lib/actions/chat-actions";
+import type { DatabasePerson, ChatResponse } from "@/lib/actions/chat-actions";
 
 interface ArtifactData {
   type: "user";
@@ -19,11 +19,21 @@ interface ArtifactData {
   };
 }
 
+interface ChatMessage {
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  chatResponse?: ChatResponse;
+  timestamp: Date;
+}
+
 interface SimpleArtifactContextType {
   isVisible: boolean;
   artifactData: ArtifactData | null;
+  messages: ChatMessage[];
   openArtifact: (data: ArtifactData) => void;
   closeArtifact: () => void;
+  setMessages: (messages: ChatMessage[]) => void;
 }
 
 const SimpleArtifactContext = createContext<
@@ -36,6 +46,7 @@ export const SimpleArtifactProvider: React.FC<{ children: ReactNode }> = ({
   // Simple artifact provider for user details
   const [isVisible, setIsVisible] = useState(false);
   const [artifactData, setArtifactData] = useState<ArtifactData | null>(null);
+  const [messages, setMessagesState] = useState<ChatMessage[]>([]);
 
   const openArtifact = (data: ArtifactData) => {
     setArtifactData(data);
@@ -48,13 +59,19 @@ export const SimpleArtifactProvider: React.FC<{ children: ReactNode }> = ({
     setTimeout(() => setArtifactData(null), 500);
   };
 
+  const setMessages = (newMessages: ChatMessage[]) => {
+    setMessagesState(newMessages);
+  };
+
   return (
     <SimpleArtifactContext.Provider
       value={{
         isVisible,
         artifactData,
+        messages,
         openArtifact,
         closeArtifact,
+        setMessages,
       }}
     >
       {children}
