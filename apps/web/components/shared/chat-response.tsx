@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { Users, Search } from 'lucide-react';
-import { ChatResponse } from '@/lib/actions/chat-actions';
-import { MemoizedUserCard } from '@/components/user-card';
-import { useUserArtifact } from '@/hooks/use-user-artifact';
+import React from "react";
+import { Users, Search } from "lucide-react";
+import { ChatResponse } from "@/lib/actions/chat-actions";
+import { SimpleUserCard } from "./user-card";
 
 interface ChatResponseComponentProps {
   response: ChatResponse;
@@ -13,50 +12,12 @@ interface ChatResponseComponentProps {
 export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
   response,
 }) => {
-  const { userArtifact, setUserArtifact } = useUserArtifact();
-
-  // Auto-open panel with first user when people are found
-  useEffect(() => {
-    if (response.query_type === "people_search" && 
-        response.people && 
-        response.people.length > 0) {
-      
-      const firstPerson = response.people[0];
-      if (!firstPerson) return;
-      
-      const displayName = firstPerson.first_name && firstPerson.last_name
-        ? `${firstPerson.first_name} ${firstPerson.last_name}`
-        : firstPerson.first_name || firstPerson.last_name || 'Unknown User';
-
-      // Small delay to allow the component to mount
-      setTimeout(() => {
-        setUserArtifact((artifact) => ({
-          ...artifact,
-          userId: firstPerson.id,
-          title: displayName,
-          userData: {
-            id: firstPerson.id,
-            firstName: firstPerson.first_name,
-            lastName: firstPerson.last_name,
-            email: firstPerson.email,
-            bio: firstPerson.bio,
-            personalDetails: firstPerson.personal_details ? {
-              university: firstPerson.personal_details.university,
-              department: firstPerson.personal_details.department,
-              degreeLevel: firstPerson.personal_details.degree_level,
-              dateOfBirth: firstPerson.personal_details.date_of_birth,
-            } : null,
-            technicalProfile: firstPerson.technical_profile,
-          },
-          isVisible: true,
-          status: 'idle',
-        }));
-      }, 100);
-    }
-  }, [response, setUserArtifact]);
-
   // Database People Results
-  if (response.query_type === "people_search" && response.people && response.people.length > 0) {
+  if (
+    response.query_type === "people_search" &&
+    response.people &&
+    response.people.length > 0
+  ) {
     return (
       <div className="mt-6">
         <div className="flex items-center gap-2 mb-4">
@@ -69,18 +30,11 @@ export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
         {/* Horizontal Scrollable Cards */}
         <div className="overflow-x-auto pb-4">
           <div className="flex gap-4 min-w-max">
-            {response.people.map((person) => {
-              const isSelected = userArtifact.userId === person.id;
-              
-              return (
-                <div key={person.id} className="flex-shrink-0 w-80">
-                  <MemoizedUserCard 
-                    person={person}
-                    isSelected={isSelected}
-                  />
-                </div>
-              );
-            })}
+            {response.people.map((person) => (
+              <div key={person.id} className="flex-shrink-0 w-80">
+                <SimpleUserCard person={person} />
+              </div>
+            ))}
           </div>
         </div>
 
@@ -100,7 +54,11 @@ export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
   }
 
   // No Results Message
-  if (response.query_type === "people_search" && response.people && response.people.length === 0) {
+  if (
+    response.query_type === "people_search" &&
+    response.people &&
+    response.people.length === 0
+  ) {
     return (
       <div className="mt-6">
         <div

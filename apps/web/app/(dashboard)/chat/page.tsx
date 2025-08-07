@@ -1,61 +1,53 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import ChatItem from '@/components/shared/chat-item';
-import AIInputSearch from '@/components/shared/ai-input-search';
-import { UserArtifactProvider, useUserArtifact } from '@/hooks/use-user-artifact';
-import { UserArtifactPanel } from '@/components/user-artifact-panel';
-import { ChatResponse } from '@/lib/actions/chat-actions';
+import React, { useState, useEffect } from "react";
+import ChatItem from "@/components/shared/chat-item";
+import AIInputSearch from "@/components/shared/ai-input-search";
+import {
+  SimpleArtifactProvider,
+  useSimpleArtifact,
+} from "../../../hooks/use-user-detail-panel";
+import { SimpleArtifactPanel } from "@/components/panels/user-detail-panel";
+import { ChatResponse } from "@/lib/actions/chat-actions";
 
 interface ChatMessage {
   id: string;
   content: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   chatResponse?: ChatResponse;
   timestamp: Date;
 }
 
-function ChatPageContent() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const { userArtifact } = useUserArtifact();
+interface ChatPageContentProps {
+  messages: ChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  handleUserMessage: (content: string) => void;
+  handleAIResponse: (response: ChatResponse) => void;
+}
 
-  const handleUserMessage = (content: string) => {
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      content,
-      role: 'user',
-      timestamp: new Date(),
-    };
+function ChatPageContent({
+  messages,
+  setMessages,
+  isLoading,
+  setIsLoading,
+  handleUserMessage,
+  handleAIResponse,
+}: ChatPageContentProps) {
+  const { setMessages: setArtifactMessages } = useSimpleArtifact();
 
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-  };
-
-  const handleAIResponse = (response: ChatResponse) => {
-    setIsLoading(false);
-
-    const aiMessage: ChatMessage = {
-      id: `ai-${Date.now()}`,
-      content:
-        response.message ||
-        (response.query_type === 'people_search'
-          ? 'Here are the people I found:'
-          : ''),
-      role: 'assistant',
-      chatResponse: response,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, aiMessage]);
-  };
+  // Update artifact context with messages whenever they change
+  useEffect(() => {
+    setArtifactMessages(messages);
+  }, [messages, setArtifactMessages]);
 
   const handleRegenerate = async (messageId: string) => {
     // Find the user message that preceded this AI response
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex > 0) {
       const userMessage = messages[messageIndex - 1];
-      if (userMessage && userMessage.role === 'user') {
+      if (userMessage && userMessage.role === "user") {
         setIsLoading(true);
         // Remove the old AI response
         setMessages((prev) => prev.filter((m) => m.id !== messageId));
@@ -66,11 +58,9 @@ function ChatPageContent() {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full relative">
       {/* Main Chat Content */}
-      <div className={`flex flex-col transition-all duration-300 ${
-        userArtifact.isVisible ? 'w-[calc(100%-448px)]' : 'w-full'
-      }`}>
+      <div className="flex flex-col w-full">
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
@@ -79,7 +69,7 @@ function ChatPageContent() {
               <div className="flex justify-center pt-20">
                 <div
                   className="bg-muted/30 p-8 max-w-md text-center"
-                  style={{ borderRadius: '0px' }}
+                  style={{ borderRadius: "0px" }}
                 >
                   <h3 className="font-semibold mb-3 text-lg">
                     Welcome to People Finder
@@ -108,7 +98,7 @@ function ChatPageContent() {
                     role={message.role}
                     chatResponse={message.chatResponse}
                     onRegenerate={
-                      message.role === 'assistant'
+                      message.role === "assistant"
                         ? () => handleRegenerate(message.id)
                         : undefined
                     }
@@ -145,16 +135,56 @@ function ChatPageContent() {
         </div>
       </div>
 
-      {/* User Artifact Area - Fixed Width Column */}
-      <UserArtifactPanel />
+      {/* Simple Artifact Panel */}
+      <SimpleArtifactPanel />
     </div>
   );
 }
 
 export default function ChatPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUserMessage = (content: string) => {
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      content,
+      role: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+  };
+
+  const handleAIResponse = (response: ChatResponse) => {
+    setIsLoading(false);
+
+    const aiMessage: ChatMessage = {
+      id: `ai-${Date.now()}`,
+      content:
+        response.message ||
+        (response.query_type === "people_search"
+          ? "Here are the people I found:"
+          : ""),
+      role: "assistant",
+      chatResponse: response,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, aiMessage]);
+  };
+
   return (
-    <UserArtifactProvider>
-      <ChatPageContent />
-    </UserArtifactProvider>
+    <SimpleArtifactProvider sendMessage={handleUserMessage}>
+      <ChatPageContent
+        messages={messages}
+        setMessages={setMessages}
+        isLoading={isLoading}
+        setIsLoading={setIsLoading}
+        handleUserMessage={handleUserMessage}
+        handleAIResponse={handleAIResponse}
+      />
+    </SimpleArtifactProvider>
   );
 }
