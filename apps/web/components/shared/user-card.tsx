@@ -4,7 +4,7 @@ import { memo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { DatabasePerson } from "@/lib/actions/chat-actions";
 import { UserIcon, MailIcon } from "lucide-react";
-import { useSimpleArtifact } from "../hooks/use-simple-artifact-v2";
+import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 
 interface UserCardProps {
   person: DatabasePerson;

@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import ChatItem from "@/components/shared/chat-item";
 import AIInputSearch from "@/components/shared/ai-input-search";
-import { SimpleArtifactProvider } from "../../../hooks/use-simple-artifact-v2";
-import { SimpleArtifactPanel } from "@/components/simple-artifact-panel-v2";
+import { SimpleArtifactProvider } from "../../../hooks/use-user-detail-panel";
+import { SimpleArtifactPanel } from "@/components/panels/user-detail-panel";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
 interface ChatMessage {

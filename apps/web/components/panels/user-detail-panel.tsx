@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useSimpleArtifact } from "../hooks/use-simple-artifact-v2";
+import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 import { useWindowSize } from "usehooks-ts";
 import { X } from "lucide-react";
 
