@@ -3,8 +3,6 @@
 import React from "react";
 import { Users, Search } from "lucide-react";
 import { ChatResponse } from "@/lib/actions/chat-actions";
-import { SimpleUserCard } from "./user-card";
-import { DatabasePersonCard } from "./database-person-card";
 import { PersonCard } from "./person-card";
 
 interface ChatResponseComponentProps {
