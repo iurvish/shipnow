@@ -4,6 +4,8 @@ import React from "react";
 import { Users, Search } from "lucide-react";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 import { SimpleUserCard } from "./user-card";
+import { DatabasePersonCard } from "./database-person-card";
+import { PersonCard } from "./person-card";
 
 interface ChatResponseComponentProps {
   response: ChatResponse;
@@ -32,7 +34,7 @@ export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
           <div className="flex gap-4 min-w-max">
             {response.people.map((person) => (
               <div key={person.id} className="flex-shrink-0 w-80">
-                <SimpleUserCard person={person} />
+                <PersonCard person={person} />
               </div>
             ))}
           </div>

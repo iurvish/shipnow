@@ -21,7 +21,7 @@ export default function AIInputSearch({
   onResponse,
   onUserMessage,
   disabled = false,
-  placeholder = "Tell me about the kind of people you're looking for...",
+  placeholder = "Search people you're looking for...",
 }: AIInputSearchProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +96,7 @@ export default function AIInputSearch({
   }, [input]);
 
   return (
-    <div className="w-full py-2">
+    <div className="w-full py-2 pb-4">
       {/* Tool Status Indicator */}
       {isLoading && toolStatuses.length > 0 && (
         <div className="mb-4">
@@ -134,7 +134,32 @@ export default function AIInputSearch({
           </div>
 
           {/* Send Button */}
-          <div className="flex justify-end p-2 border-t border-input/50">
+          <div
+            className={`flex  items-center p-2 border-t border-input/50  ${!isLoading && input.length === 0 ? "justify-between" : "justify-end"}`}
+          >
+            {!isLoading && input.length === 0 && (
+              <div className=" flex flex-wrap  gap-2">
+                {/* <span className="text-xs text-muted-foreground mr-2">Try:</span> */}
+                {[
+                  "React developers",
+                  "UX designers",
+                  "Backend engineers",
+                  "Data scientists",
+                ].map((example) => (
+                  <button
+                    key={example}
+                    onClick={() => setInput(`Find me ${example}`)}
+                    className="text-xs px-2 py-1 bg-muted text-muted-foreground hover:bg-muted-foreground hover:text-muted transition-colors"
+                    style={{
+                      clipPath:
+                        "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
+                    }}
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            )}
             <button
               onClick={handleSubmit}
               className={cn(
@@ -165,29 +190,6 @@ export default function AIInputSearch({
         </div>
 
         {/* Example Queries */}
-        {!isLoading && input.length === 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="text-xs text-muted-foreground mr-2">Try:</span>
-            {[
-              "React developers",
-              "UX designers",
-              "Backend engineers",
-              "Data scientists",
-            ].map((example) => (
-              <button
-                key={example}
-                onClick={() => setInput(`Find me ${example}`)}
-                className="text-xs px-2 py-1 bg-muted text-muted-foreground hover:bg-muted-foreground hover:text-muted transition-colors"
-                style={{
-                  clipPath:
-                    "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
-                }}
-              >
-                {example}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
