@@ -3,7 +3,7 @@
 import React from "react";
 import { Users, Search } from "lucide-react";
 import { ChatResponse } from "@/lib/actions/chat-actions";
-import { SimpleUserCard } from "./user-card";
+import { PersonCard } from "./person-card";
 
 interface ChatResponseComponentProps {
   response: ChatResponse;
@@ -32,14 +32,14 @@ export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
           <div className="flex gap-4 min-w-max">
             {response.people.map((person) => (
               <div key={person.id} className="flex-shrink-0 w-80">
-                <SimpleUserCard person={person} />
+                <PersonCard person={person} />
               </div>
             ))}
           </div>
         </div>
 
         {/* Query Information */}
-        {response.explanation && (
+        {/* {response.explanation && (
           <div
             className="mt-4 p-3 bg-muted/50 border border-muted"
             style={{ borderRadius: "0px" }}
@@ -48,7 +48,7 @@ export const ChatResponseComponent: React.FC<ChatResponseComponentProps> = ({
               <strong>Search explanation:</strong> {response.explanation}
             </p>
           </div>
-        )}
+        )} */}
       </div>
     );
   }

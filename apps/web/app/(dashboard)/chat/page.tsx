@@ -60,9 +60,9 @@ function ChatPageContent({
   return (
     <div className="flex h-full relative">
       {/* Main Chat Content */}
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full relative">
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-24">
           <div className="max-w-6xl mx-auto">
             {messages.length === 0 && !isLoading ? (
               /* Welcome Message */
@@ -119,18 +119,14 @@ function ChatPageContent({
         </div>
 
         {/* Sticky Input Area */}
-        <div className="border-t border-border/40 bg-background/80 backdrop-blur-sm sticky bottom-0 p-4">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border/40 bg-background/80 backdrop-blur-sm ">
           <div className="max-w-6xl mx-auto">
             <AIInputSearch
               onResponse={handleAIResponse}
               onUserMessage={handleUserMessage}
               disabled={isLoading}
-              placeholder="Tell me about the kind of people you're looking for..."
+              placeholder="Search people you're looking for..."
             />
-            <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
-              <span>Press Enter to send, Shift + Enter for new line</span>
-              <span>Looking for people? Just describe what you need!</span>
-            </div>
           </div>
         </div>
       </div>
