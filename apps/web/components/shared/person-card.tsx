@@ -1,15 +1,44 @@
 "use client";
 
+import { memo, useRef, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { DatabasePerson } from "@/lib/actions/chat-actions";
-import { Clock, User, ExternalLink, GraduationCap } from "lucide-react";
+import {
+  Clock,
+  User,
+  ExternalLink,
+  GraduationCap,
+  ChevronsLeftRight,
+} from "lucide-react";
+import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 
 interface PersonCardProps {
   person: DatabasePerson;
+  isSelected?: boolean;
 }
 
-export function PersonCard({ person }: PersonCardProps) {
+export function PersonCard({ person, isSelected = false }: PersonCardProps) {
+  const { openArtifact } = useSimpleArtifact();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleClick = useCallback(() => {
+    const boundingBox = cardRef.current?.getBoundingClientRect();
+
+    if (boundingBox) {
+      openArtifact({
+        type: "user",
+        data: person,
+        boundingBox: {
+          top: boundingBox.top,
+          left: boundingBox.left,
+          width: boundingBox.width,
+          height: boundingBox.height,
+        },
+      });
+    }
+  }, [person, openArtifact]);
+
   const fullName = `${person.first_name} ${person.last_name}`;
   const skills = person.technical_profile?.skills || [];
   const experience = person.technical_profile?.experience || "Not specified";
@@ -25,15 +54,19 @@ export function PersonCard({ person }: PersonCardProps) {
 
   return (
     <div
-      className="group relative bg-card border border-border/40 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer h-[320px] flex flex-col p-4"
+      ref={cardRef}
+      onClick={handleClick}
+      className="group relative bg-card border border-border/40 transition-all duration-300  hover:shadow-lg hover:shadow-primary/5 cursor-pointer h-[320px] flex flex-col p-4"
       style={{
         clipPath:
           "polygon(0 0, calc(100% - 16px) 0%, 100% 16px, 100% 100%, 0 100%)",
       }}
     >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.05] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
       {/* Hover indicator */}
       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
-        <ExternalLink className="w-4 h-4 text-primary" />
+        <ChevronsLeftRight className="w-4 h-4 text-primary transition-transform duration-300 group-hover:rotate-45" />
       </div>
 
       {/* Header with Avatar and Name */}
@@ -72,13 +105,13 @@ export function PersonCard({ person }: PersonCardProps) {
         <h4 className="text-sm font-semibold text-foreground mb-2">Skills</h4>
         <div className="flex flex-wrap gap-1.5">
           {skills.length > 0 ? (
-            skills.slice(0, 6).map((skill, index) => (
+            skills.slice(0, 7).map((skill, index) => (
               <Badge
                 key={index}
                 variant="secondary"
                 className="text-xs px-2 py-1 bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 transition-colors duration-300"
               >
-                {truncateText(skill, 12)}
+                {truncateText(skill, 10)}
               </Badge>
             ))
           ) : (
@@ -125,13 +158,13 @@ export function PersonCard({ person }: PersonCardProps) {
                 className="text-sm font-medium text-foreground leading-3.5 "
                 title={university}
               >
-                {truncateText(university, 20)}
+                {truncateText(university, 10)}
               </p>
               <p
                 className="text-xs text-muted-foreground mt-0.5"
                 title={department}
               >
-                {truncateText(department, 25)}
+                {truncateText(department, 10)}
               </p>
             </div>
           </div>
@@ -141,9 +174,11 @@ export function PersonCard({ person }: PersonCardProps) {
 
           {/* Right side: Experience */}
           <div className="flex items-start gap-2 flex-1 justify-center">
-            <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+            <Clock className="w-[15px] h-[15px] text-primary flex-shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Experience</p>
+              <p className="text-xs text-muted-foreground leading-3.5">
+                Experience
+              </p>
               <p
                 className="text-sm font-medium text-foreground"
                 title={experience}
