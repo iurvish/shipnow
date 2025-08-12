@@ -320,10 +320,16 @@ export function SimpleArtifactPanel() {
                   <div className="flex items-start space-x-4">
                     {/* Avatar */}
                     <div className="relative">
-                      <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full flex items-center justify-center ring-2 ring-primary/10">
-                        <User className="w-8 h-8 text-primary" />
+                      <div
+                        className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center ring-2 ring-primary/10"
+                        style={{
+                          clipPath:
+                            "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
+                        }}
+                      >
+                        <User className="w-12 h-12 text-primary" />
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-background"></div>
+                      <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-background"></div>
                     </div>
 
                     {/* Basic Info */}
@@ -371,247 +377,109 @@ export function SimpleArtifactPanel() {
 
             {/* Content Area */}
             <ScrollArea className="flex-1">
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-8">
                 {/* Bio Section */}
                 {userData.bio && (
-                  <Card className="border-border/50">
-                    <CardHeader className="pb-3">
-                      <h3 className="font-semibold text-sm flex items-center gap-2">
-                        <User className="w-4 h-4 text-primary" />
-                        About
-                      </h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {userData.bio}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">About</h3>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {userData.bio}
+                    </p>
+                  </div>
                 )}
 
-                {/* Contact & Personal Info */}
-                <Card className="border-border/50">
-                  <CardHeader className="pb-3">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-primary" />
-                      Contact Information
-                    </h3>
-                  </CardHeader>
-                  <CardContent className="pt-0 space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                          <Mail className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs text-muted-foreground">Email</p>
-                          <p className="text-sm font-medium truncate">
-                            {userData.email}
-                          </p>
-                        </div>
-                      </div>
-
-                      {userData.personal_details?.phone && (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                            <Phone className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground">
-                              Phone
-                            </p>
-                            <p className="text-sm font-medium">
-                              {userData.personal_details.phone}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {userData.date_of_birth && (
-                        <div className="flex items-center gap-3 sm:col-span-2">
-                          <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground">
-                              Date of Birth
-                            </p>
-                            <p className="text-sm font-medium">
-                              {formatDate(userData.date_of_birth)}
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                {/* Details Section */}
+                <div className="space-y-4 pt-8 border-t border-border/50">
+                  <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Details</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-foreground">{userData.email}</span>
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Education */}
-                {userData.personal_details && (
-                  <Card className="border-border/50">
-                    <CardHeader className="pb-3">
-                      <h3 className="font-semibold text-sm flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4 text-primary" />
-                        Education
-                      </h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/20 rounded-xl flex items-center justify-center">
-                          <GraduationCap className="w-6 h-6 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-foreground capitalize">
-                            {userData.personal_details.degree_level?.replace(
-                              "_",
-                              " "
-                            )}{" "}
-                            Degree
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {userData.personal_details.department}
-                          </p>
-                          <p className="text-sm font-medium text-foreground mt-1">
-                            {userData.personal_details.university}
-                          </p>
-                        </div>
+                    {userData.personal_details?.phone && (
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-foreground">{userData.personal_details.phone}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    )}
+                    {userData.date_of_birth && (
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-foreground">{formatDate(userData.date_of_birth)}</span>
+                      </div>
+                    )}
+                    {userData.personal_details?.university && (
+                       <div className="flex items-center gap-3">
+                        <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-foreground">{userData.personal_details.university}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-                {/* Technical Skills */}
-                {userData.technical_profile?.primary_skills && (
-                  <Card className="border-border/50">
-                    <CardHeader className="pb-3">
-                      <h3 className="font-semibold text-sm flex items-center gap-2">
-                        <Code className="w-4 h-4 text-primary" />
-                        Technical Skills
-                      </h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
+                {/* Skills & Interests Section */}
+                <div className="space-y-4 pt-8 border-t border-border/50">
+                  <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Skills & Interests</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Primary Skills</h4>
                       <div className="flex flex-wrap gap-2">
                         {userData.technical_profile.primary_skills.map(
                           (skill: string, index: number) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 transition-colors"
-                            >
+                            <Badge key={index} variant="secondary">
                               {skill}
                             </Badge>
                           )
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Interests */}
-                {userData.technical_profile?.interests && (
-                  <Card className="border-border/50">
-                    <CardHeader className="pb-3">
-                      <h3 className="font-semibold text-sm">Interests</h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
+                    </div>
+                     <div>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Interests</h4>
                       <div className="flex flex-wrap gap-2">
                         {userData.technical_profile.interests.map(
                           (interest: string, index: number) => (
-                            <Badge
-                              key={index}
-                              variant="outline"
-                              className="border-muted-foreground/20 hover:bg-muted transition-colors"
-                            >
+                            <Badge key={index} variant="outline">
                               {interest}
                             </Badge>
                           )
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Social Links & Actions */}
-                <Card className="border-border/50">
-                  <CardHeader className="pb-3">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <ExternalLink className="w-4 h-4 text-primary" />
-                      Links & Actions
-                    </h3>
-                  </CardHeader>
-                  <CardContent className="pt-0 space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Button variant="default" className="w-full" size="sm">
-                        <Mail className="w-4 h-4 mr-2" />
-                        Send Message
-                      </Button>
-
-                      {userData.technical_profile?.github_url && (
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          size="sm"
-                          asChild
-                        >
-                          <a
-                            href={userData.technical_profile.github_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Github className="w-4 h-4 mr-2" />
-                            GitHub
-                          </a>
-                        </Button>
-                      )}
-
-                      {userData.technical_profile?.linkedin_url && (
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          size="sm"
-                          asChild
-                        >
-                          <a
-                            href={userData.technical_profile.linkedin_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Linkedin className="w-4 h-4 mr-2" />
-                            LinkedIn
-                          </a>
-                        </Button>
-                      )}
-
-                      {userData.technical_profile?.portfolio_url && (
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          size="sm"
-                          asChild
-                        >
-                          <a
-                            href={userData.technical_profile.portfolio_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Portfolio
-                          </a>
-                        </Button>
-                      )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+
+                {/* Links Section */}
+                <div className="space-y-3 pt-8 border-t border-border/50">
+                  <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Links</h3>
+                  <div className="flex items-center gap-2">
+                     {userData.technical_profile?.github_url && (
+                      <Button variant="outline" size="icon" asChild>
+                        <a href={userData.technical_profile.github_url} target="_blank" rel="noopener noreferrer">
+                          <Github className="w-4 h-4" />
+                        </a>
+                      </Button>
+                    )}
+                    {userData.technical_profile?.linkedin_url && (
+                      <Button variant="outline" size="icon" asChild>
+                        <a href={userData.technical_profile.linkedin_url} target="_blank" rel="noopener noreferrer">
+                          <Linkedin className="w-4 h-4" />
+                        </a>
+                      </Button>
+                    )}
+                    {userData.technical_profile?.portfolio_url && (
+                      <Button variant="outline" size="icon" asChild>
+                        <a href={userData.technical_profile.portfolio_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
                 {/* Debug Info (only in development) */}
-                <Card className="border-dashed border-muted-foreground/20">
-                  <CardContent className="pt-6">
-                    <p className="text-xs text-muted-foreground">
-                      Profile ID: {artifactData.data.id || "temp-id-123"} • Last
-                      updated: {new Date().toLocaleDateString()}
-                    </p>
-                  </CardContent>
-                </Card>
+                <p className="text-xs text-muted-foreground text-center pt-8 border-t border-border/50">
+                  Profile ID: {artifactData.data.id || "temp-id-123"}
+                </p>
               </div>
             </ScrollArea>
           </motion.div>
