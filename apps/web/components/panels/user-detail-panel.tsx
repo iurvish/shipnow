@@ -249,7 +249,7 @@ export function SimpleArtifactPanel() {
 
           {/* Main artifact panel */}
           <motion.div
-            className="fixed dark:bg-muted bg-background h-dvh flex flex-col overflow-y-scroll md:border-l dark:border-zinc-700 border-zinc-200"
+            className="fixed bg-background h-dvh flex flex-col overflow-y-scroll md:border-l dark:border-zinc-700 border-zinc-200"
             initial={
               isMobile
                 ? {
@@ -269,39 +269,6 @@ export function SimpleArtifactPanel() {
                     borderRadius: 50,
                   }
             }
-            animate={
-              isMobile
-                ? {
-                    opacity: 1,
-                    x: 0,
-                    y: 0,
-                    height: windowHeight,
-                    width: windowWidth ? windowWidth : "calc(100dvw)",
-                    borderRadius: 0,
-                    transition: {
-                      delay: 0,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 30,
-                    },
-                  }
-                : {
-                    opacity: 1,
-                    x: 400,
-                    y: 0,
-                    height: windowHeight,
-                    width: windowWidth
-                      ? windowWidth - 400
-                      : "calc(100dvw-400px)",
-                    borderRadius: 0,
-                    transition: {
-                      delay: 0,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 30,
-                    },
-                  }
-            }
             exit={{
               opacity: 0,
               scale: 0.5,
@@ -313,12 +280,12 @@ export function SimpleArtifactPanel() {
               },
             }}
           >
-            {/* Modern User Profile Header */}
-            <div className="border-b border-border/50 bg-gradient-to-r from-background via-muted/20 to-background">
-              <div className="p-6">
-                <div className="flex items-center justify-between">
+            {/* Content Area */}
+            <div className="flex-1 flex flex-col">
+              {/* Header */}
+              <div className="p-6 border-b border-border/50">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex items-center gap-6">
-                    {/* Avatar */}
                     <div
                       className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center ring-2 ring-primary/10 shrink-0"
                       style={{
@@ -328,8 +295,6 @@ export function SimpleArtifactPanel() {
                     >
                       <User className="w-12 h-12 text-primary" />
                     </div>
-
-                    {/* User Info */}
                     <div className="space-y-1.5">
                       <h1 className="text-2xl font-bold text-foreground">
                         {userData.first_name} {userData.last_name}
@@ -343,140 +308,109 @@ export function SimpleArtifactPanel() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Close Button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={closeArtifact}
-                    className="self-start"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-
-                {/* Experience Badge */}
-                {userData.technical_profile?.experience_level && (
-                  <div className="mt-5">
-                    <Badge
-                      variant="outline"
-                      className={`${getExperienceColor(userData.technical_profile.experience_level)} capitalize`}
-                    >
-                      <Briefcase className="w-3 h-3 mr-1.5" />
-                      {userData.technical_profile.experience_level} Experience
-                    </Badge>
+                  <div className="flex flex-col items-start sm:items-end gap-4">
+                     <Button variant="ghost" size="icon" onClick={closeArtifact} className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0">
+                        <X className="h-5 w-5" />
+                     </Button>
+                     {userData.technical_profile?.experience_level && (
+                        <Badge
+                          variant="outline"
+                          className={`${getExperienceColor(userData.technical_profile.experience_level)} capitalize mt-2 sm:mt-0`}
+                        >
+                          <Briefcase className="w-3 h-3 mr-1.5" />
+                          {userData.technical_profile.experience_level} Experience
+                        </Badge>
+                      )}
                   </div>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* Content Area */}
-            <ScrollArea className="flex-1">
-              <div className="p-6 space-y-8">
-                {/* Bio Section */}
-                {userData.bio && (
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+                <div className="p-6 space-y-8">
+                  {/* Bio Section */}
                   <div className="space-y-3">
                     <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">About</h3>
                     <p className="text-sm text-foreground leading-relaxed">
-                      {userData.bio}
+                      {userData.bio || <span className="text-muted-foreground/60">Not provided.</span>}
                     </p>
                   </div>
-                )}
 
-                {/* Details Section */}
-                <div className="space-y-4 pt-8 border-t border-border/50">
-                  <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Details</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-foreground">{userData.email}</span>
-                    </div>
-                    {userData.personal_details?.phone && (
+                  {/* Details Section */}
+                  <div className="space-y-4 pt-8 border-t border-border/50">
+                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Details</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                       <div className="flex items-center gap-3">
                         <Phone className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">{userData.personal_details.phone}</span>
+                        <span className="text-foreground">{userData.personal_details?.phone || <span className="text-muted-foreground/60">Not provided</span>}</span>
                       </div>
-                    )}
-                    {userData.date_of_birth && (
                       <div className="flex items-center gap-3">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">{formatDate(userData.date_of_birth)}</span>
+                        <span className="text-foreground">{userData.date_of_birth ? formatDate(userData.date_of_birth) : <span className="text-muted-foreground/60">Not provided</span>}</span>
                       </div>
-                    )}
-                    {userData.personal_details?.university && (
-                       <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 sm:col-span-2">
                         <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">{userData.personal_details.university}</span>
+                        <span className="text-foreground">{userData.personal_details?.university || <span className="text-muted-foreground/60">Not provided</span>}</span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Skills & Interests Section */}
-                <div className="space-y-4 pt-8 border-t border-border/50">
-                  <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Skills & Interests</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Primary Skills</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {userData.technical_profile.primary_skills.map(
+                  {/* Skills Section */}
+                  <div className="space-y-4 pt-8 border-t border-border/50">
+                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Skills</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {(userData.technical_profile.primary_skills && userData.technical_profile.primary_skills.length > 0) ? (
+                        userData.technical_profile.primary_skills.map(
                           (skill: string, index: number) => (
                             <Badge key={index} variant="secondary">
                               {skill}
                             </Badge>
                           )
-                        )}
-                      </div>
-                    </div>
-                     <div>
-                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Interests</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {userData.technical_profile.interests.map(
-                          (interest: string, index: number) => (
-                            <Badge key={index} variant="outline">
-                              {interest}
-                            </Badge>
-                          )
-                        )}
-                      </div>
+                        )
+                      ) : (
+                        <p className="text-sm text-muted-foreground/60">No skills listed.</p>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                {/* Links Section */}
-                <div className="space-y-3 pt-8 border-t border-border/50">
-                  <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Links</h3>
-                  <div className="flex items-center gap-2">
-                     {userData.technical_profile?.github_url && (
-                      <Button variant="outline" size="icon" asChild>
-                        <a href={userData.technical_profile.github_url} target="_blank" rel="noopener noreferrer">
-                          <Github className="w-4 h-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {userData.technical_profile?.linkedin_url && (
-                      <Button variant="outline" size="icon" asChild>
-                        <a href={userData.technical_profile.linkedin_url} target="_blank" rel="noopener noreferrer">
-                          <Linkedin className="w-4 h-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {userData.technical_profile?.portfolio_url && (
-                      <Button variant="outline" size="icon" asChild>
-                        <a href={userData.technical_profile.portfolio_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </Button>
-                    )}
+                  {/* Links Section */}
+                  <div className="space-y-3 pt-8 border-t border-border/50">
+                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Links</h3>
+                    <div className="flex items-center gap-2">
+                       {userData.technical_profile?.github_url ? (
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={userData.technical_profile.github_url} target="_blank" rel="noopener noreferrer">
+                            <Github className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      ) : null}
+                      {userData.technical_profile?.linkedin_url ? (
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={userData.technical_profile.linkedin_url} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      ) : null}
+                      {userData.technical_profile?.portfolio_url ? (
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={userData.technical_profile.portfolio_url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      ) : null}
+                      {!userData.technical_profile?.github_url && !userData.technical_profile?.linkedin_url && !userData.technical_profile?.portfolio_url && (
+                         <p className="text-sm text-muted-foreground/60">No links provided.</p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Debug Info (only in development) */}
-                <p className="text-xs text-muted-foreground text-center pt-8 border-t border-border/50">
-                  Profile ID: {artifactData.data.id || "temp-id-123"}
-                </p>
-              </div>
-            </ScrollArea>
+                  {/* Debug Info (only in development) */}
+                  <p className="text-xs text-muted-foreground text-center pt-8 border-t border-border/50">
+                    Profile ID: {artifactData.data.id || "temp-id-123"}
+                  </p>
+                </div>
+              </ScrollArea>
+            </div>
           </motion.div>
         </motion.div>
       )}
