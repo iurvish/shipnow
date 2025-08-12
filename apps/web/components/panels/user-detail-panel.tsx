@@ -316,59 +316,54 @@ export function SimpleArtifactPanel() {
             {/* Modern User Profile Header */}
             <div className="border-b border-border/50 bg-gradient-to-r from-background via-muted/20 to-background">
               <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
                     {/* Avatar */}
-                    <div className="relative">
-                      <div
-                        className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center ring-2 ring-primary/10"
-                        style={{
-                          clipPath:
-                            "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
-                        }}
-                      >
-                        <User className="w-12 h-12 text-primary" />
-                      </div>
-                      <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-background"></div>
+                    <div
+                      className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center ring-2 ring-primary/10 shrink-0"
+                      style={{
+                        clipPath:
+                          "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
+                      }}
+                    >
+                      <User className="w-12 h-12 text-primary" />
                     </div>
 
-                    {/* Basic Info */}
-                    <div className="flex-1 min-w-0">
-                      <h1 className="text-2xl font-bold text-foreground truncate">
+                    {/* User Info */}
+                    <div className="space-y-1.5">
+                      <h1 className="text-2xl font-bold text-foreground">
                         {userData.first_name} {userData.last_name}
                       </h1>
-                      <p className="text-muted-foreground flex items-center gap-2 mt-1">
+                      <p className="text-muted-foreground">
+                        {userData.technical_profile?.preferred_roles?.[0] || 'Software Engineer'}
+                      </p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
                         <Mail className="w-4 h-4" />
                         {userData.email}
                       </p>
-                      {userData.technical_profile?.preferred_roles?.[0] && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {userData.technical_profile.preferred_roles[0]}
-                        </p>
-                      )}
                     </div>
                   </div>
 
                   {/* Close Button */}
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={closeArtifact}
-                    className="h-8 w-8 p-0 hover:bg-muted"
+                    className="self-start"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                   </Button>
                 </div>
 
                 {/* Experience Badge */}
                 {userData.technical_profile?.experience_level && (
-                  <div className="mt-4">
+                  <div className="mt-5">
                     <Badge
                       variant="outline"
                       className={`${getExperienceColor(userData.technical_profile.experience_level)} capitalize`}
                     >
-                      <Briefcase className="w-3 h-3 mr-1" />
-                      {userData.technical_profile.experience_level} Level
+                      <Briefcase className="w-3 h-3 mr-1.5" />
+                      {userData.technical_profile.experience_level} Experience
                     </Badge>
                   </div>
                 )}
