@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Calendar,
   Briefcase,
+  Globe,
 } from "lucide-react";
 import ChatItem from "../shared/chat-item";
 import { ScrollArea } from "../ui/scroll-area";
@@ -332,16 +333,19 @@ export function SimpleArtifactPanel() {
                   <div className="w-20 justify-start text-white text-lg font-medium font-mono uppercase">
                     Essentials
                   </div>
-                  <div className="self-stretch pt-[3px] flex flex-col justify-start items-start">
-                    {/* First Row */}
-                    <div className="self-stretch flex justify-start items-start overflow-hidden">
-                      {/* Education */}
-                      <div className="flex-1 self-stretch p-1.5 border-l border-r-[0.50px] border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1">
-                        <div className="p-1 bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                          <GraduationCap className="w-4 h-4 text-zinc-400" />
+                  <div className="self-stretch">
+                    {/* 2x2 Grid Layout */}
+                    <div className="grid grid-cols-2 border border-neutral-600">
+                      {/* Education - Top Left */}
+                      <div className="p-1.5 border-r border-b border-neutral-600 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                          <GraduationCap
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
                         </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-1">
-                          <div className="justify-start text-zinc-400 text-sm font-normal font-mono uppercase leading-none">
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
                             education
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
@@ -350,13 +354,17 @@ export function SimpleArtifactPanel() {
                           </div>
                         </div>
                       </div>
-                      {/* GitHub */}
-                      <div className="flex-1 p-1.5 border-l-[0.50px] border-r border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1">
-                        <div className="p-1 bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                          <Github className="w-4 h-4 text-zinc-400" />
+
+                      {/* GitHub - Top Right */}
+                      <div className="p-1.5 border-b border-neutral-600 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-center">
+                          <Github
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
                         </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-1">
-                          <div className="justify-start text-zinc-400 text-sm font-normal font-mono leading-none">
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono leading-none">
                             GITHUB
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
@@ -366,16 +374,17 @@ export function SimpleArtifactPanel() {
                           </div>
                         </div>
                       </div>
-                    </div>
-                    {/* Second Row */}
-                    <div className="self-stretch flex justify-start items-start">
-                      {/* LinkedIn */}
-                      <div className="flex-1 p-1.5 border-l border-r-[0.50px] border-t-[0.50px] border-b border-neutral-600 flex justify-start items-start gap-1">
-                        <div className="p-1 bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                          <Linkedin className="w-4 h-4 text-zinc-400" />
+
+                      {/* LinkedIn - Bottom Left */}
+                      <div className="p-1.5 border-r border-neutral-600 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                          <Linkedin
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
                         </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-1">
-                          <div className="justify-start text-zinc-400 text-sm font-normal font-mono uppercase leading-none">
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
                             linkedin
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
@@ -385,13 +394,17 @@ export function SimpleArtifactPanel() {
                           </div>
                         </div>
                       </div>
-                      {/* Portfolio */}
-                      <div className="flex-1 p-1.5 border-l-[0.50px] border-r border-t-[0.50px] border-b border-neutral-600 flex justify-start items-start gap-1">
-                        <div className="p-1 bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                          <ExternalLink className="w-4 h-4 text-zinc-400" />
+
+                      {/* Portfolio - Bottom Right */}
+                      <div className="p-1.5 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                          <Globe
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
                         </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-1">
-                          <div className="justify-start text-zinc-400 text-sm font-normal font-mono uppercase leading-none">
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
                             portfolio
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">

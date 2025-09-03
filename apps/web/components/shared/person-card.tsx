@@ -59,7 +59,7 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
     <div
       ref={cardRef}
       onClick={handleClick}
-      className="group relative w-80 h-[360px] p-3 bg-neutral-800 inline-flex justify-start items-start gap-2.5 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02]"
+      className="group relative w-80 h-[380px] p-3 bg-card inline-flex justify-start items-start gap-2.5 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02]"
       style={{
         clipPath:
           "polygon(0% 0%, calc(100% - 20px) 0%, 100% 20px, 100% 100%, 0% 100%)",
@@ -104,11 +104,11 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
             </div>
           </div>
 
-          <div className="self-stretch border-b border-neutral-600 flex flex-col justify-start items-start gap-2 pb-2">
+          <div className="self-stretch border-neutral-600 flex flex-col justify-start items-start gap-2 ">
             <div className="justify-start text-white text-base font-medium font-mono uppercase leading-none">
               Bio
             </div>
-            <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-none">
+            <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
               {person.bio
                 ? truncateText(person.bio, 120)
                 : "Lorem Ipsum is simply dummy text of the printing and typesetting industry Lorem Ipsum has been the industrY..."}
@@ -120,12 +120,12 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
               SKILLS
             </div>
             <div className="inline-flex justify-start items-start gap-1.5 flex-wrap">
-              {skills.slice(0, 4).map((skill: string, index: number) => (
+              {skills.slice(0, 7).map((skill: string, index: number) => (
                 <div
                   key={index}
                   className="px-2 py-1.5 bg-zinc-100 flex justify-start items-center"
                 >
-                  <div className="justify-start text-neutral-500 text-xs font-medium font-mono uppercase leading-none">
+                  <div className="justify-start text-neutral-500 text-sm font-medium font-mono uppercase leading-none">
                     {skill}
                   </div>
                 </div>
