@@ -202,7 +202,7 @@ export function SimpleArtifactPanel() {
               opacity: 0,
               scale: 0.5,
               transition: {
-                delay: 0.1,
+                delay: 0.2,
                 type: "spring",
                 stiffness: 600,
                 damping: 30,
