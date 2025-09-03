@@ -163,45 +163,30 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-}
 
-/* Custom scrollbar styles */
-.scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
-}
+  ::selection {
+    @apply bg-primary text-background;
+  }
 
-.scrollbar-thin::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
-  -webkit-appearance: none;
-}
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-  -webkit-box-shadow: none;
-}
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
-  border: none;
-  -webkit-box-shadow: none;
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-muted-foreground;
+  }
+  /* 
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  } */
 }
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
-}
-
-.scrollbar-thin::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-button {
-  display: none;
-  -webkit-appearance: none;
-}
-
 /* Force scrollbar to always show on desktop when content overflows */
 @media (min-width: 1024px) {
   .scrollbar-thin {

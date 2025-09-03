@@ -120,10 +120,10 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
               SKILLS
             </div>
             <div className="inline-flex justify-start items-start gap-1.5 flex-wrap">
-              {skills.slice(0, 5).map((skill: string, index: number) => (
+              {skills.slice(0, 4).map((skill: string, index: number) => (
                 <div
                   key={index}
-                  className="px-1.5 py-1 bg-zinc-100 flex justify-start items-center"
+                  className="px-2 py-1.5 bg-zinc-100 flex justify-start items-center"
                 >
                   <div className="justify-start text-neutral-500 text-xs font-medium font-mono uppercase leading-none">
                     {skill}
@@ -141,24 +141,30 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
           </div>
           <div className="self-stretch pt-[3px] flex flex-col justify-start items-start">
             <div className="self-stretch inline-flex justify-start items-start overflow-hidden">
-              <div className="flex-1 self-stretch p-1.5 border-l border-r-[0.50px] border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1">
-                <div className="p-1 bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                  <GraduationCap className="w-4 h-4 text-zinc-400" />
+              <div className="flex-1 self-stretch p-1.5 border-l border-r-[0.50px] border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1 ">
+                <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                  <GraduationCap
+                    className="w-6 h-6 text-zinc-400"
+                    strokeWidth={1.2}
+                  />
                 </div>
-                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-1">
+                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-0.5">
                   <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
                     education
                   </div>
                   <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                    {truncateText(university, 12)}
+                    {truncateText(university, 9)}
                   </div>
                 </div>
               </div>
-              <div className="flex-1 p-1.5 border-l-[0.50px] border-r border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1">
-                <div className="p-1 bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                  <Briefcase className="w-4 h-4 text-zinc-400" />
+              <div className="flex-1 p-1.5 border-r border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1 border-l-0">
+                <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start ">
+                  <Briefcase
+                    className="w-6 h-6 text-zinc-400"
+                    strokeWidth={1.2}
+                  />
                 </div>
-                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-1">
+                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-0.5">
                   <div className="justify-start text-zinc-400 text-xs font-normal font-mono leading-none">
                     EXPERIENCE
                   </div>
