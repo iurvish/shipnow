@@ -53,6 +53,7 @@ export function SimpleArtifactPanel() {
   };
 
   const handleUserMessage = (content: string) => {
+    // Loading state is now handled by AIInputSearch component via onLoadingChange
     if (sendMessage) {
       sendMessage(content);
     }
@@ -239,12 +240,12 @@ export function SimpleArtifactPanel() {
                   </div>
 
                   {/* Sticky Input Area */}
-                  <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto bg-transparent">
+                  <div className="md:w-full w-full mx-auto bg-transparent">
                     <AIInputSearch
                       onResponse={handleAIResponse}
                       onUserMessage={handleUserMessage}
+                      onLoadingChange={setIsLoading}
                       disabled={isLoading}
-                      placeholder="Ask about this person..."
                     />
                   </div>
                 </div>

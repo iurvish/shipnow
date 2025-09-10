@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 interface AIInputSearchProps {
   onResponse?: (response: ChatResponse) => void;
   onUserMessage?: (message: string) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -48,6 +49,7 @@ const buttonVariants = {
 export default function AIInputSearch({
   onResponse,
   onUserMessage,
+  onLoadingChange,
   disabled = false,
   placeholder = "Search people you're looking for...",
 }: AIInputSearchProps) {
@@ -93,9 +95,16 @@ export default function AIInputSearch({
     const userMessage = input.trim();
     setInput("");
     setIsLoading(true);
+    onLoadingChange?.(true); // Notify parent about loading state
     setToolStatuses([]);
     setCurrentStep("");
     setShowSuggestions(false);
+
+    // Reset textarea height to minimum
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "30px";
+      setIsMultiLine(false);
+    }
 
     // Notify parent about user message
     onUserMessage?.(userMessage);
@@ -114,6 +123,7 @@ export default function AIInputSearch({
       });
     } finally {
       setIsLoading(false);
+      onLoadingChange?.(false); // Notify parent about loading state end
       setToolStatuses([]);
       setCurrentStep("");
       // Don't show suggestions after a successful search
@@ -136,6 +146,13 @@ export default function AIInputSearch({
   // Auto-resize textarea and detect line count
   const adjustHeight = () => {
     if (textareaRef.current) {
+      // Only adjust if there's actual content
+      if (input.trim().length === 0) {
+        textareaRef.current.style.height = "50px";
+        setIsMultiLine(false);
+        return 50;
+      }
+
       textareaRef.current.style.height = "30px"; // Set to our desired minimum
       const newHeight = Math.max(
         30,

@@ -81,6 +81,7 @@ function ChatPageContent({
           <AIInputSearch
             onResponse={handleAIResponse}
             onUserMessage={handleUserMessage}
+            onLoadingChange={setIsLoading}
             disabled={isLoading}
             placeholder="Search people you're looking for..."
           />
@@ -106,11 +107,11 @@ export default function ChatPage() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
+    // Loading state is now handled by AIInputSearch component via onLoadingChange
   };
 
   const handleAIResponse = (response: ChatResponse) => {
-    setIsLoading(false);
+    // Loading state is now handled by AIInputSearch component via onLoadingChange
 
     const aiMessage: ChatMessage = {
       id: `ai-${Date.now()}`,
