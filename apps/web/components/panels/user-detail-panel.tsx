@@ -28,12 +28,12 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
-import ChatMessages from "../shared/chat-messages";
+import ChatMessages, { ChatMessage } from "../shared/chat-messages";
 import AIInputSearch from "../shared/ai-input-search";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
 export function SimpleArtifactPanel() {
-  const { isVisible, artifactData, closeArtifact, messages, sendMessage } =
+  const { isVisible, artifactData, closeArtifact, messages, sendMessage, onAIResponse } =
     useSimpleArtifact();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const isMobile = windowWidth ? windowWidth < 768 : false;
@@ -59,8 +59,12 @@ export function SimpleArtifactPanel() {
     }
   };
 
-  const handleAIResponse = (response: ChatResponse) => {
-    // Handle AI response if needed
+    const handleAIResponse = (response: ChatResponse) => {
+    // Use the main chat page's AI response handler
+    console.log("Artifact panel handleAIResponse called with:", response);
+    if (onAIResponse) {
+      onAIResponse(response);
+    }
     setIsLoading(false);
   };
 
