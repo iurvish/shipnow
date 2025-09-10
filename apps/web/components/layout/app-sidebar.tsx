@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { UserMenu } from "./user-menu";
 import { ActiveDecorator } from "@/components/ui/active-decorator";
+import { useSessionUser } from "@/hooks/use-session-user";
 
 // Mock chat history data
 const chatHistory = [
@@ -30,6 +31,28 @@ const timeGroups = {
 
 export function AppSidebar() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
+  const { user, loading } = useSessionUser();
+
+  // Format user data for UserMenu
+  const userData = user
+    ? {
+        name:
+          [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+          "Anonymous User",
+        email: user.email,
+        avatar: user.profile_picture || "", // Empty string will fallback to initials
+      }
+    : loading
+      ? {
+          name: "Loading...",
+          email: "loading...",
+          avatar: "",
+        }
+      : {
+          name: "Guest User",
+          email: "guest@example.com",
+          avatar: "",
+        };
 
   return (
     <Sidebar className="border-r border-border/40">
@@ -88,13 +111,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/40 p-4">
-        <UserMenu
-          user={{
-            name: "John Doe",
-            email: "john@example.com",
-            avatar: "/avatars/avatar.jpg",
-          }}
-        />
+        <UserMenu user={userData} />
       </SidebarFooter>
     </Sidebar>
   );
