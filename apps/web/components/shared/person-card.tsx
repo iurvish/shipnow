@@ -1,14 +1,11 @@
 "use client";
 
 import { memo, useRef, useCallback } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import type { DatabasePerson } from "@/lib/actions/chat-actions";
 import {
-  Clock,
-  User,
-  ExternalLink,
   GraduationCap,
+  Briefcase,
+  User,
   ChevronsLeftRight,
 } from "lucide-react";
 import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
@@ -40,10 +37,16 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
   }, [person, openArtifact]);
 
   const fullName = `${person.first_name} ${person.last_name}`;
-  const skills = person.technical_profile?.skills || [];
-  const experience = person.technical_profile?.experience || "Not specified";
-  const university = person.personal_details?.university || "Not specified";
-  const department = person.personal_details?.department || "Developer";
+  const skills = person.technical_profile?.skills || [
+    "JavaScript",
+    "React",
+    "Node.js",
+    "Python",
+    "PostgreSQL",
+  ];
+  const experience = person.technical_profile?.experience || "beginner";
+  const university =
+    person.personal_details?.university || "Stanford University";
 
   // Helper function to truncate text with ellipsis
   const truncateText = (text: string, maxLength: number) => {
@@ -56,12 +59,13 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
     <div
       ref={cardRef}
       onClick={handleClick}
-      className="group relative bg-card border border-border/40 transition-all duration-300  hover:shadow-lg hover:shadow-primary/5 cursor-pointer h-[320px] flex flex-col p-4"
+      className="group relative w-80 h-[380px] p-3 bg-card inline-flex justify-start items-start gap-2.5 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02]"
       style={{
         clipPath:
-          "polygon(0 0, calc(100% - 16px) 0%, 100% 16px, 100% 100%, 0 100%)",
+          "polygon(0% 0%, calc(100% - 20px) 0%, 100% 20px, 100% 100%, 0% 100%)",
       }}
     >
+      {/* Hover overlay effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.05] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       {/* Hover indicator */}
@@ -69,122 +73,106 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
         <ChevronsLeftRight className="w-4 h-4 text-primary transition-transform duration-300 group-hover:rotate-45" />
       </div>
 
-      {/* Header with Avatar and Name */}
-      <div className="flex items-start gap-3 mb-3">
-        <div
-          className="w-12 h-12 bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors duration-300"
-          style={{
-            clipPath:
-              "polygon(0 0, calc(100% - 6px) 0%, 100% 6px, 100% 100%, 0 100%)",
-          }}
-        >
-          <User className="w-6 h-6 text-primary" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-base text-foreground mb-1 truncate group-hover:text-primary transition-colors duration-300">
-            {fullName}
-          </h3>
-          {/* Email right below name */}
-          <p className="text-sm text-muted-foreground truncate mb-2">
-            {person.email}
-          </p>
-        </div>
-      </div>
-
-      {/* Bio Section with character limit */}
-      <div className="mb-4">
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {person.bio
-            ? truncateText(person.bio, 60)
-            : "Passionate developer focused on creating innovative solutions and contributing to meaningful projects."}
-        </p>
-      </div>
-
-      {/* Skills Section */}
-      <div className="mb-4 flex-1">
-        <h4 className="text-sm font-semibold text-foreground mb-2">Skills</h4>
-        <div className="flex flex-wrap gap-1.5">
-          {skills.length > 0 ? (
-            skills.slice(0, 7).map((skill, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="text-xs px-2 py-1 bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 transition-colors duration-300"
-              >
-                {truncateText(skill, 10)}
-              </Badge>
-            ))
-          ) : (
-            <>
-              <Badge
-                variant="secondary"
-                className="text-xs px-2 py-1 bg-primary/5 text-primary border-primary/10"
-              >
-                JavaScript
-              </Badge>
-              <Badge
-                variant="secondary"
-                className="text-xs px-2 py-1 bg-primary/5 text-primary border-primary/10"
-              >
-                React
-              </Badge>
-              <Badge
-                variant="secondary"
-                className="text-xs px-2 py-1 bg-primary/5 text-primary border-primary/10"
-              >
-                TypeScript
-              </Badge>
-            </>
-          )}
-          {skills.length > 6 && (
-            <Badge
-              variant="secondary"
-              className="text-xs px-2 py-1 bg-muted/50 text-muted-foreground"
+      <div className="flex-1 inline-flex flex-col justify-start items-start h-full">
+        {/* Top section - Header, Bio, Skills */}
+        <div className="flex flex-col gap-3.5 flex-1">
+          <div className="inline-flex justify-start items-center gap-3">
+            <div
+              className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center"
+              style={{
+                clipPath:
+                  "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
+              }}
             >
-              +{skills.length - 6}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom Section: University/Department and Experience with vertical separator */}
-      <div className="mt-auto pt-3 border-t border-border/30">
-        <div className="flex items-center justify-between gap-3">
-          {/* Left side: University and Department */}
-          <div className="flex items-start gap-2  min-w-0 flex-1 ">
-            <GraduationCap className="w-4 h-4 text-primary flex-shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p
-                className="text-sm font-medium text-foreground leading-3.5 "
-                title={university}
-              >
-                {truncateText(university, 10)}
-              </p>
-              <p
-                className="text-xs text-muted-foreground mt-0.5"
-                title={department}
-              >
-                {truncateText(department, 10)}
-              </p>
+              <User className="w-8 h-8 text-primary" />
+            </div>
+            <div className="py-2 inline-flex flex-col justify-start items-start gap-2">
+              <div className="justify-start leading-none">
+                <span className="text-neutral-50 text-2xl font-bold font-mono leading-none">
+                  {person.first_name}
+                </span>
+                <span className="text-neutral-50 text-sm font-bold font-mono leading-none">
+                  {" "}
+                </span>
+                <span className="text-neutral-50 text-2xl font-bold font-mono leading-none">
+                  {person.last_name}
+                </span>
+              </div>
+              <div className="justify-start text-zinc-400 text-sm font-normal font-mono leading-none">
+                {person.email}
+              </div>
             </div>
           </div>
 
-          {/* Vertical Separator */}
-          <div className="w-px bg-border self-stretch" />
+          <div className="self-stretch border-neutral-600 flex flex-col justify-start items-start gap-2 ">
+            <div className="justify-start text-white text-base font-medium font-mono uppercase leading-none">
+              Bio
+            </div>
+            <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
+              {person.bio
+                ? truncateText(person.bio, 120)
+                : "Lorem Ipsum is simply dummy text of the printing and typesetting industry Lorem Ipsum has been the industrY..."}
+            </div>
+          </div>
 
-          {/* Right side: Experience */}
-          <div className="flex items-start gap-2 flex-1 justify-center">
-            <Clock className="w-[15px] h-[15px] text-primary flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground leading-3.5">
-                Experience
-              </p>
-              <p
-                className="text-sm font-medium text-foreground"
-                title={experience}
-              >
-                {truncateText(experience, 15)}
-              </p>
+          <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
+            <div className="w-20 justify-start text-white text-base font-medium font-mono uppercase leading-none">
+              SKILLS
+            </div>
+            <div className="inline-flex justify-start items-start gap-1.5 flex-wrap">
+              {skills.slice(0, 7).map((skill: string, index: number) => (
+                <div
+                  key={index}
+                  className="px-2 py-1.5 bg-zinc-100 flex justify-start items-center"
+                >
+                  <div className="justify-start text-neutral-500 text-sm font-medium font-mono uppercase leading-none">
+                    {skill}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom section - Essentials */}
+        <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden mt-auto">
+          <div className="w-20 justify-start text-white text-base font-medium font-mono uppercase leading-none">
+            Essentials
+          </div>
+          <div className="self-stretch pt-[3px] flex flex-col justify-start items-start">
+            <div className="self-stretch inline-flex justify-start items-start overflow-hidden">
+              <div className="flex-1 self-stretch p-1.5 border-l border-r-[0.50px] border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1 ">
+                <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                  <GraduationCap
+                    className="w-6 h-6 text-zinc-400"
+                    strokeWidth={1.2}
+                  />
+                </div>
+                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-0.5">
+                  <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                    education
+                  </div>
+                  <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                    {truncateText(university, 9)}
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 p-1.5 border-r border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1 border-l-0">
+                <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start ">
+                  <Briefcase
+                    className="w-6 h-6 text-zinc-400"
+                    strokeWidth={1.2}
+                  />
+                </div>
+                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-0.5">
+                  <div className="justify-start text-zinc-400 text-xs font-normal font-mono leading-none">
+                    EXPERIENCE
+                  </div>
+                  <div className="justify-start text-white text-sm font-normal font-mono uppercase leading-none">
+                    {experience}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

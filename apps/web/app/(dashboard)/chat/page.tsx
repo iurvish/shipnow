@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ChatItem from "@/components/shared/chat-item";
+import ChatMessages, { ChatMessage } from "@/components/shared/chat-messages";
 import AIInputSearch from "@/components/shared/ai-input-search";
 import {
   SimpleArtifactProvider,
@@ -9,14 +9,6 @@ import {
 } from "../../../hooks/use-user-detail-panel";
 import { SimpleArtifactPanel } from "@/components/panels/user-detail-panel";
 import { ChatResponse } from "@/lib/actions/chat-actions";
-
-interface ChatMessage {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  chatResponse?: ChatResponse;
-  timestamp: Date;
-}
 
 interface ChatPageContentProps {
   messages: ChatMessage[];
@@ -42,27 +34,12 @@ function ChatPageContent({
     setArtifactMessages(messages);
   }, [messages, setArtifactMessages]);
 
-  const handleRegenerate = async (messageId: string) => {
-    // Find the user message that preceded this AI response
-    const messageIndex = messages.findIndex((m) => m.id === messageId);
-    if (messageIndex > 0) {
-      const userMessage = messages[messageIndex - 1];
-      if (userMessage && userMessage.role === "user") {
-        setIsLoading(true);
-        // Remove the old AI response
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
-        // Regenerate with the original user message
-        handleUserMessage(userMessage.content);
-      }
-    }
-  };
-
   return (
     <div className="flex h-full relative">
       {/* Main Chat Content */}
-      <div className="flex flex-col w-full relative">
+      <div className="hide-scrollbar w-full flex flex-col justify-between h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-3.75rem)] min-h-0 bg-transparent">
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto pb-24">
+        <div className="flex-1 overflow-y-auto pb-24 bg-transparent">
           <div className="max-w-6xl mx-auto">
             {messages.length === 0 && !isLoading ? (
               /* Welcome Message */
@@ -89,45 +66,24 @@ function ChatPageContent({
                 </div>
               </div>
             ) : (
-              /* Chat Messages */
-              <div className="space-y-0">
-                {messages.map((message) => (
-                  <ChatItem
-                    key={message.id}
-                    content={message.content}
-                    role={message.role}
-                    chatResponse={message.chatResponse}
-                    onRegenerate={
-                      message.role === "assistant"
-                        ? () => handleRegenerate(message.id)
-                        : undefined
-                    }
-                  />
-                ))}
-
-                {/* Loading State */}
-                {isLoading && (
-                  <ChatItem
-                    content="Searching for people..."
-                    role="assistant"
-                    isLoading={true}
-                  />
-                )}
-              </div>
+              /* Chat Messages without regenerate */
+              <ChatMessages
+                messages={messages}
+                isLoading={isLoading}
+                loadingMessage="Searching for people..."
+              />
             )}
           </div>
         </div>
 
         {/* Sticky Input Area */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-border/40 bg-background/80 backdrop-blur-sm ">
-          <div className="max-w-6xl mx-auto">
-            <AIInputSearch
-              onResponse={handleAIResponse}
-              onUserMessage={handleUserMessage}
-              disabled={isLoading}
-              placeholder="Search people you're looking for..."
-            />
-          </div>
+        <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto bg-transparent">
+          <AIInputSearch
+            onResponse={handleAIResponse}
+            onUserMessage={handleUserMessage}
+            disabled={isLoading}
+            placeholder="Search people you're looking for..."
+          />
         </div>
       </div>
 

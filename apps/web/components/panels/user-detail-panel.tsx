@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Calendar,
   Briefcase,
+  Globe,
 } from "lucide-react";
 import ChatItem from "../shared/chat-item";
 import { ScrollArea } from "../ui/scroll-area";
@@ -27,6 +28,9 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
+import ChatMessages from "../shared/chat-messages";
+import AIInputSearch from "../shared/ai-input-search";
+import { ChatResponse } from "@/lib/actions/chat-actions";
 
 export function SimpleArtifactPanel() {
   const { isVisible, artifactData, closeArtifact, messages, sendMessage } =
@@ -46,6 +50,17 @@ export function SimpleArtifactPanel() {
       sendMessage(input);
     }
     setInput("");
+  };
+
+  const handleUserMessage = (content: string) => {
+    if (sendMessage) {
+      sendMessage(content);
+    }
+  };
+
+  const handleAIResponse = (response: ChatResponse) => {
+    // Handle AI response if needed
+    setIsLoading(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -144,112 +159,9 @@ export function SimpleArtifactPanel() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { delay: 0.4 } }}
         >
-          {/* Desktop: Background */}
-          {!isMobile && (
-            <motion.div
-              className="fixed bg-background h-dvh"
-              initial={{
-                width: windowWidth,
-                right: 0,
-              }}
-              animate={{ width: windowWidth, right: 0 }}
-              exit={{
-                width: windowWidth,
-                right: 0,
-              }}
-            />
-          )}
-
-          {/* Desktop: Left panel (400px) - Chat Messages */}
-          {!isMobile && (
-            <motion.div
-              className="relative w-[400px] bg-muted dark:bg-background h-dvh shrink-0 border-r border-border flex flex-col"
-              initial={{ opacity: 0, x: 10, scale: 1 }}
-              animate={{
-                opacity: 1,
-                x: 0,
-                scale: 1,
-                transition: {
-                  delay: 0.2,
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 30,
-                },
-              }}
-              exit={{
-                opacity: 0,
-                x: 0,
-                scale: 1,
-                transition: { duration: 0 },
-              }}
-            >
-              {/* Chat Header */}
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Chat History</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Your conversation with the AI assistant
-                </p>
-              </div>
-
-              {/* Chat Messages - with fixed height to leave room for input */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.length > 0 ? (
-                      messages.map((message) => (
-                        <ChatItem
-                          key={message.id}
-                          content={message.content}
-                          role={message.role}
-                          chatResponse={message.chatResponse}
-                        />
-                      ))
-                    ) : (
-                      <div className="text-center py-8">
-                        <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                        <p className="text-sm text-muted-foreground">
-                          No messages yet. Start a conversation in the main
-                          chat!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-
-                {/* Fixed Chat Input */}
-                <div className="p-4 border-t border-border bg-background/95 backdrop-blur-sm">
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Continue the conversation..."
-                      className="min-h-[40px] max-h-[120px] resize-none flex-1"
-                      disabled={isLoading}
-                    />
-                    <Button
-                      onClick={handleSend}
-                      disabled={!input.trim() || isLoading}
-                      size="sm"
-                      className="px-3"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Press Enter to send, Shift + Enter for new line
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Main artifact panel */}
+          {/* Main artifact panel - Now full width and centered */}
           <motion.div
-            className="fixed bg-background h-dvh flex flex-col overflow-y-scroll md:border-l dark:border-zinc-700 border-zinc-200"
+            className="w-full flex flex-col h-dvh overflow-y-scroll bg-background dark:bg-muted"
             initial={
               isMobile
                 ? {
@@ -269,147 +181,242 @@ export function SimpleArtifactPanel() {
                     borderRadius: 50,
                   }
             }
+            animate={
+              isMobile
+                ? {
+                    opacity: 1,
+                    x: 0,
+                    y: 0,
+                    height: windowHeight,
+                    width: windowWidth ? windowWidth : "calc(100dvw)",
+                    borderRadius: 0,
+                    transition: {
+                      delay: 0,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 30,
+                    },
+                  }
+                : {
+                    opacity: 1,
+                    x: 0, // Animate to x:0 for full width
+                    y: 0,
+                    height: windowHeight,
+                    width: windowWidth,
+                    borderRadius: 0,
+                    transition: {
+                      delay: 0,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 30,
+                    },
+                  }
+            }
             exit={{
               opacity: 0,
               scale: 0.5,
               transition: {
-                delay: 0.1,
+                delay: 0.2,
                 type: "spring",
                 stiffness: 600,
                 damping: 30,
               },
             }}
           >
-            {/* Content Area */}
-            <div className="flex-1 flex flex-col">
-              {/* Header */}
-              <div className="p-6 border-b border-border/50">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex items-center gap-6">
-                    <div
-                      className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center ring-2 ring-primary/10 shrink-0"
-                      style={{
-                        clipPath:
-                          "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
-                      }}
-                    >
-                      <User className="w-12 h-12 text-primary" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <h1 className="text-2xl font-bold text-foreground">
-                        {userData.first_name} {userData.last_name}
-                      </h1>
-                      <p className="text-muted-foreground">
-                        {userData.technical_profile?.preferred_roles?.[0] || 'Software Engineer'}
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        {userData.email}
-                      </p>
+            <div className="flex-1 flex flex-col md:flex-row h-full">
+              {/* Left Column - Chat Messages - Hidden on mobile */}
+              <div className="hidden md:flex md:w-3/5 relative bg-muted dark:bg-background h-dvh shrink-0 border-r border-border flex-col">
+                {/* Messages Area */}
+                <div className="hide-scrollbar w-full flex flex-col justify-between min-h-0 bg-transparent">
+                  <div className="flex-1 overflow-y-auto pb-24 bg-transparent">
+                    <div className="max-w-6xl mx-auto">
+                      <ChatMessages
+                        messages={messages}
+                        isLoading={isLoading}
+                        loadingMessage="Searching for people..."
+                      />
                     </div>
                   </div>
-                  <div className="flex flex-col items-start sm:items-end gap-4">
-                     <Button variant="ghost" size="icon" onClick={closeArtifact} className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0">
-                        <X className="h-5 w-5" />
-                     </Button>
-                     {userData.technical_profile?.experience_level && (
-                        <Badge
-                          variant="outline"
-                          className={`${getExperienceColor(userData.technical_profile.experience_level)} capitalize mt-2 sm:mt-0`}
-                        >
-                          <Briefcase className="w-3 h-3 mr-1.5" />
-                          {userData.technical_profile.experience_level} Experience
-                        </Badge>
-                      )}
+
+                  {/* Sticky Input Area */}
+                  <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto bg-transparent">
+                    <AIInputSearch
+                      onResponse={handleAIResponse}
+                      onUserMessage={handleUserMessage}
+                      disabled={isLoading}
+                      placeholder="Ask about this person..."
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Scrollable Content */}
-              <ScrollArea className="flex-1">
-                <div className="p-6 space-y-8">
-                  {/* Bio Section */}
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">About</h3>
-                    <p className="text-sm text-foreground leading-relaxed">
-                      {userData.bio || <span className="text-muted-foreground/60">Not provided.</span>}
-                    </p>
-                  </div>
+              {/* Right Column - Profile Details - Full width on mobile, 2/5 on desktop */}
+              <div className="w-full md:w-2/5 p-5 bg-neutral-800 flex flex-col gap-3.5 relative overflow-y-auto">
+                {/* Close Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={closeArtifact}
+                  className="absolute top-4 right-4 h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-white/10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
 
-                  {/* Details Section */}
-                  <div className="space-y-4 pt-8 border-t border-border/50">
-                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Details</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">{userData.personal_details?.phone || <span className="text-muted-foreground/60">Not provided</span>}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">{userData.date_of_birth ? formatDate(userData.date_of_birth) : <span className="text-muted-foreground/60">Not provided</span>}</span>
-                      </div>
-                      <div className="flex items-center gap-3 sm:col-span-2">
-                        <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">{userData.personal_details?.university || <span className="text-muted-foreground/60">Not provided</span>}</span>
-                      </div>
+                {/* Header with Avatar and Name */}
+                <div className="self-stretch flex justify-start items-center gap-3">
+                  <div
+                    className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center"
+                    style={{
+                      clipPath:
+                        "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
+                    }}
+                  >
+                    <User className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="py-2 flex flex-col justify-start items-start gap-2">
+                    <div className="justify-start">
+                      <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                        {userData.first_name}
+                      </span>
+                      <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                        {" "}
+                      </span>
+                      <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                        {userData.last_name}
+                      </span>
+                    </div>
+                    <div className="justify-start text-zinc-400 text-base font-normal font-mono leading-none">
+                      {userData.email}
                     </div>
                   </div>
-
-                  {/* Skills Section */}
-                  <div className="space-y-4 pt-8 border-t border-border/50">
-                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Skills</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {(userData.technical_profile.primary_skills && userData.technical_profile.primary_skills.length > 0) ? (
-                        userData.technical_profile.primary_skills.map(
-                          (skill: string, index: number) => (
-                            <Badge key={index} variant="secondary">
-                              {skill}
-                            </Badge>
-                          )
-                        )
-                      ) : (
-                        <p className="text-sm text-muted-foreground/60">No skills listed.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Links Section */}
-                  <div className="space-y-3 pt-8 border-t border-border/50">
-                    <h3 className="font-semibold text-sm text-muted-foreground tracking-wide uppercase">Links</h3>
-                    <div className="flex items-center gap-2">
-                       {userData.technical_profile?.github_url ? (
-                        <Button variant="outline" size="icon" asChild>
-                          <a href={userData.technical_profile.github_url} target="_blank" rel="noopener noreferrer">
-                            <Github className="w-4 h-4" />
-                          </a>
-                        </Button>
-                      ) : null}
-                      {userData.technical_profile?.linkedin_url ? (
-                        <Button variant="outline" size="icon" asChild>
-                          <a href={userData.technical_profile.linkedin_url} target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="w-4 h-4" />
-                          </a>
-                        </Button>
-                      ) : null}
-                      {userData.technical_profile?.portfolio_url ? (
-                        <Button variant="outline" size="icon" asChild>
-                          <a href={userData.technical_profile.portfolio_url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        </Button>
-                      ) : null}
-                      {!userData.technical_profile?.github_url && !userData.technical_profile?.linkedin_url && !userData.technical_profile?.portfolio_url && (
-                         <p className="text-sm text-muted-foreground/60">No links provided.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Debug Info (only in development) */}
-                  <p className="text-xs text-muted-foreground text-center pt-8 border-t border-border/50">
-                    Profile ID: {artifactData.data.id || "temp-id-123"}
-                  </p>
                 </div>
-              </ScrollArea>
+
+                {/* Bio Section */}
+                {userData.bio && (
+                  <div className="self-stretch border-b border-neutral-600 flex flex-col justify-start items-start gap-2 pb-3.5">
+                    <div className="justify-start text-white text-lg font-medium font-mono uppercase">
+                      Bio
+                    </div>
+                    <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
+                      {userData.bio}
+                    </div>
+                  </div>
+                )}
+
+                {/* Essentials Section */}
+                <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
+                  <div className="w-20 justify-start text-white text-lg font-medium font-mono uppercase">
+                    Essentials
+                  </div>
+                  <div className="self-stretch">
+                    {/* 2x2 Grid Layout */}
+                    <div className="grid grid-cols-2 border border-neutral-600">
+                      {/* Education - Top Left */}
+                      <div className="p-1.5 border-r border-b border-neutral-600 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                          <GraduationCap
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
+                        </div>
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                            education
+                          </div>
+                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                            {userData.personal_details?.university ||
+                              "Stanford University"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* GitHub - Top Right */}
+                      <div className="p-1.5 border-b border-neutral-600 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-center">
+                          <Github
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
+                        </div>
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono leading-none">
+                            GITHUB
+                          </div>
+                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                            {userData.technical_profile?.github_url
+                              ? `@${userData.technical_profile.github_url.split("/").pop()}`
+                              : "@charlicodes"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* LinkedIn - Bottom Left */}
+                      <div className="p-1.5 border-r border-neutral-600 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                          <Linkedin
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
+                        </div>
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                            linkedin
+                          </div>
+                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                            {userData.technical_profile?.linkedin_url
+                              ? `@${userData.technical_profile.linkedin_url.split("/").pop()}`
+                              : "@charile16"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Portfolio - Bottom Right */}
+                      <div className="p-1.5 flex justify-start items-start gap-1">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                          <Globe
+                            className="w-6 h-6 text-zinc-400"
+                            strokeWidth={1.2}
+                          />
+                        </div>
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                            portfolio
+                          </div>
+                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                            {userData.technical_profile?.portfolio_url
+                              ? userData.technical_profile.portfolio_url.replace(
+                                  "https://",
+                                  ""
+                                )
+                              : "charliebrown.com"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Skills Section */}
+                <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
+                  <div className="w-20 justify-start text-white text-lg font-medium font-mono uppercase">
+                    SKILLS
+                  </div>
+                  <div className="flex justify-start items-start gap-2 flex-wrap">
+                    {userData.technical_profile.primary_skills.map(
+                      (skill: string, index: number) => (
+                        <div
+                          key={index}
+                          className="p-2 bg-zinc-100 flex justify-start items-center"
+                        >
+                          <div className="justify-start text-neutral-500 text-sm font-medium font-mono uppercase">
+                            {skill}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </motion.div>
