@@ -214,80 +214,63 @@ export default function AIInputSearch({
               disabled={disabled || isLoading}
             />
 
-            {/* Button positioning based on line count */}
+            {/* Single button with conditional positioning */}
             <AnimatePresence>
               {(isLoading || input.trim().length > 0) && (
-                <>
-                  {!isMultiLine ? (
-                    // Inline button when textarea is short
-                    <motion.div
-                      variants={buttonVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      className="absolute top-1/2 right-3 transform -translate-y-1/2"
-                    >
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        className={cn(
-                          "transition-colors flex items-center justify-center bg-foreground hover:bg-foreground/90 text-background w-10 h-10 p-0",
-                          isLoading &&
-                            "bg-gradient-to-br from-indigo-400 to-indigo-600 cursor-not-allowed"
-                        )}
-                        style={{
-                          clipPath:
-                            "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
-                        }}
-                        onClick={() => {
-                          if (!disabled) {
-                            handleSubmit();
-                          }
-                        }}
-                        disabled={disabled || !input.trim()}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Triangle size={16} className="fill-current" />
-                        )}
-                      </Button>
-                    </motion.div>
-                  ) : (
-                    // Full width button at bottom when textarea is multi-line
-                    <div className="border-t border-input/50 p-2 flex w-full justify-end">
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        className={cn(
-                          "transition-colors flex items-center justify-center bg-foreground hover:bg-foreground/90 text-background w-fit h-10",
-                          isLoading &&
-                            "bg-gradient-to-br from-indigo-400 to-indigo-600 cursor-not-allowed"
-                        )}
-                        style={{
-                          clipPath:
-                            "polygon(4px 0%, 100% 0%, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0% 100%, 0% 4px)",
-                        }}
-                        onClick={() => {
-                          if (!disabled) {
-                            handleSubmit();
-                          }
-                        }}
-                        disabled={disabled || !input.trim()}
-                      >
-                        {isLoading ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Triangle size={16} className="fill-current" />
-                          </div>
-                        )}
-                      </Button>
-                    </div>
+                <motion.div
+                  variants={!isMultiLine ? buttonVariants : undefined}
+                  initial={!isMultiLine ? "hidden" : undefined}
+                  animate={!isMultiLine ? "visible" : undefined}
+                  exit={!isMultiLine ? "exit" : undefined}
+                  className={cn(
+                    "flex w-full justify-end",
+                    isMultiLine
+                      ? "border-t border-input/50 p-2"
+                      : "absolute top-1/2 right-3 transform -translate-y-1/2 w-auto"
                   )}
-                </>
+                >
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    className={cn(
+                      "transition-colors flex items-center justify-center bg-foreground hover:bg-foreground/80 text-background h-10 rounded-none cursor-pointer",
+                      isMultiLine ? "w-10" : "w-10 p-0",
+                      isLoading &&
+                        "bg-foreground/60 hover:bg-foreground/60 cursor-not-allowed"
+                    )}
+                    style={{
+                      clipPath: isMultiLine
+                        ? "polygon(4px 0%, 100% 0%, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0% 100%, 0% 4px)"
+                        : "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
+                    }}
+                    onClick={() => {
+                      if (!disabled) {
+                        handleSubmit();
+                      }
+                    }}
+                    disabled={disabled || !input.trim()}
+                  >
+                    {isLoading ? (
+                      <div
+                        className={cn(
+                          "flex items-center",
+                          isMultiLine ? "gap-2" : ""
+                        )}
+                      >
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      </div>
+                    ) : (
+                      <div
+                        className={cn(
+                          "flex items-center",
+                          isMultiLine ? "gap-2" : ""
+                        )}
+                      >
+                        <Triangle size={16} className="fill-current" />
+                      </div>
+                    )}
+                  </Button>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
