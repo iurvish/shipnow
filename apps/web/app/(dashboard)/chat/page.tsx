@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ChatItem from "@/components/shared/chat-item";
+import ChatMessages, { ChatMessage } from "@/components/shared/chat-messages";
 import AIInputSearch from "@/components/shared/ai-input-search";
 import {
   SimpleArtifactProvider,
@@ -9,14 +9,6 @@ import {
 } from "../../../hooks/use-user-detail-panel";
 import { SimpleArtifactPanel } from "@/components/panels/user-detail-panel";
 import { ChatResponse } from "@/lib/actions/chat-actions";
-
-interface ChatMessage {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  chatResponse?: ChatResponse;
-  timestamp: Date;
-}
 
 interface ChatPageContentProps {
   messages: ChatMessage[];
@@ -41,21 +33,6 @@ function ChatPageContent({
   useEffect(() => {
     setArtifactMessages(messages);
   }, [messages, setArtifactMessages]);
-
-  const handleRegenerate = async (messageId: string) => {
-    // Find the user message that preceded this AI response
-    const messageIndex = messages.findIndex((m) => m.id === messageId);
-    if (messageIndex > 0) {
-      const userMessage = messages[messageIndex - 1];
-      if (userMessage && userMessage.role === "user") {
-        setIsLoading(true);
-        // Remove the old AI response
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
-        // Regenerate with the original user message
-        handleUserMessage(userMessage.content);
-      }
-    }
-  };
 
   return (
     <div className="flex h-full relative">
@@ -89,31 +66,12 @@ function ChatPageContent({
                 </div>
               </div>
             ) : (
-              /* Chat Messages */
-              <div className="space-y-0">
-                {messages.map((message) => (
-                  <ChatItem
-                    key={message.id}
-                    content={message.content}
-                    role={message.role}
-                    chatResponse={message.chatResponse}
-                    onRegenerate={
-                      message.role === "assistant"
-                        ? () => handleRegenerate(message.id)
-                        : undefined
-                    }
-                  />
-                ))}
-
-                {/* Loading State */}
-                {isLoading && (
-                  <ChatItem
-                    content="Searching for people..."
-                    role="assistant"
-                    isLoading={true}
-                  />
-                )}
-              </div>
+              /* Chat Messages without regenerate */
+              <ChatMessages
+                messages={messages}
+                isLoading={isLoading}
+                loadingMessage="Searching for people..."
+              />
             )}
           </div>
         </div>

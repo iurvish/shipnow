@@ -28,6 +28,8 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
+import ChatMessages from "../shared/chat-messages";
+import AIInputSearch from "../shared/ai-input-search";
 
 export function SimpleArtifactPanel() {
   const { isVisible, artifactData, closeArtifact, messages, sendMessage } =
@@ -213,65 +215,24 @@ export function SimpleArtifactPanel() {
               {/* Left Column - Chat Messages - Hidden on mobile */}
               <div className="hidden md:flex md:w-3/5 relative bg-muted dark:bg-background h-dvh shrink-0 border-r border-border flex-col">
                 {/* Chat Header */}
-                <div className="p-4 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold">Chat History</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Your conversation with the AI assistant
-                  </p>
-                </div>
 
-                {/* Chat Messages - with fixed height to leave room for input */}
+                {/* Messages Area */}
                 <div className="flex-1 flex flex-col min-h-0">
-                  <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
-                      {messages.length > 0 ? (
-                        messages.map((message) => (
-                          <ChatItem
-                            key={message.id}
-                            content={message.content}
-                            role={message.role}
-                            chatResponse={message.chatResponse}
-                          />
-                        ))
-                      ) : (
-                        <div className="text-center py-8">
-                          <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                          <p className="text-sm text-muted-foreground">
-                            No messages yet. Start a conversation in the main
-                            chat!
-                          </p>
-                        </div>
-                      )}
+                  <div className="hide-scrollbar w-full flex flex-col justify-between h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-3.75rem)] min-h-0 bg-transparent">
+                    <div className="flex-1 overflow-y-auto pb-24 bg-transparent">
+                      <div className="max-w-6xl mx-auto">
+                        <ChatMessages
+                          messages={messages}
+                          isLoading={isLoading}
+                          loadingMessage="Searching for people..."
+                        />{" "}
+                      </div>
+                      <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto bg-transparent">
+                        <AIInputSearch />
+                      </div>
                     </div>
-                  </ScrollArea>
-
-                  {/* Fixed Chat Input */}
-                  <div className="p-4 border-t border-border bg-background/95 backdrop-blur-sm">
-                    <div className="flex gap-2">
-                      <Textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Continue the conversation..."
-                        className="min-h-[40px] max-h-[120px] resize-none flex-1"
-                        disabled={isLoading}
-                      />
-                      <Button
-                        onClick={handleSend}
-                        disabled={!input.trim() || isLoading}
-                        size="sm"
-                        className="px-3"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Press Enter to send, Shift + Enter for new line
-                    </p>
                   </div>
+                  {/* Chat Messages - with fixed height to leave room for input */}
                 </div>
               </div>
 

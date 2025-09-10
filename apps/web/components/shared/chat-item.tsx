@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Check, RefreshCw, User, Bot } from "lucide-react";
+import { User, Bot } from "lucide-react";
 import { ChatResponseComponent } from "./chat-response";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
@@ -10,7 +10,6 @@ interface ChatItemProps {
   role: "user" | "assistant";
   isLoading?: boolean;
   chatResponse?: ChatResponse;
-  onRegenerate?: () => Promise<void>;
 }
 
 const CHAR_LIMIT = 300;
@@ -20,22 +19,8 @@ const ChatItem: React.FC<ChatItemProps> = ({
   role,
   isLoading = false,
   chatResponse,
-  onRegenerate,
 }) => {
-  const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleRegenerate = async () => {
-    if (onRegenerate) {
-      await onRegenerate();
-    }
-  };
 
   const toggleExpand = () => {
     setExpanded(!expanded);
@@ -108,39 +93,6 @@ const ChatItem: React.FC<ChatItemProps> = ({
               <div className="mt-6">
                 <ChatResponseComponent response={chatResponse} />
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Action Buttons for Assistant Messages */}
-        {role === "assistant" && !isLoading && (
-          <div className="mt-4 flex gap-2">
-            <Button
-              onClick={handleCopy}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 border-muted-foreground/20"
-              style={{ borderRadius: "0px" }}
-            >
-              {copied ? (
-                <Check className="h-3 w-3" />
-              ) : (
-                <Copy className="h-3 w-3" />
-              )}
-              <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
-            </Button>
-
-            {onRegenerate && (
-              <Button
-                onClick={handleRegenerate}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 border-muted-foreground/20"
-                style={{ borderRadius: "0px" }}
-              >
-                <RefreshCw className="h-3 w-3" />
-                <span className="text-xs">Regenerate</span>
-              </Button>
             )}
           </div>
         )}
