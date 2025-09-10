@@ -60,9 +60,9 @@ function ChatPageContent({
   return (
     <div className="flex h-full relative">
       {/* Main Chat Content */}
-      <div className="flex flex-col w-full relative">
+      <div className="hide-scrollbar w-full flex flex-col justify-between h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-3.75rem)] min-h-0">
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto pb-24">
+        <div className="flex-1 overflow-y-auto pb-24   ">
           <div className="max-w-6xl mx-auto">
             {messages.length === 0 && !isLoading ? (
               /* Welcome Message */
@@ -119,15 +119,13 @@ function ChatPageContent({
         </div>
 
         {/* Sticky Input Area */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-border/40 bg-background/80 backdrop-blur-sm ">
-          <div className="max-w-6xl mx-auto">
-            <AIInputSearch
-              onResponse={handleAIResponse}
-              onUserMessage={handleUserMessage}
-              disabled={isLoading}
-              placeholder="Search people you're looking for..."
-            />
-          </div>
+        <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto ">
+          <AIInputSearch
+            onResponse={handleAIResponse}
+            onUserMessage={handleUserMessage}
+            disabled={isLoading}
+            placeholder="Search people you're looking for..."
+          />
         </div>
       </div>
 
