@@ -157,7 +157,7 @@ export default function AIInputSearch({
   }, [input]);
 
   return (
-    <div className="w-full py-2 pb-4">
+    <div className="w-full py-2 pb-4 bg-transparent">
       {/* Tool Status Indicator */}
       {isLoading && toolStatuses.length > 0 && (
         <div className="mb-4">
@@ -168,7 +168,7 @@ export default function AIInputSearch({
         </div>
       )}
 
-      <div className="w-full px-4 max-sm:px-4">
+      <div className="w-full px-4 max-sm:px-4 bg-transparent">
         {/* AI Suggestions - positioned above input */}
         <AISuggestions className="mb-3" show={showSuggestions && !isLoading}>
           {suggestions.map((suggestion) => (
