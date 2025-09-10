@@ -30,6 +30,7 @@ import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
 import ChatMessages from "../shared/chat-messages";
 import AIInputSearch from "../shared/ai-input-search";
+import { ChatResponse } from "@/lib/actions/chat-actions";
 
 export function SimpleArtifactPanel() {
   const { isVisible, artifactData, closeArtifact, messages, sendMessage } =
@@ -49,6 +50,17 @@ export function SimpleArtifactPanel() {
       sendMessage(input);
     }
     setInput("");
+  };
+
+  const handleUserMessage = (content: string) => {
+    if (sendMessage) {
+      sendMessage(content);
+    }
+  };
+
+  const handleAIResponse = (response: ChatResponse) => {
+    // Handle AI response if needed
+    setIsLoading(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -214,25 +226,27 @@ export function SimpleArtifactPanel() {
             <div className="flex-1 flex flex-col md:flex-row h-full">
               {/* Left Column - Chat Messages - Hidden on mobile */}
               <div className="hidden md:flex md:w-3/5 relative bg-muted dark:bg-background h-dvh shrink-0 border-r border-border flex-col">
-                {/* Chat Header */}
-
                 {/* Messages Area */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  <div className="hide-scrollbar w-full flex flex-col justify-between h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-3.75rem)] min-h-0 bg-transparent">
-                    <div className="flex-1 overflow-y-auto pb-24 bg-transparent">
-                      <div className="max-w-6xl mx-auto">
-                        <ChatMessages
-                          messages={messages}
-                          isLoading={isLoading}
-                          loadingMessage="Searching for people..."
-                        />{" "}
-                      </div>
-                      <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto bg-transparent">
-                        <AIInputSearch />
-                      </div>
+                <div className="hide-scrollbar w-full flex flex-col justify-between min-h-0 bg-transparent">
+                  <div className="flex-1 overflow-y-auto pb-24 bg-transparent">
+                    <div className="max-w-6xl mx-auto">
+                      <ChatMessages
+                        messages={messages}
+                        isLoading={isLoading}
+                        loadingMessage="Searching for people..."
+                      />
                     </div>
                   </div>
-                  {/* Chat Messages - with fixed height to leave room for input */}
+
+                  {/* Sticky Input Area */}
+                  <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto bg-transparent">
+                    <AIInputSearch
+                      onResponse={handleAIResponse}
+                      onUserMessage={handleUserMessage}
+                      disabled={isLoading}
+                      placeholder="Ask about this person..."
+                    />
+                  </div>
                 </div>
               </div>
 
