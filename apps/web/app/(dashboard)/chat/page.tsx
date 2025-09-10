@@ -129,7 +129,7 @@ export default function ChatPage() {
   };
 
   return (
-    <SimpleArtifactProvider 
+    <SimpleArtifactProvider
       sendMessage={handleUserMessage}
       onAIResponse={handleAIResponse}
     >

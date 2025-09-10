@@ -33,8 +33,14 @@ import AIInputSearch from "../shared/ai-input-search";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
 export function SimpleArtifactPanel() {
-  const { isVisible, artifactData, closeArtifact, messages, sendMessage, onAIResponse } =
-    useSimpleArtifact();
+  const {
+    isVisible,
+    artifactData,
+    closeArtifact,
+    messages,
+    sendMessage,
+    onAIResponse,
+  } = useSimpleArtifact();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const isMobile = windowWidth ? windowWidth < 768 : false;
 
@@ -59,7 +65,7 @@ export function SimpleArtifactPanel() {
     }
   };
 
-    const handleAIResponse = (response: ChatResponse) => {
+  const handleAIResponse = (response: ChatResponse) => {
     // Use the main chat page's AI response handler
     console.log("Artifact panel handleAIResponse called with:", response);
     if (onAIResponse) {
