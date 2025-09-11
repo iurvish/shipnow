@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
-import ProjectMultiSelect from "@/components/project-multiselect";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ProjectMultiSelect from "@/components/project-multiselect";
 import {
   Form,
   FormControl,
@@ -20,10 +19,10 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
-import { createProject } from "@/lib/actions/projects";
-import { ProjectInput } from "@/lib/types";
 import { toast } from "sonner";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { Project, ProjectInput } from "@/lib/types";
+import { updateProject, getProject } from "@/lib/actions/projects";
 
 const formSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
@@ -40,9 +39,16 @@ const formSchema = z.object({
 
 type ProjectFormData = z.infer<typeof formSchema>;
 
-export default function AddProjectPage() {
+export default function EditProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = use(params);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [project, setProject] = useState<Project | null>(null);
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(formSchema),
@@ -60,49 +66,101 @@ export default function AddProjectPage() {
     },
   });
 
+  // Load project data
+  useEffect(() => {
+    const loadProject = async () => {
+      try {
+        const projectData = await getProject(resolvedParams.id);
+        if (projectData) {
+          setProject(projectData);
+          form.reset({
+            project_name: projectData.project_name || "",
+            case_summary: projectData.case_summary || "",
+            project_image: projectData.project_image || "",
+            live_site_url: projectData.live_site_url || "",
+            github_link: projectData.github_link || "",
+            video_url: projectData.video_url || "",
+            tags: projectData.tags || [],
+            key_features: projectData.key_features || [],
+            build_journey: projectData.build_journey || "",
+            results: projectData.results || "",
+          });
+        } else {
+          toast.error("Project not found");
+          router.push("/projects");
+        }
+      } catch (error) {
+        toast.error("Failed to load project");
+        router.push("/projects");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProject();
+  }, [resolvedParams.id, router]);
+
   const onSubmit = async (data: ProjectFormData) => {
+    if (!project) return;
+
     setIsSubmitting(true);
     try {
       // Data is already in the correct format for the API
-      await createProject(data);
-      toast.success("Project added successfully!");
+      await updateProject(project.id, data);
+      toast.success("Project updated successfully!");
       router.push("/projects");
     } catch (error) {
-      console.error("Error creating project:", error);
-      toast.error("Failed to create project. Please try again.");
+      console.error("Error updating project:", error);
+      toast.error("Failed to update project. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      action();
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Project not found</h2>
+          <Button onClick={() => router.push("/projects")}>
+            Back to Projects
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
+    <div className="container mx-auto py-10">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Button
             variant="ghost"
-            className="mb-4"
             onClick={() => router.back()}
+            className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <h1 className="text-3xl font-bold">Add New Project</h1>
+          <h1 className="text-3xl font-bold">Edit Project</h1>
           <p className="text-muted-foreground mt-2">
-            Showcase your work and technical skills
+            Update your project details and information.
           </p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-6">
               {/* Basic Information */}
               <Card>
@@ -126,21 +184,17 @@ export default function AddProjectPage() {
 
                   <FormField
                     control={form.control}
-                    name="project_image"
+                    name="case_summary"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project Image URL</FormLabel>
+                        <FormLabel>Description *</FormLabel>
                         <FormControl>
-                          <Input
-                            type="url"
-                            placeholder="https://example.com/screenshot.png"
+                          <Textarea
+                            placeholder="Brief description of what your project does..."
+                            rows={3}
                             {...field}
                           />
                         </FormControl>
-                        <FormDescription>
-                          Upload your screenshot to a service like Imgur or use
-                          a direct URL
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -148,14 +202,14 @@ export default function AddProjectPage() {
 
                   <FormField
                     control={form.control}
-                    name="case_summary"
+                    name="project_image"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project Summary *</FormLabel>
+                        <FormLabel>Project Image URL</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Brief description of what this project does and why it's useful..."
-                            rows={3}
+                          <Input
+                            type="url"
+                            placeholder="https://example.com/image.png"
                             {...field}
                           />
                         </FormControl>
@@ -166,7 +220,7 @@ export default function AddProjectPage() {
                 </CardContent>
               </Card>
 
-              {/* Links */}
+              {/* Project Links */}
               <Card>
                 <CardHeader>
                   <CardTitle>Project Links</CardTitle>
@@ -231,7 +285,7 @@ export default function AddProjectPage() {
               {/* Technologies */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Technologies Used</CardTitle>
+                  <CardTitle>Technologies & Tags</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <FormField
@@ -239,7 +293,7 @@ export default function AddProjectPage() {
                     name="tags"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Technologies Used</FormLabel>
+                        <FormLabel>Technologies & Tools</FormLabel>
                         <FormControl>
                           <ProjectMultiSelect
                             value={field.value || []}
@@ -378,12 +432,12 @@ export default function AddProjectPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
+                      Updating...
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      Create Project
+                      Update Project
                     </>
                   )}
                 </Button>

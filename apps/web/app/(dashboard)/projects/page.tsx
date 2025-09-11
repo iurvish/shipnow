@@ -256,7 +256,7 @@ export default function ProjectsPage() {
             </p>
           </div>
           <Button asChild>
-            <Link href="/dashboard/projects/add">
+            <Link href="/projects/add">
               <Plus className="h-4 w-4 mr-2" />
               Add Project
             </Link>
@@ -277,7 +277,7 @@ export default function ProjectsPage() {
                 Start building your portfolio by adding your first project
               </p>
               <Button asChild>
-                <Link href="/dashboard/projects/add">
+                <Link href="/projects/add">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First Project
                 </Link>
