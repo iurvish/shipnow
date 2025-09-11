@@ -1,4 +1,5 @@
 // User schema types for comprehensive recommendation system
+import { Project } from './types';
 
 export type DegreeLevel =
   | "Bachelor"
@@ -7,11 +8,6 @@ export type DegreeLevel =
   | "Diploma"
   | "Other";
 
-export type ExperienceLevel =
-  | "Beginner"
-  | "Intermediate"
-  | "Advanced"
-  | "Expert";
 
 // Main User table (extends auth.users) - clean with only basic info
 export interface User {
@@ -39,11 +35,10 @@ export interface PersonalDetails {
   updated_at: string;
 }
 
-// Technical profile table (linked to users) - bio removed, it's in users table
+// Technical profile table (linked to users) - experience removed, now inferred from projects
 export interface TechnicalProfile {
   id: string;
   user_id: string;
-  experience: ExperienceLevel;
   skills: string[];
   github?: string;
   portfolio?: string;
@@ -51,10 +46,11 @@ export interface TechnicalProfile {
   updated_at: string;
 }
 
-// Complete user with joined data
+// Complete user with joined data including projects
 export interface CompleteUser extends User {
   personal_details?: PersonalDetails;
   technical_profile?: TechnicalProfile;
+  projects?: Project[]; // Add projects relationship
 }
 
 // For form inputs and API requests
@@ -69,7 +65,6 @@ export interface CreatePersonalDetailsInput {
 
 export interface CreateTechnicalProfileInput {
   skills: string[];
-  experience: ExperienceLevel;
   github?: string;
   portfolio?: string;
 }
@@ -81,12 +76,13 @@ export interface UpdateUserInput {
   onboarded?: boolean;
 }
 
-// For recommendation system
+// For recommendation system - experience now inferred from project complexity/count
 export interface UserRecommendationData {
   id: string;
   skills: string[];
-  experience_level: ExperienceLevel;
   university: string;
   department: string;
   degree_level: DegreeLevel;
+  project_count: number;
+  recent_projects: string[]; // Recent project tags for skills inference
 }
