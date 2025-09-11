@@ -295,25 +295,64 @@ export default function AddProjectPage() {
                             value={field.value || []}
                             onChange={field.onChange}
                             options={[
-                              { value: "User Authentication", label: "User Authentication" },
-                              { value: "Real-time Updates", label: "Real-time Updates" },
-                              { value: "Responsive Design", label: "Responsive Design" },
+                              {
+                                value: "User Authentication",
+                                label: "User Authentication",
+                              },
+                              {
+                                value: "Real-time Updates",
+                                label: "Real-time Updates",
+                              },
+                              {
+                                value: "Responsive Design",
+                                label: "Responsive Design",
+                              },
                               { value: "REST API", label: "REST API" },
                               { value: "GraphQL API", label: "GraphQL API" },
-                              { value: "Database Integration", label: "Database Integration" },
-                              { value: "Payment Processing", label: "Payment Processing" },
-                              { value: "Search Functionality", label: "Search Functionality" },
-                              { value: "Analytics Dashboard", label: "Analytics Dashboard" },
-                              { value: "Push Notifications", label: "Push Notifications" },
+                              {
+                                value: "Database Integration",
+                                label: "Database Integration",
+                              },
+                              {
+                                value: "Payment Processing",
+                                label: "Payment Processing",
+                              },
+                              {
+                                value: "Search Functionality",
+                                label: "Search Functionality",
+                              },
+                              {
+                                value: "Analytics Dashboard",
+                                label: "Analytics Dashboard",
+                              },
+                              {
+                                value: "Push Notifications",
+                                label: "Push Notifications",
+                              },
                               { value: "Chat System", label: "Chat System" },
                               { value: "File Upload", label: "File Upload" },
                               { value: "Admin Panel", label: "Admin Panel" },
-                              { value: "SEO Optimized", label: "SEO Optimized" },
-                              { value: "Progressive Web App", label: "Progressive Web App" },
-                              { value: "Multi-language Support", label: "Multi-language Support" },
+                              {
+                                value: "SEO Optimized",
+                                label: "SEO Optimized",
+                              },
+                              {
+                                value: "Progressive Web App",
+                                label: "Progressive Web App",
+                              },
+                              {
+                                value: "Multi-language Support",
+                                label: "Multi-language Support",
+                              },
                               { value: "Dark Mode", label: "Dark Mode" },
-                              { value: "Offline Support", label: "Offline Support" },
-                              { value: "Email Integration", label: "Email Integration" },
+                              {
+                                value: "Offline Support",
+                                label: "Offline Support",
+                              },
+                              {
+                                value: "Email Integration",
+                                label: "Email Integration",
+                              },
                               { value: "Social Login", label: "Social Login" },
                             ]}
                             placeholder="Select key features..."
