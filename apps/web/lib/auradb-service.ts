@@ -11,7 +11,7 @@ import {
   DELETE_PROJECT_CYPHER,
   CHECK_USER_SKILLS_CYPHER
 } from './auradb-queries';
-import { OnboardingData } from './onboarding';
+import type { OnboardingFormData } from './actions/onboarding';
 import { Project } from './types';
 
 // Interface for user profile data that will be sent to AuraDB
@@ -50,7 +50,7 @@ export interface AuraDBProject {
 export function transformOnboardingDataForAuraDB(
   userId: string,
   email: string,
-  onboardingData: OnboardingData,
+  onboardingData: OnboardingFormData,
   projects: Project[] = []
 ): AuraDBUserProfile {
   const name = `${onboardingData.first_name} ${onboardingData.last_name}`.trim();

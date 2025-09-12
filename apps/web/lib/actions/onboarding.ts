@@ -245,7 +245,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
           date_of_birth: validatedData.date_of_birth,
           university: validatedData.university,
           department: validatedData.department,
-          degree_level: validatedData.degree_level.toLowerCase() as "bachelor" | "master" | "self_taught",
+          degree_level: validatedData.degree_level,
           skills: validatedData.skills,
           github: validatedData.github,
           portfolio: validatedData.portfolio,
