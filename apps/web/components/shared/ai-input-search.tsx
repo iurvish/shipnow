@@ -7,13 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   generatePeopleSuggestions,
-  ToolStatus,
   ChatResponse,
 } from "@/lib/actions/chat-actions";
 import { ToolStatusIndicator } from "./tool-status-indicator";
 import { AISuggestion, AISuggestions } from "@/components/ai/suggestions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useSessionUser } from "@/hooks/use-session-user";
 
 interface AIInputSearchProps {
   onResponse?: (response: ChatResponse) => void;
@@ -55,11 +55,13 @@ export default function AIInputSearch({
 }: AIInputSearchProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [toolStatuses, setToolStatuses] = useState<ToolStatus[]>([]);
   const [currentStep, setCurrentStep] = useState<string>("");
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isMultiLine, setIsMultiLine] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Get current user session
+  const { user: sessionUser, loading: userLoading } = useSessionUser();
 
   // Predefined suggestions
   const suggestions = [
@@ -73,30 +75,33 @@ export default function AIInputSearch({
     "Mobile app developers",
   ];
 
-  const handleStatusUpdate = (status: ToolStatus) => {
-    setCurrentStep(status.step);
-    setToolStatuses((prev) => {
-      const existingIndex = prev.findIndex((s) => s.step === status.step);
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = status;
-        return updated;
-      } else {
-        return [...prev, status];
-      }
-    });
-  };
-
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    if (!input.trim() || isLoading || disabled) return;
+    if (
+      !input.trim() ||
+      isLoading ||
+      disabled ||
+      userLoading ||
+      !sessionUser?.id
+    )
+      return;
+
+    // Check if user is available
+    if (!sessionUser?.id) {
+      console.error("User not authenticated");
+      onResponse?.({
+        query_type: "general_question",
+        reasoning: "Authentication required",
+        message: "Please log in to search for people.",
+      });
+      return;
+    }
 
     const userMessage = input.trim();
     setInput("");
     setIsLoading(true);
     onLoadingChange?.(true); // Notify parent about loading state
-    setToolStatuses([]);
     setCurrentStep("");
     setShowSuggestions(false);
 
@@ -110,7 +115,10 @@ export default function AIInputSearch({
     onUserMessage?.(userMessage);
 
     try {
-      const response = await generatePeopleSuggestions(userMessage);
+      const response = await generatePeopleSuggestions(
+        userMessage,
+        sessionUser.id
+      );
       onResponse?.(response);
     } catch (error) {
       console.error("Error generating suggestions:", error);
@@ -124,7 +132,6 @@ export default function AIInputSearch({
     } finally {
       setIsLoading(false);
       onLoadingChange?.(false); // Notify parent about loading state end
-      setToolStatuses([]);
       setCurrentStep("");
       // Don't show suggestions after a successful search
     }
@@ -176,14 +183,16 @@ export default function AIInputSearch({
   return (
     <div className="w-full py-2 pb-4 bg-transparent">
       {/* Tool Status Indicator */}
-      {isLoading && toolStatuses.length > 0 && (
-        <div className="mb-4">
-          <ToolStatusIndicator
-            statuses={toolStatuses}
-            currentStep={currentStep}
-          />
-        </div>
-      )}
+      {/* {isLoading && toolStatuses.length > 0 && (
+        <>
+        </>
+        // <div className="mb-4">
+        //   <ToolStatusIndicator
+        //     statuses={toolStatuses}
+        //     currentStep={currentStep}
+        //   />
+        // </div>
+      )} */}
 
       <div className="w-full px-4 max-sm:px-4 bg-transparent">
         {/* AI Suggestions - positioned above input */}
@@ -222,13 +231,15 @@ export default function AIInputSearch({
                 }
               }}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder}
+              placeholder={
+                userLoading ? "Loading user session..." : placeholder
+              }
               className={cn(
                 "w-full bg-transparent text-foreground placeholder:text-muted-foreground text-base resize-none border-none outline-none min-h-[30px] scrollbar-thin overflow-y-auto px-4 py-3",
                 !isMultiLine ? "pr-16" : "pr-4" // Add right padding when button is inline
               )}
               rows={1}
-              disabled={disabled || isLoading}
+              disabled={disabled || isLoading || userLoading || !sessionUser}
             />
 
             {/* Single button with conditional positioning */}
@@ -261,11 +272,13 @@ export default function AIInputSearch({
                         : "polygon(2px 0%, 100% 0%, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0% 100%, 0% 2px)",
                     }}
                     onClick={() => {
-                      if (!disabled) {
+                      if (!disabled && sessionUser?.id) {
                         handleSubmit();
                       }
                     }}
-                    disabled={disabled || !input.trim()}
+                    disabled={
+                      disabled || !input.trim() || userLoading || !sessionUser
+                    }
                   >
                     {isLoading ? (
                       <div

@@ -9,6 +9,7 @@ import {
 } from "../../../hooks/use-user-detail-panel";
 import { SimpleArtifactPanel } from "@/components/panels/user-detail-panel";
 import { ChatResponse } from "@/lib/actions/chat-actions";
+import { useSessionUser } from "@/hooks/use-session-user";
 
 interface ChatPageContentProps {
   messages: ChatMessage[];
@@ -17,6 +18,8 @@ interface ChatPageContentProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   handleUserMessage: (content: string) => void;
   handleAIResponse: (response: ChatResponse) => void;
+  userLoading: boolean;
+  sessionUser: any;
 }
 
 function ChatPageContent({
@@ -26,6 +29,8 @@ function ChatPageContent({
   setIsLoading,
   handleUserMessage,
   handleAIResponse,
+  userLoading,
+  sessionUser,
 }: ChatPageContentProps) {
   const { setMessages: setArtifactMessages } = useSimpleArtifact();
 
@@ -33,6 +38,37 @@ function ChatPageContent({
   useEffect(() => {
     setArtifactMessages(messages);
   }, [messages, setArtifactMessages]);
+
+  // Show loading state while user is being fetched
+  if (userLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if user is not authenticated
+  if (!sessionUser) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">
+            Please log in to search for people
+          </p>
+          <button
+            onClick={() => (window.location.href = "/auth/login")}
+            className="bg-foreground text-background px-4 py-2 rounded"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full relative">
@@ -98,6 +134,9 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Get current user session
+  const { user: sessionUser, loading: userLoading } = useSessionUser();
+
   const handleUserMessage = (content: string) => {
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -140,6 +179,8 @@ export default function ChatPage() {
         setIsLoading={setIsLoading}
         handleUserMessage={handleUserMessage}
         handleAIResponse={handleAIResponse}
+        userLoading={userLoading}
+        sessionUser={sessionUser}
       />
     </SimpleArtifactProvider>
   );
