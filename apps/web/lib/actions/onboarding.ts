@@ -4,6 +4,10 @@ import { createClient } from "@/lib/server";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { 
+  syncUserProfileToAuraDB, 
+  transformOnboardingDataForAuraDB 
+} from "@/lib/auradb-service";
 
 // Define the complete onboarding schema
 const onboardingSchema = z.object({
@@ -17,9 +21,62 @@ const onboardingSchema = z.object({
   
   // Technical Profile
   skills: z.array(z.string()).min(1, "At least one skill is required"),
-  experience: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"]),
-  github: z.string().url().optional().or(z.literal("")),
-  portfolio: z.string().url().optional().or(z.literal("")),
+  github: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ''); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ''); // Remove www.
+      
+      // Add https:// prefix for storage
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., github.com/username)",
+      }
+    ),
+  portfolio: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ''); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ''); // Remove www.
+      
+      // Add https:// prefix for storage
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., portfolio.com)",
+      }
+    ),
   
   // Setup Profile
   profilePhoto: z.string().url().optional().or(z.literal("")),
@@ -148,7 +205,6 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
       .from('technical_profiles')
       .upsert({
         user_id: user.id,
-        experience: validatedData.experience,
         skills: validatedData.skills,
         github: validatedData.github || null,
         portfolio: validatedData.portfolio || null,
@@ -166,6 +222,42 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
     revalidatePath('/onboarding');
     revalidatePath('/protected');
     revalidatePath('/');
+
+    // Step 4: Sync to AuraDB for AI-powered search
+    try {
+      console.log("🔄 Syncing user profile to AuraDB...");
+      
+      // Transform the data for AuraDB (no projects during onboarding)
+      const auraDBProfile = transformOnboardingDataForAuraDB(
+        user.id,
+        user.email || '',
+        {
+          first_name: validatedData.first_name,
+          last_name: validatedData.last_name,
+          date_of_birth: validatedData.date_of_birth,
+          university: validatedData.university,
+          department: validatedData.department,
+          degree_level: validatedData.degree_level.toLowerCase() as "bachelor" | "master" | "self_taught",
+          skills: validatedData.skills,
+          github: validatedData.github,
+          portfolio: validatedData.portfolio,
+          profilePhoto: validatedData.profilePhoto,
+          username: validatedData.username,
+          bio: validatedData.bio,
+        },
+        [] // Empty projects array - projects will be added when user creates them
+      );
+      
+      // Sync to AuraDB
+      await syncUserProfileToAuraDB(auraDBProfile);
+      
+      console.log("✅ User profile synced to AuraDB successfully!");
+      
+    } catch (auraDBError) {
+      console.error("⚠️  Warning: Failed to sync to AuraDB:", auraDBError);
+      // Don't fail the entire onboarding process if AuraDB sync fails
+      // This allows the app to continue working even if the graph database is down
+    }
 
     return {
       success: true,

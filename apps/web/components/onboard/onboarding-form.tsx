@@ -27,7 +27,7 @@ import SelectCommand from "@/components/ui/autoform/custom/select-command";
 import ProfilePhotoField from "@/components/ui/autoform/custom/profile-photo";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
-
+import { submitOnboardingForm } from "@/lib/actions/onboarding";
 // Step 1: Personal Details
 const personalDetailsSchema = z.object({
   first_name: z
@@ -255,28 +255,34 @@ const technicalProfileSchema = z.object({
         },
       })
     ),
-  experience: z
-    .enum(["Beginner", "Intermediate", "Advanced", "Expert"])
-    .superRefine(
-      fieldConfig({
-        label: "Experience Level",
-        inputProps: {
-          placeholder: "Select your experience level",
-        },
-      })
-    ),
   github: z
     .string()
-    .url()
     .optional()
     .transform((val) => {
       if (!val || val.trim() === "") return undefined;
-      // Add https:// if not present
-      if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
-        return `https://${val}`;
-      }
-      return val;
+
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
+
+      // Add https:// prefix
+      return `https://${cleanVal}`;
     })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field, so undefined/empty is valid
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., github.com/username)",
+      }
+    )
     .superRefine(
       fieldConfig({
         label: "Github/Twitter Profile",
@@ -290,16 +296,32 @@ const technicalProfileSchema = z.object({
     ),
   portfolio: z
     .string()
-    .url()
     .optional()
     .transform((val) => {
       if (!val || val.trim() === "") return undefined;
-      // Add https:// if not present
-      if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
-        return `https://${val}`;
-      }
-      return val;
+
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
+
+      // Add https:// prefix
+      return `https://${cleanVal}`;
     })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field, so undefined/empty is valid
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., portfolio.com)",
+      }
+    )
     .superRefine(
       fieldConfig({
         label: "Portfolio Link",
@@ -385,7 +407,7 @@ const steps = [
     title: "Technical Profile",
     icon: GraduationCap,
     schema: new ZodProvider(technicalProfileSchema),
-    fields: ["skills", "experience", "github", "portfolio"],
+    fields: ["skills", "github", "portfolio"],
   },
   {
     id: "step-3",
@@ -499,10 +521,6 @@ const OnboardingForm = () => {
     try {
       console.log("Submitting complete onboarding data:", completeData);
 
-      // Import the server action
-      const { submitOnboardingForm } = await import("@/lib/actions/onboarding");
-
-      // Submit the data using server action
       const result = await submitOnboardingForm(completeData);
 
       if (result.success) {
