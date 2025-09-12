@@ -8,12 +8,6 @@ export interface Document {
   userId: string;
 }
 
-export interface Vote {
-  id: string;
-  documentId: string;
-  isUpvoted: boolean;
-  userId: string;
-}
 
 export interface Suggestion {
   id: string;

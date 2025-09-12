@@ -1,4 +1,8 @@
 import { createClient } from "./client";
+import { 
+  syncUserProfileToAuraDB, 
+  transformOnboardingDataForAuraDB 
+} from "./auradb-service";
 
 // Define the types based on our form schema
 export interface OnboardingData {
@@ -12,7 +16,6 @@ export interface OnboardingData {
   
   // Step 2: Technical Profile
   skills: string[];
-  experience: "Beginner" | "Intermediate" | "Advanced";
   github?: string;
   portfolio?: string;
   
@@ -22,21 +25,7 @@ export interface OnboardingData {
   bio?: string;
 }
 
-// Normalize experience level to match database enum
-const normalizeExperienceLevel = (experience: string): "beginner" | "intermediate" | "advanced" => {
-  switch (experience.toLowerCase()) {
-    case "beginner":
-      return "beginner";
-    case "intermediate":
-      return "intermediate";
-    case "advanced":
-      return "advanced";
-    default:
-      return "beginner";
-  }
-};
 
-// Normalize degree level to match database enum
 const normalizeDegreeLevel = (degreeLevel: string): "bachelor" | "master" | "self_taught" => {
   switch (degreeLevel) {
     case "bachelor":
@@ -113,7 +102,6 @@ export async function submitOnboardingData(data: OnboardingData) {
       .upsert({
         user_id: user.id,
         primary_skills: data.skills,
-        experience_level: normalizeExperienceLevel(data.experience),
         github_url: data.github || null,
         portfolio_url: data.portfolio || null,
         updated_at: new Date().toISOString()
@@ -126,6 +114,29 @@ export async function submitOnboardingData(data: OnboardingData) {
     }
 
     console.log("✅ Onboarding data submitted successfully!");
+    
+    // Step 4: Sync to AuraDB for AI-powered search
+    try {
+      console.log("🔄 Syncing user profile to AuraDB...");
+      
+      // Transform the data for AuraDB (no projects during onboarding)
+      const auraDBProfile = transformOnboardingDataForAuraDB(
+        user.id,
+        user.email || '',
+        data,
+        [] // Empty projects array - projects will be added when user creates them
+      );
+      
+      // Sync to AuraDB
+      await syncUserProfileToAuraDB(auraDBProfile);
+      
+      console.log("✅ User profile synced to AuraDB successfully!");
+      
+    } catch (auraDBError) {
+      console.error("⚠️  Warning: Failed to sync to AuraDB:", auraDBError);
+      // Don't fail the entire onboarding process if AuraDB sync fails
+      // This allows the app to continue working even if the graph database is down
+    }
     
     return {
       success: true,

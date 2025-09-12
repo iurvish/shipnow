@@ -1,96 +1,61 @@
-# ✅ Final Clean User Schema
+create table public.users (
+id uuid not null,
+email text null,
+username text null,
+bio text null,
+onboarded boolean null default false,
+created_at timestamp with time zone null default now(),
+updated_at timestamp with time zone null default now(),
+avatar_url text null,
+first_name character varying(100) null,
+last_name character varying(100) null,
+constraint users_pkey primary key (id),
+constraint users_id_fkey foreign KEY (id) references auth.users (id) on delete CASCADE deferrable initially DEFERRED
+) TABLESPACE pg_default;
 
-Your user schema is now properly normalized with separate tables for different concerns.
+create table public.technical_profiles (
+id uuid not null default gen_random_uuid (),
+user_id uuid not null,
+skills text[] not null default '{}'::text[],
+github character varying(255) null,
+portfolio character varying(255) null,
+created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
+constraint technical_profiles_pkey primary key (id),
+constraint technical_profiles_user_id_key unique (user_id),
+constraint technical_profiles_user_id_fkey foreign KEY (user_id) references users (id) on delete CASCADE
+) TABLESPACE pg_default;
 
-## 📊 Database Structure
+create table public.projects (
+id uuid not null default gen_random_uuid (),
+user_id uuid not null,
+project_name character varying(255) not null,
+project_image text null,
+live_site_url text null,
+github_link text null,
+video_url text null,
+tags text[] null default '{}'::text[],
+case_summary text null,
+build_journey text null,
+key_features text[] null,
+results text null,
+created_at timestamp with time zone null default now(),
+updated_at timestamp with time zone null default now(),
+constraint projects_pkey primary key (id),
+constraint projects_user_id_fkey foreign KEY (user_id) references users (id) on delete CASCADE,
+constraint projects_project_name_check check ((char_length((project_name)::text) > 0))
+) TABLESPACE pg_default;
 
-### 🔹 **Main `users` table** (Clean & Basic Info Only)
-
-```sql
-- id (UUID, references auth.users)
-- first_name (TEXT)
-- last_name (TEXT)
-- email (TEXT)
-- username (TEXT)
-- bio (TEXT)
-- date_of_birth (DATE)
-- profile_picture (TEXT)
-- onboarded (BOOLEAN)
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
-```
-
-### 🔸 **`personal_details` table** (Linked to users)
-
-```sql
-- id (UUID, primary key)
-- user_id (UUID, references users.id) ← FOREIGN KEY
-- university (TEXT)
-- department (TEXT)
-- degree_level (ENUM: associate, bachelor, master, doctorate, bootcamp, self_taught)
-- phone (TEXT)
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
-```
-
-### 🔹 **`technical_profiles` table** (Linked to users)
-
-```sql
-- id (UUID, primary key)
-- user_id (UUID, references users.id) ← FOREIGN KEY
-- primary_skills (TEXT[])
-- experience_level (ENUM: beginner, intermediate, advanced, expert)
-- interests (TEXT[])
-- preferred_roles (TEXT[])
-- github_url (TEXT)
-- linkedin_url (TEXT)
-- portfolio_url (TEXT)
-- tools_proficiency (TEXT[])
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
-```
-
-## 🔗 Relationships
-
-- **One user** can have **one personal_details** record (1:1)
-- **One user** can have **one technical_profile** record (1:1)
-- Both linked via `user_id` foreign key
-
-## 🎯 What Was Accomplished
-
-1. ✅ **Moved existing data** from users table to proper normalized tables
-2. ✅ **Cleaned users table** - removed all technical/personal columns
-3. ✅ **Preserved data** - existing user information was properly migrated
-4. ✅ **Proper normalization** - each table has a single responsibility
-5. ✅ **Foreign key relationships** - proper linking between tables
-
-## 🚀 Usage Examples
-
-### Get complete user with details:
-
-```sql
-SELECT
-  u.*,
-  pd.university, pd.department, pd.degree_level,
-  tp.primary_skills, tp.experience_level, tp.interests
-FROM users u
-LEFT JOIN personal_details pd ON u.id = pd.user_id
-LEFT JOIN technical_profiles tp ON u.id = tp.user_id
-WHERE u.id = 'user-id-here';
-```
-
-### Insert new personal details:
-
-```sql
-INSERT INTO personal_details (user_id, university, department, degree_level)
-VALUES ('user-id', 'MIT', 'Computer Science', 'bachelor');
-```
-
-### Insert new technical profile:
-
-```sql
-INSERT INTO technical_profiles (user_id, primary_skills, experience_level, interests)
-VALUES ('user-id', '{"JavaScript", "React"}', 'intermediate', '{"Web Development"}');
-```
-
-Your schema is now clean, normalized, and ready for production! 🎉
+create table public.personal_details (
+id uuid not null default gen_random_uuid (),
+user_id uuid not null,
+date_of_birth date null,
+university character varying(200) not null,
+department character varying(200) not null,
+degree_level public.degree_level not null,
+created_at timestamp with time zone null default CURRENT_TIMESTAMP,
+updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
+constraint personal_details_pkey primary key (id),
+constraint personal_details_user_id_key unique (user_id),
+constraint personal_details_user_id_fkey foreign KEY (user_id) references users (id) on delete CASCADE
+) TABLESPACE pg_default;

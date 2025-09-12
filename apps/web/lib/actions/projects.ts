@@ -3,6 +3,10 @@
 import { createClient } from "@/lib/server";
 import { Project, ProjectInput } from "@/lib/types";
 import { revalidatePath } from "next/cache";
+import { 
+  syncProjectToAuraDB, 
+  deleteProjectFromAuraDB 
+} from "@/lib/auradb-service";
 
 // Get all projects for a user
 export async function getUserProjects(userId?: string): Promise<Project[]> {
@@ -85,6 +89,16 @@ export async function createProject(projectData: ProjectInput): Promise<Project>
     throw new Error(`Failed to create project: ${error.message}`);
   }
 
+  // Sync to AuraDB for AI-powered search
+  try {
+    console.log("🔄 Syncing new project to AuraDB...");
+    await syncProjectToAuraDB(userId, data);
+    console.log("✅ Project synced to AuraDB successfully!");
+  } catch (auraDBError) {
+    console.error("⚠️  Warning: Failed to sync project to AuraDB:", auraDBError);
+    // Don't fail the project creation if AuraDB sync fails
+  }
+
   revalidatePath('/'); // Revalidate any cached pages
   return data;
 }
@@ -108,6 +122,16 @@ export async function updateProject(
     throw new Error(`Failed to update project: ${error.message}`);
   }
 
+  // Sync to AuraDB for AI-powered search
+  try {
+    console.log("🔄 Syncing updated project to AuraDB...");
+    await syncProjectToAuraDB(data.user_id, data);
+    console.log("✅ Project updated in AuraDB successfully!");
+  } catch (auraDBError) {
+    console.error("⚠️  Warning: Failed to sync updated project to AuraDB:", auraDBError);
+    // Don't fail the project update if AuraDB sync fails
+  }
+
   revalidatePath('/'); // Revalidate any cached pages
   return data;
 }
@@ -116,6 +140,18 @@ export async function updateProject(
 export async function deleteProject(projectId: string): Promise<void> {
   const supabase = await createClient();
   
+  // First get the project details before deleting
+  const { data: project, error: fetchError } = await supabase
+    .from('projects')
+    .select('user_id, project_name')
+    .eq('id', projectId)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching project for deletion:', fetchError);
+    throw new Error(`Failed to fetch project: ${fetchError.message}`);
+  }
+
   const { error } = await supabase
     .from('projects')
     .delete()
@@ -124,6 +160,18 @@ export async function deleteProject(projectId: string): Promise<void> {
   if (error) {
     console.error('Error deleting project:', error);
     throw new Error(`Failed to delete project: ${error.message}`);
+  }
+
+  // Delete from AuraDB
+  if (project) {
+    try {
+      console.log("🔄 Deleting project from AuraDB...");
+      await deleteProjectFromAuraDB(project.user_id, project.project_name);
+      console.log("✅ Project deleted from AuraDB successfully!");
+    } catch (auraDBError) {
+      console.error("⚠️  Warning: Failed to delete project from AuraDB:", auraDBError);
+      // Don't fail the project deletion if AuraDB deletion fails
+    }
   }
 
   revalidatePath('/'); // Revalidate any cached pages
