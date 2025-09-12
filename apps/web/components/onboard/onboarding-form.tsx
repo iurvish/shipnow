@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { getSkillsForFormOptions, validateSkills } from "@/lib/config/skills";
 import {
   ChevronLeft,
   ChevronRight,
@@ -230,28 +231,17 @@ const technicalProfileSchema = z.object({
   skills: z
     .array(z.string())
     .min(1, "Select at least one skill")
+    .refine((skills) => validateSkills(skills), {
+      message: "Invalid skill selected",
+    })
     .superRefine(
       fieldConfig({
         label: "Technical Skills",
-        fieldType: "multiselect", // Add fieldType to specify component
+        fieldType: "multiselect",
         inputProps: {
           placeholder: "Select skills...",
           className: "w-full",
-          options: [
-            { value: "react", label: "React" },
-            { value: "typescript", label: "TypeScript" },
-            { value: "node", label: "Node.js" },
-            { value: "graphql", label: "GraphQL" },
-            { value: "next", label: "Next.js" },
-            { value: "vue", label: "Vue" },
-            { value: "svelte", label: "Svelte" },
-            { value: "angular", label: "Angular" },
-            { value: "tailwind", label: "Tailwind CSS" },
-            { value: "bootstrap", label: "Bootstrap" },
-            { value: "chakra", label: "Chakra UI" },
-            { value: "material", label: "Material UI" },
-            { value: "ant", label: "Ant Design" },
-          ],
+          options: getSkillsForFormOptions(),
         },
       })
     ),
@@ -530,10 +520,10 @@ const OnboardingForm = () => {
         });
         setShowSuccess(true);
 
-        // Redirect to protected area after 3 seconds
+        // Redirect to chat after 3 seconds
         setTimeout(() => {
-          window.location.href = "/protected";
-        }, 3000);
+          window.location.href = "/chat";
+        }, 2500);
       } else {
         throw new Error(result.error || "Failed to submit onboarding data");
       }

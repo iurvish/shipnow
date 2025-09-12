@@ -6,8 +6,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { 
   syncUserProfileToAuraDB, 
-  transformOnboardingDataForAuraDB 
+  transformOnboardingDataForAuraDB,
+  checkUserSkillsInAuraDB 
 } from "@/lib/auradb-service";
+import { validateSkills } from "@/lib/config/skills";
 
 // Define the complete onboarding schema
 const onboardingSchema = z.object({
@@ -20,7 +22,13 @@ const onboardingSchema = z.object({
   degree_level: z.enum(["Bachelor", "Master", "Self_taught", "Diploma", "Other"]),
   
   // Technical Profile
-  skills: z.array(z.string()).min(1, "At least one skill is required"),
+  skills: z
+    .array(z.string())
+    .min(1, "At least one skill is required")
+    .refine(
+      (skills) => validateSkills(skills),
+      { message: "Invalid skill selected" }
+    ),
   github: z
     .string()
     .optional()
@@ -220,7 +228,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
 
     // Revalidate relevant paths
     revalidatePath('/onboarding');
-    revalidatePath('/protected');
+    revalidatePath('/chat');
     revalidatePath('/');
 
     // Step 4: Sync to AuraDB for AI-powered search
@@ -252,6 +260,15 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
       await syncUserProfileToAuraDB(auraDBProfile);
       
       console.log("✅ User profile synced to AuraDB successfully!");
+      
+      // Debug: Check what was actually created in AuraDB
+      setTimeout(async () => {
+        try {
+          await checkUserSkillsInAuraDB(user.id);
+        } catch (debugError) {
+          console.error("Debug check failed:", debugError);
+        }
+      }, 1000); // Wait 1 second to allow sync to complete
       
     } catch (auraDBError) {
       console.error("⚠️  Warning: Failed to sync to AuraDB:", auraDBError);

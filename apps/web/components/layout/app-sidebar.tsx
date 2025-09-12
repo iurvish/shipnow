@@ -87,7 +87,7 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link
-                  href="/dashboard/projects"
+                  href="/projects"
                   className={cn(
                     "relative w-full justify-start text-left h-auto p-3 hover:bg-accent/50 group transition-colors rounded-none",
                     pathname?.startsWith("/dashboard/projects") &&

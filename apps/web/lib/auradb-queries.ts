@@ -166,3 +166,13 @@ DELETE p
 
 RETURN "Project deleted successfully" as status
 `;
+
+// Query to check user-skill relationships (for debugging)
+export const CHECK_USER_SKILLS_CYPHER = `
+MATCH (u:User {userId: $userId})
+OPTIONAL MATCH (u)-[:HAS_SKILL]->(s:Skill)
+RETURN u.userId as userId, 
+       u.name as userName,
+       collect(s.name) as skills,
+       count(s) as skillCount
+`;

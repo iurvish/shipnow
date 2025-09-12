@@ -8,7 +8,8 @@ import {
 import { 
   SYNC_USER_PROFILE_CYPHER,
   SYNC_PROJECT_CYPHER,
-  DELETE_PROJECT_CYPHER
+  DELETE_PROJECT_CYPHER,
+  CHECK_USER_SKILLS_CYPHER
 } from './auradb-queries';
 import { OnboardingData } from './onboarding';
 import { Project } from './types';
@@ -111,6 +112,8 @@ export async function syncUserProfileToAuraDB(userProfile: AuraDBUserProfile): P
   }
 
   console.log('🔄 Syncing user profile to AuraDB for user:', userProfile.userId);
+  console.log('📊 User skills being synced:', userProfile.skills);
+  console.log('📝 Complete user profile data:', JSON.stringify(userProfile, null, 2));
 
   const session = getAuraDBDriver().session();
   
@@ -208,6 +211,38 @@ export async function deleteProjectFromAuraDB(
   } catch (error) {
     console.error('❌ Error deleting project from AuraDB:', error);
     throw handleAuraDBError(error, 'deleteProjectFromAuraDB');
+  } finally {
+    await session.close();
+  }
+}
+
+// Function to check user skills in AuraDB (for debugging)
+export async function checkUserSkillsInAuraDB(userId: string): Promise<any> {
+  console.log('🔍 Checking user skills in AuraDB for user:', userId);
+  
+  const session = getAuraDBDriver().session();
+  
+  try {
+    const result = await session.run(CHECK_USER_SKILLS_CYPHER, { userId });
+    const record = result.records[0];
+    
+    if (record) {
+      const userSkillsData = {
+        userId: record.get('userId'),
+        userName: record.get('userName'),
+        skills: record.get('skills') || [],
+        skillCount: record.get('skillCount') || 0
+      };
+      
+      console.log('📊 User skills in AuraDB:', userSkillsData);
+      return userSkillsData;
+    } else {
+      console.log('⚠️ No user found in AuraDB');
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Failed to check user skills in AuraDB:', error);
+    throw handleAuraDBError(error, 'checkUserSkills');
   } finally {
     await session.close();
   }
