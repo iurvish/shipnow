@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/server";
 import { getAuraDBDriver } from "@/lib/auradb-client";
 import { google } from "@ai-sdk/google";
+import { SKILLS } from "@/lib/config/skills";
 
 // Schema for the search_people tool parameters
 const SearchPeopleToolSchema = z.object({
@@ -293,20 +294,34 @@ export async function generatePeopleSuggestions(
     const userContext = await getCurrentUserContext(userId);
     console.log('👤 User context:', userContext);
 
-    // Step 2: LLM Intent Recognition & Entity Extraction
+    // Step 2: LLM Intent Recognition & Entity Extraction  
+    const availableSkills = SKILLS.slice(0, 20).map(s => s.value).join(', ');
+    
     const llmResponse = await generateObject({
       model: google("gemini-2.0-flash-001"),
       system: `You are an expert people search assistant. Analyze the user's query and determine if they want to search for people or have a general conversation.
       
       If it's a people search, extract structured parameters. If it's general conversation, provide a helpful response.
       
+      AVAILABLE SKILLS IN DATABASE (use exact format):
+      ${availableSkills}, and more...
+      
+      SKILL FORMAT RULES:
+      - Use exact proper case: "React" (not "react"), "Next.js" (not "nextjs"), "TypeScript" (not "typescript")
+      - For "Representational State Transfer" → use "REST API"
+      - For "NoSQL document database" → use "MongoDB"  
+      - For "graph database" → use "Neo4j"
+      - For "container orchestration" → use "Kubernetes"
+      
       Current user context:
       - University: ${userContext.university || 'Unknown'}
       - Department: ${userContext.department || 'Unknown'}
       - Skills: ${userContext.skills.join(', ') || 'None'}
       
-      For people searches, you can extract:
-      - skills: Array of technical skills/technologies
+      For people searches, extract and EXPAND skills with related technologies:
+      - "React developers" → skills: ["React", "Next.js", "JavaScript", "TypeScript"]
+      - "Python backend" → skills: ["Python", "Django", "Flask", "FastAPI"]
+      - skills: Array of technical skills (use exact database format)
       - university: University name (use "CURRENT_USER_UNIVERSITY" for user's university)
       - department: Department name (use "CURRENT_USER_DEPARTMENT" for user's department)
       - projectTags: Array of project technologies/frameworks
