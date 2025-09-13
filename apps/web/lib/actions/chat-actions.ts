@@ -34,7 +34,6 @@ const DatabasePersonSchema = z.object({
   }).nullable(),
   technical_profile: z.object({
     skills: z.array(z.string()),
-    experience: z.string(),
     github: z.string().nullable(),
     portfolio: z.string().nullable(),
   }).nullable(),
@@ -205,17 +204,21 @@ function buildDynamicCypherQuery(currentUserId: string, params: SearchPeoplePara
   // Add conditions to query
   query += conditions.join(' ');
   
-  // Find connection paths and return results
+  // Find connection paths and return results (including unconnected users)
   query += `
     WITH targetUser, currentUser
-    MATCH path = shortestPath((currentUser)-[*1..3]-(targetUser))
+    OPTIONAL MATCH path = shortestPath((currentUser)-[*1..3]-(targetUser))
     RETURN DISTINCT targetUser.userId as userId,
-           length(path) as connectionDistance,
+           CASE 
+             WHEN path IS NULL THEN 999
+             ELSE length(path)
+           END as connectionDistance,
            path,
            CASE 
              WHEN EXISTS((currentUser)-[:IN_DEPARTMENT]->()<-[:IN_DEPARTMENT]-(targetUser)) THEN 3
              WHEN EXISTS((currentUser)-[:STUDIED_AT]->()<-[:STUDIED_AT]-(targetUser)) THEN 2
-             ELSE 1
+             WHEN path IS NOT NULL THEN 1
+             ELSE 0
            END as connectionStrength
     ORDER BY connectionStrength DESC, connectionDistance ASC
     LIMIT 20
@@ -234,7 +237,7 @@ async function fetchDetailedProfiles(userIds: string[]): Promise<DatabasePerson[
     .select(`
       id, first_name, last_name, email, bio,
       personal_details(university, department, degree_level, date_of_birth),
-      technical_profiles(skills, experience, github, portfolio)
+      technical_profiles(skills, github, portfolio)
     `)
     .in("id", userIds);
     
@@ -269,7 +272,6 @@ async function fetchDetailedProfiles(userIds: string[]): Promise<DatabasePerson[
         skills: Array.isArray(technicalProfile.skills) 
           ? technicalProfile.skills.map(String)
           : [],
-        experience: String(technicalProfile.experience || ''),
         github: technicalProfile.github ? String(technicalProfile.github) : null,
         portfolio: technicalProfile.portfolio ? String(technicalProfile.portfolio) : null,
       } : null,
@@ -390,10 +392,15 @@ export async function generatePeopleSuggestions(
         });
         
         const foundUserIds = cypherResult.records.map(record => record.get('userId'));
-        const connections = cypherResult.records.map(record => ({
-          path: record.get('path')?.toString() || '',
-          connection_strength: record.get('connectionStrength') || 1
-        }));
+        const connections = cypherResult.records.map(record => {
+          const connectionStrength = record.get('connectionStrength');
+          return {
+            path: record.get('path')?.toString() || '',
+            connection_strength: typeof connectionStrength?.toNumber === 'function' 
+              ? connectionStrength.toNumber() 
+              : (typeof connectionStrength === 'number' ? connectionStrength : 1)
+          };
+        });
         
         console.log('📈 Found user IDs:', foundUserIds);
         console.log('🔗 Connections:', connections);
