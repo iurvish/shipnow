@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Set Geist Mono as the default font family */
+@theme {
+  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-mono);
+}
+
 /* Custom font utilities */
 :root {
   --font-bitcount: "Bitcount Prop Single", monospace;
@@ -24,10 +30,12 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  font-family: var(--font-geist-mono), monospace;
 }
 
 * {
   box-sizing: border-box;
+  font-family: inherit;
   /* padding: 0;
   margin: 0; */
 }

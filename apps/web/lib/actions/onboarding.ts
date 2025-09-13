@@ -86,6 +86,35 @@ const onboardingSchema = z.object({
       }
     ),
   
+  linkedin: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ''); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ''); // Remove www.
+      
+      // Add https:// prefix for storage
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)",
+      }
+    ),
+  
   // Setup Profile
   profilePhoto: z.string().url().optional().or(z.literal("")),
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be at most 20 characters"),
@@ -216,6 +245,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
         skills: validatedData.skills,
         github: validatedData.github || null,
         portfolio: validatedData.portfolio || null,
+        linkedin: validatedData.linkedin || null,
         updated_at: new Date().toISOString()
       });
 
@@ -249,6 +279,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
           skills: validatedData.skills,
           github: validatedData.github,
           portfolio: validatedData.portfolio,
+          linkedin: validatedData.linkedin,
           profilePhoto: validatedData.profilePhoto,
           username: validatedData.username,
           bio: validatedData.bio,

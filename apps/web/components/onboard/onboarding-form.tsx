@@ -323,6 +323,46 @@ const technicalProfileSchema = z.object({
         },
       })
     ),
+  linkedin: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
+
+      // Add https:// prefix
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field, so undefined/empty is valid
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message:
+          "Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)",
+      }
+    )
+    .superRefine(
+      fieldConfig({
+        label: "LinkedIn Profile",
+        fieldType: "input", // Use custom input for beforeInput support
+        inputProps: {
+          placeholder: "linkedin.com/in/username",
+          beforeInput: <span className="text-muted-foreground">https://</span>,
+          className: "url-field-linkedin",
+        },
+      })
+    ),
 });
 
 // Step 3: Setup Profile Schema
@@ -397,7 +437,7 @@ const steps = [
     title: "Technical Profile",
     icon: GraduationCap,
     schema: new ZodProvider(technicalProfileSchema),
-    fields: ["skills", "github", "portfolio"],
+    fields: ["skills", "github", "portfolio", "linkedin"],
   },
   {
     id: "step-3",

@@ -7,6 +7,7 @@ import {
   Briefcase,
   User,
   ChevronsLeftRight,
+  Linkedin,
 } from "lucide-react";
 import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 
@@ -39,7 +40,7 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
   const fullName = `${person.first_name} ${person.last_name}`;
   const skills = person.technical_profile?.skills || [];
   const university = person.personal_details?.university;
-
+  const linkedin = person.technical_profile?.linkedin;
   // Helper function to truncate text with ellipsis
   const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength
@@ -155,10 +156,18 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
               </div>
               <div className="flex-1 p-1.5 border-r border-t border-b-[0.50px] border-neutral-600 flex justify-start items-start gap-1 border-l-0">
                 <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start ">
-                  <Briefcase
+                  <Linkedin
                     className="w-6 h-6 text-zinc-400"
                     strokeWidth={1.2}
                   />
+                </div>
+                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-0.5">
+                  <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                    linkedin
+                  </div>
+                  <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                    {linkedin ? truncateText(linkedin, 9) : "Not specified"}
+                  </div>
                 </div>
               </div>
             </div>

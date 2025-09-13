@@ -22,6 +22,7 @@ export interface AuraDBUserProfile {
   avatarUrl?: string | null;
   githubUrl?: string | null;
   portfolioUrl?: string | null;
+  linkedinUrl?: string | null;
   dateOfBirth?: string | null;
   bio?: string | null;
   username: string;
@@ -76,6 +77,7 @@ export function transformOnboardingDataForAuraDB(
     avatarUrl: onboardingData.profilePhoto || null,
     githubUrl: onboardingData.github || null,
     portfolioUrl: onboardingData.portfolio || null,
+    linkedinUrl: onboardingData.linkedin || null,
     dateOfBirth: onboardingData.date_of_birth || null,
     bio: onboardingData.bio || null,
     username: onboardingData.username,

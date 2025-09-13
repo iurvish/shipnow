@@ -42,6 +42,7 @@ export interface TechnicalProfile {
   skills: string[];
   github?: string;
   portfolio?: string;
+  linkedin?: string;
   created_at: string;
   updated_at: string;
 }
@@ -67,6 +68,7 @@ export interface CreateTechnicalProfileInput {
   skills: string[];
   github?: string;
   portfolio?: string;
+  linkedin?: string;
 }
 
 export interface UpdateUserInput {

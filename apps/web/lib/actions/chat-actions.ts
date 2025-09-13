@@ -36,6 +36,7 @@ const DatabasePersonSchema = z.object({
     skills: z.array(z.string()),
     github: z.string().nullable(),
     portfolio: z.string().nullable(),
+    linkedin: z.string().nullable(),
   }).nullable(),
 });
 
@@ -237,7 +238,7 @@ async function fetchDetailedProfiles(userIds: string[]): Promise<DatabasePerson[
     .select(`
       id, first_name, last_name, email, bio,
       personal_details(university, department, degree_level, date_of_birth),
-      technical_profiles(skills, github, portfolio)
+      technical_profiles(skills, github, portfolio, linkedin)
     `)
     .in("id", userIds);
     
@@ -274,6 +275,7 @@ async function fetchDetailedProfiles(userIds: string[]): Promise<DatabasePerson[
           : [],
         github: technicalProfile.github ? String(technicalProfile.github) : null,
         portfolio: technicalProfile.portfolio ? String(technicalProfile.portfolio) : null,
+        linkedin: technicalProfile.linkedin ? String(technicalProfile.linkedin) : null,
       } : null,
     };
   });
@@ -406,8 +408,8 @@ export async function generatePeopleSuggestions(
         console.log('🔗 Connections:', connections);
         
         // Step 6: Fetch detailed profiles from Supabase
-        const detailedProfiles = await fetchDetailedProfiles(foundUserIds);
-        console.log('👥 Detailed profiles count:', detailedProfiles.length);
+        const detailedProfiles = await (foundUserIds);
+        console.log('👥 Detailed profiles counfetchDetailedProfilest:', detailedProfiles.length);
         
         return {
           query_type: 'people_search',

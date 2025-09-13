@@ -10,6 +10,7 @@ SET u.name = data.name,
     u.avatarUrl = data.avatarUrl,
     u.githubUrl = data.githubUrl,
     u.portfolioUrl = data.portfolioUrl,
+    u.linkedinUrl = data.linkedinUrl,
     u.dateOfBirth = data.dateOfBirth,
     u.birthYear = CASE 
       WHEN data.dateOfBirth IS NOT NULL 
