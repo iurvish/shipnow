@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { FormCommandSelect } from "./form-command-select";
 import { cn } from "@/lib/utils";
 
@@ -142,9 +142,9 @@ const FormTwoSelect = forwardRef<HTMLDivElement, FormTwoSelectProps>(
             </label>
           )}
 
-          <div className="flex w-full">
+          <div className="grid grid-cols-2 overflow-hidden">
             {/* First Select */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               {loadingFirst ? (
                 <div className="h-10 bg-input/30 animate-pulse rounded-r-none border border-r-[0.5px] border-r-border flex items-center justify-center opacity-30 cursor-not-allowed">
                   <span className="text-sm text-muted-foreground truncate px-3">
@@ -164,7 +164,7 @@ const FormTwoSelect = forwardRef<HTMLDivElement, FormTwoSelectProps>(
             </div>
 
             {/* Second Select */}
-            <div className="flex-1 min-w-0">
+            <div className=" min-w-0 overflow-hidden">
               {loadingSecond ? (
                 <div className="h-10 bg-input/30 animate-pulse rounded-l-none border border-l-[0.5px] border-l-border flex items-center justify-center opacity-30 cursor-not-allowed">
                   <span className="text-sm text-muted-foreground truncate px-3">

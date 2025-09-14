@@ -62,8 +62,42 @@ const personalDetailsSchema = z.object({
 // Step 2: Technical Details Schema
 const technicalDetailsSchema = z.object({
   skills: z.array(z.string()).min(3, "Please select at least three skill"),
-  github: z.string().optional(),
-  linkedin: z.string().optional(),
+  github: z
+    .string()
+    .min(1, "GitHub profile is required")
+    .refine(
+      (value) => {
+        if (!value) return false;
+        const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
+        return (
+          cleanUrl.includes("github.com/") &&
+          cleanUrl.length > "github.com/".length
+        );
+      },
+      {
+        message:
+          "Please provide a valid GitHub profile URL (github.com/username)",
+      }
+    ),
+  linkedin: z
+    .string()
+    .min(1, "LinkedIn profile is required")
+    .refine(
+      (value) => {
+        if (!value) return false;
+        const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
+        return (
+          (cleanUrl.includes("linkedin.com/in/") ||
+            cleanUrl.includes("linkedin.com/pub/")) &&
+          (cleanUrl.length > "linkedin.com/in/".length ||
+            cleanUrl.length > "linkedin.com/pub/".length)
+        );
+      },
+      {
+        message:
+          "Please provide a valid LinkedIn profile URL (linkedin.com/in/username)",
+      }
+    ),
   portfolio: z.string().optional(),
 });
 
@@ -105,20 +139,20 @@ const OnboardingForm: React.FC = () => {
   const personalDetailsForm = useForm<z.infer<typeof personalDetailsSchema>>({
     resolver: zodResolver(personalDetailsSchema),
     defaultValues: {
-      first_name: getStepData(0).first_name || "",
-      last_name: getStepData(0).last_name || "",
-      date_of_birth: getStepData(0).date_of_birth || "",
-      university: getStepData(0).university || "",
-      institute: getStepData(0).institute || "",
-      department: getStepData(0).department || "",
-      degree_level: getStepData(0).degree_level || undefined,
+      first_name: "",
+      last_name: "",
+      date_of_birth: "",
+      university: "",
+      institute: "",
+      department: "",
+      degree_level: undefined,
     },
   });
 
   // Combined institute/department state
   const [instituteDepartment, setInstituteDepartment] = useState({
-    first: getStepData(0).institute || "",
-    second: getStepData(0).department || "",
+    first: "",
+    second: "",
   });
 
   // Institute and department options
@@ -165,19 +199,19 @@ const OnboardingForm: React.FC = () => {
   const technicalDetailsForm = useForm<z.infer<typeof technicalDetailsSchema>>({
     resolver: zodResolver(technicalDetailsSchema),
     defaultValues: {
-      skills: getStepData(1).skills || [],
-      github: getStepData(1).github || "",
-      linkedin: getStepData(1).linkedin || "",
-      portfolio: getStepData(1).portfolio || "",
+      skills: [],
+      github: "",
+      linkedin: "",
+      portfolio: "",
     },
   });
 
   const profileDetailsForm = useForm<z.infer<typeof profileDetailsSchema>>({
     resolver: zodResolver(profileDetailsSchema),
     defaultValues: {
-      profilePhoto: getStepData(2).profilePhoto || null,
-      username: getStepData(2).username || "",
-      bio: getStepData(2).bio || "",
+      profilePhoto: null,
+      username: "",
+      bio: "",
     },
   });
 
@@ -193,6 +227,46 @@ const OnboardingForm: React.FC = () => {
         return personalDetailsForm;
     }
   }, [step, personalDetailsForm, technicalDetailsForm, profileDetailsForm]);
+
+  // Initialize form values after hydration to avoid SSR mismatch
+  useEffect(() => {
+    const stepData0 = getStepData(0);
+    const stepData1 = getStepData(1);
+    const stepData2 = getStepData(2);
+
+    personalDetailsForm.reset({
+      first_name: stepData0.first_name || "",
+      last_name: stepData0.last_name || "",
+      date_of_birth: stepData0.date_of_birth || "",
+      university: stepData0.university || "",
+      institute: stepData0.institute || "",
+      department: stepData0.department || "",
+      degree_level: stepData0.degree_level || undefined,
+    });
+
+    technicalDetailsForm.reset({
+      skills: stepData1.skills || [],
+      github: stepData1.github || "",
+      linkedin: stepData1.linkedin || "",
+      portfolio: stepData1.portfolio || "",
+    });
+
+    profileDetailsForm.reset({
+      profilePhoto: stepData2.profilePhoto || null,
+      username: stepData2.username || "",
+      bio: stepData2.bio || "",
+    });
+
+    setInstituteDepartment({
+      first: stepData0.institute || "",
+      second: stepData0.department || "",
+    });
+  }, [
+    getStepData,
+    personalDetailsForm,
+    technicalDetailsForm,
+    profileDetailsForm,
+  ]);
 
   // Helper functions for step management
   const getStepStatus = (stepIndex: number): "done" | "ongoing" | "pending" => {
@@ -323,8 +397,8 @@ const OnboardingForm: React.FC = () => {
           </div>
 
           {/* Main content */}
-          <div className="p-4 md:p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-4 mb-6 gap-4">
+          <div className="">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b p-4 md:p-6 pb-4 gap-4">
               <h2 className="text-lg font-medium">{currentStepData.title}</h2>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">
@@ -337,395 +411,398 @@ const OnboardingForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Form Content */}
-            <AnimatePresence mode="wait">
-              <div className="space-y-6">
-                {step === 0 && (
-                  <Form {...personalDetailsForm}>
-                    <form
-                      onSubmit={personalDetailsForm.handleSubmit(
-                        handleFormSubmit
-                      )}
-                      className="space-y-6"
-                    >
-                      <motion.div
-                        key={step}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            <div className="p-4 md:p-6">
+              {/* Form Content */}
+              <AnimatePresence mode="wait">
+                <div className="space-y-6">
+                  {step === 0 && (
+                    <Form {...personalDetailsForm}>
+                      <form
+                        onSubmit={personalDetailsForm.handleSubmit(
+                          handleFormSubmit
+                        )}
+                        className="space-y-6"
                       >
-                        <FormField
-                          control={personalDetailsForm.control}
-                          name="first_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>First Name</FormLabel>
-                              <FormControl>
-                                <FormInput
-                                  placeholder="Enter your first name"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={personalDetailsForm.control}
-                          name="last_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Last Name</FormLabel>
-                              <FormControl>
-                                <FormInput
-                                  placeholder="Enter your last name"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={personalDetailsForm.control}
-                          name="date_of_birth"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Date of Birth</FormLabel>
-                              <FormControl>
-                                <FormDatePicker
-                                  placeholder="Select your birth date"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={personalDetailsForm.control}
-                          name="university"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>University</FormLabel>
-                              <FormControl>
-                                <FormCommandSelect
-                                  placeholder="Search and select your university"
-                                  options={[
-                                    {
-                                      value: "charusat",
-                                      label: "Charusat University",
-                                    },
-                                  ]}
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={personalDetailsForm.control}
-                          name="institute"
-                          render={({ field }) => (
-                            <FormItem className="">
-                              <FormLabel>Institute & Department</FormLabel>
-                              <FormControl>
-                                <FormTwoSelect
-                                  firstSelectLabel="Institute"
-                                  secondSelectLabel="Department"
-                                  firstSelectPlaceholder="Choose institute..."
-                                  secondSelectPlaceholder="Choose department..."
-                                  firstSelectOptions={instituteOptions}
-                                  getSecondOptions={getDepartmentOptions}
-                                  value={instituteDepartment}
-                                  onChange={(value) => {
-                                    handleInstituteDepartmentChange(value);
-                                    // Trigger validation for both fields
-                                    personalDetailsForm.trigger([
-                                      "institute",
-                                      "department",
-                                    ]);
-                                  }}
-                                  layout="inline"
-                                  showCombinedLabel={false}
-                                />
-                              </FormControl>
-                              <FormMessage>
-                                {personalDetailsForm.formState.errors.institute
-                                  ?.message ||
-                                  personalDetailsForm.formState.errors
-                                    .department?.message}
-                              </FormMessage>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={personalDetailsForm.control}
-                          name="degree_level"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Degree Level</FormLabel>
-                              <FormControl>
-                                <FormSelect
-                                  placeholder="Select your degree level"
-                                  options={[
-                                    { label: "Bachelor", value: "Bachelor" },
-                                    { label: "Master", value: "Master" },
-                                    {
-                                      label: "Self-taught",
-                                      value: "Self_taught",
-                                    },
-                                    { label: "Diploma", value: "Diploma" },
-                                    { label: "Other", value: "Other" },
-                                  ]}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </motion.div>
-
-                      {/* Navigation Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 pt-4">
-                        <div className="flex-1" />
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="w-full sm:w-auto"
+                        <motion.div
+                          key={step}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4  pt-6"
                         >
-                          Next
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                )}
+                          <FormField
+                            control={personalDetailsForm.control}
+                            name="first_name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>First Name</FormLabel>
+                                <FormControl>
+                                  <FormInput
+                                    placeholder="Enter your first name"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={personalDetailsForm.control}
+                            name="last_name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormControl>
+                                  <FormInput
+                                    placeholder="Enter your last name"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={personalDetailsForm.control}
+                            name="date_of_birth"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Date of Birth</FormLabel>
+                                <FormControl>
+                                  <FormDatePicker
+                                    placeholder="Select your birth date"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={personalDetailsForm.control}
+                            name="university"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>University</FormLabel>
+                                <FormControl>
+                                  <FormCommandSelect
+                                    placeholder="Search and select your university"
+                                    options={[
+                                      {
+                                        value: "charusat",
+                                        label: "Charusat University",
+                                      },
+                                    ]}
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={personalDetailsForm.control}
+                            name="institute"
+                            render={({ field }) => (
+                              <FormItem className="">
+                                <FormLabel>Institute & Department</FormLabel>
+                                <FormControl>
+                                  <FormTwoSelect
+                                    firstSelectLabel="Institute"
+                                    secondSelectLabel="Department"
+                                    firstSelectPlaceholder="Choose institute..."
+                                    secondSelectPlaceholder="Choose department..."
+                                    firstSelectOptions={instituteOptions}
+                                    getSecondOptions={getDepartmentOptions}
+                                    value={instituteDepartment}
+                                    onChange={(value) => {
+                                      handleInstituteDepartmentChange(value);
+                                      // Trigger validation for both fields
+                                      personalDetailsForm.trigger([
+                                        "institute",
+                                        "department",
+                                      ]);
+                                    }}
+                                    layout="inline"
+                                    showCombinedLabel={false}
+                                  />
+                                </FormControl>
+                                <FormMessage>
+                                  {personalDetailsForm.formState.errors
+                                    .institute?.message ||
+                                    personalDetailsForm.formState.errors
+                                      .department?.message}
+                                </FormMessage>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={personalDetailsForm.control}
+                            name="degree_level"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Degree Level</FormLabel>
+                                <FormControl>
+                                  <FormSelect
+                                    placeholder="Select your degree level"
+                                    options={[
+                                      { label: "Bachelor", value: "Bachelor" },
+                                      { label: "Master", value: "Master" },
+                                      {
+                                        label: "Self-taught",
+                                        value: "Self_taught",
+                                      },
+                                      { label: "Diploma", value: "Diploma" },
+                                      { label: "Other", value: "Other" },
+                                    ]}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </motion.div>
 
-                {step === 1 && (
-                  <Form {...technicalDetailsForm}>
-                    <form
-                      onSubmit={technicalDetailsForm.handleSubmit(
-                        handleFormSubmit
-                      )}
-                      className="space-y-6"
-                    >
-                      <motion.div
-                        key={step}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                        {/* Navigation Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                          <div className="flex-1" />
+                          <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full sm:w-auto"
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  )}
+
+                  {step === 1 && (
+                    <Form {...technicalDetailsForm}>
+                      <form
+                        onSubmit={technicalDetailsForm.handleSubmit(
+                          handleFormSubmit
+                        )}
+                        className="space-y-6"
                       >
-                        <FormField
-                          control={technicalDetailsForm.control}
-                          name="skills"
-                          render={({ field }) => (
-                            <FormItem className="col-span-full">
-                              <FormLabel>Technical Skills</FormLabel>
-                              <FormControl>
-                                <FormSearchMultiSelect
-                                  placeholder="Search and select skills..."
-                                  options={getSkillsForFormOptions()}
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={technicalDetailsForm.control}
-                          name="github"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Github Profile</FormLabel>
-                              <FormControl>
-                                <FormPrefixInput
-                                  prefix="https://"
-                                  placeholder="github.com/username"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  onBlur={field.onBlur}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={technicalDetailsForm.control}
-                          name="linkedin"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>LinkedIn Profile</FormLabel>
-                              <FormControl>
-                                <FormPrefixInput
-                                  prefix="https://"
-                                  placeholder="linkedin.com/in/username"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  onBlur={field.onBlur}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={technicalDetailsForm.control}
-                          name="portfolio"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Portfolio Website</FormLabel>
-                              <FormControl>
-                                <FormPrefixInput
-                                  prefix="https://"
-                                  placeholder="yourportfolio.com"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  onBlur={field.onBlur}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </motion.div>
-
-                      {/* Navigation Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 pt-4">
-                        <Button
-                          type="button"
-                          onClick={prev}
-                          variant="outline"
-                          className="w-full sm:w-auto"
+                        <motion.div
+                          key={step}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
                         >
-                          <ChevronLeft className="w-4 h-4 mr-1" />
-                          Back
-                        </Button>
-                        <div className="flex-1" />
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="w-full sm:w-auto"
-                        >
-                          Next
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                )}
+                          <FormField
+                            control={technicalDetailsForm.control}
+                            name="skills"
+                            render={({ field }) => (
+                              <FormItem className="col-span-full">
+                                <FormLabel>Technical Skills</FormLabel>
+                                <FormControl>
+                                  <FormSearchMultiSelect
+                                    placeholder="Search and select skills..."
+                                    options={getSkillsForFormOptions()}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={technicalDetailsForm.control}
+                            name="linkedin"
+                            render={({ field }) => (
+                              <FormItem className="col-span-full">
+                                <FormLabel>LinkedIn Profile *</FormLabel>
+                                <FormControl>
+                                  <FormPrefixInput
+                                    prefix="https://"
+                                    placeholder="linkedin.com/in/username"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={technicalDetailsForm.control}
+                            name="github"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>GitHub Profile *</FormLabel>
+                                <FormControl>
+                                  <FormPrefixInput
+                                    prefix="https://"
+                                    placeholder="github.com/username"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                {step === 2 && (
-                  <Form {...profileDetailsForm}>
-                    <form
-                      onSubmit={profileDetailsForm.handleSubmit(
-                        handleFormSubmit
-                      )}
-                      className="space-y-6"
-                    >
-                      <motion.div
-                        key={step}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                          <FormField
+                            control={technicalDetailsForm.control}
+                            name="portfolio"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Portfolio Website</FormLabel>
+                                <FormControl>
+                                  <FormPrefixInput
+                                    prefix="https://"
+                                    placeholder="yourportfolio.com"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </motion.div>
+
+                        {/* Navigation Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-4 ; max-md:flex-col-reverse">
+                          <Button
+                            type="button"
+                            onClick={prev}
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                          >
+                            <ChevronLeft className="w-4 h-4 mr-1" />
+                            Back
+                          </Button>
+                          <div className="flex-1" />
+                          <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full sm:w-auto"
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  )}
+
+                  {step === 2 && (
+                    <Form {...profileDetailsForm}>
+                      <form
+                        onSubmit={profileDetailsForm.handleSubmit(
+                          handleFormSubmit
+                        )}
+                        className="space-y-6"
                       >
-                        <FormField
-                          control={profileDetailsForm.control}
-                          name="profilePhoto"
-                          render={({ field }) => (
-                            <FormItem className="col-span-full">
-                              <FormLabel>Profile Photo</FormLabel>
-                              <FormControl>
-                                <FormProfilePhoto
-                                  accept="image/*"
-                                  className="profile-photo-field"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={profileDetailsForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Username</FormLabel>
-                              <FormControl>
-                                <FormPrefixInput
-                                  prefix="@"
-                                  placeholder="username"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  onBlur={field.onBlur}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={profileDetailsForm.control}
-                          name="bio"
-                          render={({ field }) => (
-                            <FormItem className="col-span-full">
-                              <FormLabel>Bio (Optional)</FormLabel>
-                              <FormControl>
-                                <FormTextarea
-                                  placeholder="Tell us about yourself..."
-                                  rows={3}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </motion.div>
+                        <motion.div
+                          key={step}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                        >
+                          <FormField
+                            control={profileDetailsForm.control}
+                            name="profilePhoto"
+                            render={({ field }) => (
+                              <FormItem className="col-span-full">
+                                <FormLabel>Profile Photo</FormLabel>
+                                <FormControl>
+                                  <FormProfilePhoto
+                                    accept="image/*"
+                                    className="profile-photo-field"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileDetailsForm.control}
+                            name="username"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Username</FormLabel>
+                                <FormControl>
+                                  <FormPrefixInput
+                                    prefix="@"
+                                    placeholder="username"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileDetailsForm.control}
+                            name="bio"
+                            render={({ field }) => (
+                              <FormItem className="col-span-full">
+                                <FormLabel>Bio (Optional)</FormLabel>
+                                <FormControl>
+                                  <FormTextarea
+                                    placeholder="Tell us about yourself..."
+                                    rows={3}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </motion.div>
 
-                      {/* Navigation Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 pt-4">
-                        <Button
-                          type="button"
-                          onClick={prev}
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                        >
-                          <ChevronLeft className="w-4 h-4 mr-1" />
-                          Back
-                        </Button>
-                        <div className="flex-1" />
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="w-full sm:w-auto"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            "Complete Setup"
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                )}
-              </div>
-            </AnimatePresence>
+                        {/* Navigation Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                          <Button
+                            type="button"
+                            onClick={prev}
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                          >
+                            <ChevronLeft className="w-4 h-4 mr-1" />
+                            Back
+                          </Button>
+                          <div className="flex-1" />
+                          <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full sm:w-auto"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              "Complete Setup"
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  )}
+                </div>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>

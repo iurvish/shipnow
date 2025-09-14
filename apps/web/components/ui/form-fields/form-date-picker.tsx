@@ -72,9 +72,10 @@ const FormDatePicker = forwardRef<HTMLButtonElement, FormDatePickerProps>(
               className
             )}
             disabled={disabled}
+            suppressHydrationWarning
             {...props}
           >
-            {selectedDate ? format(selectedDate, "PPP") : placeholder}
+            {selectedDate ? format(selectedDate, "MMMM dd, yyyy") : placeholder}
 
             <CalendarIcon className="mr-2 h-4 w-4" />
           </Button>
@@ -121,7 +122,12 @@ const FormDatePicker = forwardRef<HTMLButtonElement, FormDatePickerProps>(
                           value={String(option.value)}
                           disabled={option.disabled}
                         >
-                          {option.label}
+                          {props.name === "months"
+                            ? format(
+                                new Date(2000, Number(option.value), 1),
+                                "MMMM"
+                              )
+                            : option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
