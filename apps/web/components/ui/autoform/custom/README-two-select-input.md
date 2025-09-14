@@ -1,11 +1,14 @@
 # TwoSelectInput Component
 
-A reusable AutoForm component that provides two connected select fields where the second select's options depend on the first select's value.
+A reusable AutoForm component that provides two connected select fields displayed side-by-side where the second select's options depend on the first select's value.
 
 ## Features
 
-- **Conditional Rendering**: Second select only appears after first select has a value
-- **Dynamic Options**: Second select options are loaded based on first select value
+- **Side-by-Side Layout**: Both selects are displayed in a single row with proper border radius handling
+- **Conditional Options**: Second select options are loaded based on first select value
+- **Always Visible**: Second select is always shown but disabled until first select has a value
+- **Text Truncation**: Long text in placeholders and options is properly truncated with ellipsis
+- **Responsive Width**: Components take the full width provided and don't overflow
 - **AutoForm Compatible**: Integrates seamlessly with AutoForm system
 - **Loading States**: Shows loading indicator while fetching second options
 - **Validation**: Supports error display and validation

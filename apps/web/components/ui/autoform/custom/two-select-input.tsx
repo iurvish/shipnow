@@ -33,7 +33,24 @@ const TwoSelectInput: React.FC<AutoFormFieldProps> = ({
   id,
   field,
 }) => {
-  const { key, onChange, value, className, ...props } = inputProps;
+  // Destructure inputProps to separate DOM-safe props from custom props
+  const {
+    key,
+    onChange,
+    value,
+    className,
+    // Filter out custom props that shouldn't go to DOM
+    separateFields: _separateFields,
+    firstFieldName: _firstFieldName,
+    secondFieldName: _secondFieldName,
+    firstSelectLabel: _firstSelectLabel,
+    secondSelectLabel: _secondSelectLabel,
+    firstSelectPlaceholder: _firstSelectPlaceholder,
+    secondSelectPlaceholder: _secondSelectPlaceholder,
+    firstSelectOptions: _firstSelectOptions,
+    getSecondOptions: _getSecondOptions,
+    ...domSafeProps
+  } = inputProps;
 
   // Get configuration from fieldConfig
   const config: TwoSelectConfig = field.fieldConfig?.inputProps || {};
@@ -59,13 +76,13 @@ const TwoSelectInput: React.FC<AutoFormFieldProps> = ({
   // Initialize values from props or field default
   useEffect(() => {
     if (value && typeof value === "object") {
-      setFirstValue(value.first || "");
-      setSecondValue(value.second || "");
+      setFirstValue(value[firstFieldName] || "");
+      setSecondValue(value[secondFieldName] || "");
     } else if (field.default && typeof field.default === "object") {
-      setFirstValue(field.default.first || "");
-      setSecondValue(field.default.second || "");
+      setFirstValue(field.default[firstFieldName] || "");
+      setSecondValue(field.default[secondFieldName] || "");
     }
-  }, [value, field.default]);
+  }, [value, field.default, firstFieldName, secondFieldName]);
 
   // Load second options when first value changes
   useEffect(() => {
@@ -93,50 +110,27 @@ const TwoSelectInput: React.FC<AutoFormFieldProps> = ({
 
   // Update parent form when values change
   useEffect(() => {
-    if (separateFields) {
-      // Handle separate fields - trigger two separate onChange events
-      if (onChange && firstValue !== "") {
-        const firstEvent = {
-          target: {
-            value: firstValue,
-            name: firstFieldName,
-          },
-        } as unknown as React.ChangeEvent<HTMLInputElement>;
-        onChange(firstEvent);
-      }
+    // Always create a combined object for this field
+    // Even with separateFields=true, we still need the main field to have the full object
+    const combinedValue = {
+      [firstFieldName]: firstValue,
+      [secondFieldName]: secondValue,
+    };
 
-      if (onChange && secondValue !== "") {
-        const secondEvent = {
-          target: {
-            value: secondValue,
-            name: secondFieldName,
-          },
-        } as unknown as React.ChangeEvent<HTMLInputElement>;
-        onChange(secondEvent);
-      }
-    } else {
-      // Handle combined object
-      const combinedValue = {
-        first: firstValue,
-        second: secondValue,
-      };
-
-      if (onChange) {
-        const syntheticEvent = {
-          target: {
-            value: combinedValue,
-            name: field.key,
-          },
-        } as unknown as React.ChangeEvent<HTMLInputElement>;
-        onChange(syntheticEvent);
-      }
+    if (onChange) {
+      const syntheticEvent = {
+        target: {
+          value: combinedValue,
+          name: field.key,
+        },
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      onChange(syntheticEvent);
     }
   }, [
     firstValue,
     secondValue,
     onChange,
     field.key,
-    separateFields,
     firstFieldName,
     secondFieldName,
   ]);
@@ -164,14 +158,18 @@ const TwoSelectInput: React.FC<AutoFormFieldProps> = ({
           options: firstSelectOptions,
           placeholder: firstSelectPlaceholder,
           disabled,
+          className:
+            "rounded-r-none border-r-[0.5px] border-r-border focus:border-r-ring focus-visible:ring-offset-0",
         },
       },
     },
     inputProps: {
-      ...inputProps,
+      ...domSafeProps, // Use filtered props instead of all inputProps
       key: `${key}_first`,
       value: firstValue,
       onChange: handleFirstChange,
+      className:
+        "rounded-r-none border-r-[0.5px] border-r-border focus:border-r-ring focus-visible:ring-offset-0",
     },
     error: error,
     id: `${id}_first`,
@@ -188,15 +186,29 @@ const TwoSelectInput: React.FC<AutoFormFieldProps> = ({
       fieldConfig: {
         ...field.fieldConfig,
         label: secondSelectLabel,
+        inputProps: {
+          className: cn(
+            "rounded-l-none border-l-[0.5px] border-l-border focus:border-l-ring focus-visible:ring-offset-0",
+            (!firstValue || disabled || isLoadingSecond) &&
+              "opacity-30 cursor-not-allowed bg-input/30"
+          ),
+        },
       },
     },
     inputProps: {
-      ...inputProps,
+      ...domSafeProps, // Use filtered props instead of all inputProps
       key: `${key}_second`,
       value: secondValue,
       onChange: handleSecondChange,
-      placeholder: secondSelectPlaceholder,
+      placeholder: !firstValue
+        ? `First select ${firstSelectLabel.toLowerCase()}`
+        : secondSelectPlaceholder,
       disabled: disabled || !firstValue || isLoadingSecond,
+      className: cn(
+        "rounded-l-none border-l-[0.5px] border-l-border focus:border-l-ring focus-visible:ring-offset-0",
+        (!firstValue || disabled || isLoadingSecond) &&
+          "opacity-30 cursor-not-allowed bg-input/30"
+      ),
     },
     error: undefined, // Don't show error for second select
     id: `${id}_second`,
@@ -206,46 +218,48 @@ const TwoSelectInput: React.FC<AutoFormFieldProps> = ({
   };
 
   return (
-    <div className={cn("space-y-4 w-full", className)}>
-      <div className="flex">
+    <div className={cn("space-y-2 w-full", className)}>
+      {/* Combined Label */}
+      {/* <label className="text-sm font-medium block">
+        <span className="truncate">
+          {firstSelectLabel} & {secondSelectLabel}
+        </span>
+      </label> */}
+
+      <div className="flex w-full">
         {/* First Select - using SelectCommand */}
-        <div className="flex-1">
-          {/* <label className="text-sm font-medium mb-2 block">
-            {firstSelectLabel}
-          </label> */}
+        <div className="flex-1 min-w-0">
           <SelectCommand {...firstSelectProps} />
         </div>
 
-        {/* Second Select - conditionally rendered */}
-        <div className="flex-1">
+        {/* Second Select - always shown but disabled when first not selected */}
+        <div className="flex-1 min-w-0">
           {isLoadingSecond ? (
-            <div className="h-10 bg-muted animate-pulse rounded-md flex items-center justify-center">
-              <span className="text-sm text-muted-foreground">Loading...</span>
+            <div className="h-10 bg-input/30 animate-pulse rounded-l-none border border-l-[0.5px] border-l-border flex items-center justify-center opacity-30 cursor-not-allowed">
+              <span className="text-sm text-muted-foreground truncate px-3">
+                Loading...
+              </span>
             </div>
           ) : (
             <SelectField {...secondSelectProps} />
           )}
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <p className="text-sm font-medium text-destructive">{error}</p>
-        )}
-
-        {/* Hidden inputs for form submission */}
-        {separateFields ? (
-          <>
-            <input type="hidden" name={firstFieldName} value={firstValue} />
-            <input type="hidden" name={secondFieldName} value={secondValue} />
-          </>
-        ) : (
-          <input
-            type="hidden"
-            name={field.key}
-            value={JSON.stringify({ first: firstValue, second: secondValue })}
-          />
-        )}
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <p className="text-sm font-medium text-destructive truncate">{error}</p>
+      )}
+
+      {/* Hidden input for form submission */}
+      <input
+        type="hidden"
+        name={field.key}
+        value={JSON.stringify({
+          [firstFieldName]: firstValue,
+          [secondFieldName]: secondValue,
+        })}
+      />
     </div>
   );
 };
