@@ -20,6 +20,7 @@ import { ZodProvider, fieldConfig } from "@autoform/zod";
 import { AutoForm } from "../ui/autoform";
 import { SubmitButton } from "../ui/autoform/components/SubmitButton";
 import { Alert, AlertDescription } from "../ui/alert";
+import PasswordInputField from "../ui/autoform/custom/password-input";
 
 // Google SVG Icon Component
 const GoogleIcon = () => (
@@ -67,8 +68,8 @@ const signUpSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Password",
+        fieldType: "password-input",
         inputProps: {
-          type: "password",
           placeholder: "Enter your password",
         },
       })
@@ -169,6 +170,9 @@ export function SignUpForm({
             schema={schemaProvider}
             onSubmit={handleSignUp}
             withSubmit
+            formComponents={{
+              "password-input": PasswordInputField,
+            }}
             uiComponents={{
               SubmitButton: (props: any) => (
                 <SubmitButton

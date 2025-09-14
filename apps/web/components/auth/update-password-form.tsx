@@ -19,6 +19,7 @@ import { fieldConfig, ZodProvider } from "@autoform/zod";
 import { SubmitButton } from "../ui/autoform/components/SubmitButton";
 import { AutoForm } from "../ui/autoform";
 import { Alert, AlertDescription } from "../ui/alert";
+import PasswordInputField from "../ui/autoform/custom/password-input";
 
 const updatePasswordSchema = z.object({
   password: z
@@ -27,8 +28,8 @@ const updatePasswordSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "New Password",
+        fieldType: "password-input",
         inputProps: {
-          type: "password",
           placeholder: "Enter your new password",
         },
       })
@@ -81,6 +82,9 @@ export function UpdatePasswordForm({
               schema={schemaProvider}
               onSubmit={handleForgotPassword}
               withSubmit
+              formComponents={{
+                "password-input": PasswordInputField,
+              }}
               uiComponents={{
                 SubmitButton: (props: any) => (
                   <SubmitButton

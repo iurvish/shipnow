@@ -74,7 +74,7 @@ export interface CreateTechnicalProfileInput {
 export interface UpdateUserInput {
   username?: string;
   avatar_url?: string;
-  bio?: string; // Bio can be updated in users table
+  bio?: string; 
   onboarded?: boolean;
 }
 

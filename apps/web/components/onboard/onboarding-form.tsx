@@ -26,6 +26,7 @@ import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import SelectCommand from "@/components/ui/autoform/custom/select-command";
 import ProfilePhotoField from "@/components/ui/autoform/custom/profile-photo";
+import PasswordInputField from "@/components/ui/autoform/custom/password-input";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
 import { submitOnboardingForm } from "@/lib/actions/onboarding";
@@ -75,39 +76,7 @@ const personalDetailsSchema = z.object({
         fieldType: "select-command", // Use SelectCommand instead of input
         inputProps: {
           placeholder: "Search and select your university",
-          options: [
-            { value: "harvard", label: "Harvard University" },
-            { value: "mit", label: "Massachusetts Institute of Technology" },
-            { value: "stanford", label: "Stanford University" },
-            { value: "berkeley", label: "University of California, Berkeley" },
-            { value: "caltech", label: "California Institute of Technology" },
-            { value: "princeton", label: "Princeton University" },
-            { value: "yale", label: "Yale University" },
-            { value: "columbia", label: "Columbia University" },
-            { value: "chicago", label: "University of Chicago" },
-            { value: "upenn", label: "University of Pennsylvania" },
-            { value: "cornell", label: "Cornell University" },
-            { value: "northwestern", label: "Northwestern University" },
-            { value: "johns-hopkins", label: "Johns Hopkins University" },
-            { value: "duke", label: "Duke University" },
-            { value: "brown", label: "Brown University" },
-            { value: "vanderbilt", label: "Vanderbilt University" },
-            { value: "rice", label: "Rice University" },
-            { value: "notre-dame", label: "University of Notre Dame" },
-            { value: "ucla", label: "University of California, Los Angeles" },
-            { value: "michigan", label: "University of Michigan" },
-            { value: "virginia", label: "University of Virginia" },
-            { value: "emory", label: "Emory University" },
-            { value: "carnegie-mellon", label: "Carnegie Mellon University" },
-            { value: "georgetown", label: "Georgetown University" },
-            { value: "wake-forest", label: "Wake Forest University" },
-            { value: "tufts", label: "Tufts University" },
-            { value: "boston-college", label: "Boston College" },
-            { value: "nyu", label: "New York University" },
-            { value: "brandeis", label: "Brandeis University" },
-            { value: "case-western", label: "Case Western Reserve University" },
-            { value: "other", label: "Other (Please specify in next field)" },
-          ],
+          options: [{ value: "charusat", label: "Charusat University" }],
         },
       })
     ),
