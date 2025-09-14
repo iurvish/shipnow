@@ -75,14 +75,50 @@ const TwoSelectInput: React.FC<AutoFormFieldProps> = ({
 
   // Initialize values from props or field default
   useEffect(() => {
+    console.log("TwoSelectInput - inputProps:", inputProps);
+    console.log("TwoSelectInput - value prop:", value);
+    console.log("TwoSelectInput - field:", field);
+    console.log(
+      "TwoSelectInput - firstFieldName:",
+      firstFieldName,
+      "secondFieldName:",
+      secondFieldName
+    );
+
+    // Try different sources for the initial value
+    let sourceValue = null;
+
+    // 1. Check inputProps.value (most common in AutoForm)
     if (value && typeof value === "object") {
-      setFirstValue(value[firstFieldName] || "");
-      setSecondValue(value[secondFieldName] || "");
-    } else if (field.default && typeof field.default === "object") {
-      setFirstValue(field.default[firstFieldName] || "");
-      setSecondValue(field.default[secondFieldName] || "");
+      sourceValue = value;
+      console.log("TwoSelectInput - using inputProps.value");
     }
-  }, [value, field.default, firstFieldName, secondFieldName]);
+    // 2. Check field.default
+    else if (field.default && typeof field.default === "object") {
+      sourceValue = field.default;
+      console.log("TwoSelectInput - using field.default");
+    }
+    // 3. Check if there's a defaultValue in inputProps
+    else if (
+      inputProps.defaultValue &&
+      typeof inputProps.defaultValue === "object"
+    ) {
+      sourceValue = inputProps.defaultValue;
+      console.log("TwoSelectInput - using inputProps.defaultValue");
+    }
+
+    if (sourceValue) {
+      const firstVal = sourceValue[firstFieldName] || "";
+      const secondVal = sourceValue[secondFieldName] || "";
+      console.log("TwoSelectInput - setting values:", { firstVal, secondVal });
+      setFirstValue(firstVal);
+      setSecondValue(secondVal);
+    } else {
+      console.log("TwoSelectInput - no source value found, resetting to empty");
+      setFirstValue("");
+      setSecondValue("");
+    }
+  }, [value, field.default, firstFieldName, secondFieldName, inputProps]);
 
   // Load second options when first value changes
   useEffect(() => {

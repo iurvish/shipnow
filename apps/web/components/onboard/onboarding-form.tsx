@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { StepIndicator } from "@/components/shared/StepIndicator";
 import CustomInput from "@/components/ui/autoform/custom/input";
 import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
+import CustomSearchMultiSelect from "@/components/ui/autoform/custom/search-multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import SelectCommand from "@/components/ui/autoform/custom/select-command";
 import ProfilePhotoField from "@/components/ui/autoform/custom/profile-photo";
@@ -165,9 +166,9 @@ const technicalProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Technical Skills",
-        fieldType: "multiselect",
+        fieldType: "search-multiselect",
         inputProps: {
-          placeholder: "Select skills...",
+          placeholder: "Search and select skills...",
           className: "w-full",
           options: getSkillsForFormOptions(),
         },
@@ -409,6 +410,13 @@ const OnboardingForm = () => {
         } else if (field === "skills" && Array.isArray(value)) {
           // Ensure skills array is properly formatted
           stepData[field] = value;
+        } else if (
+          field === "institute_department" &&
+          typeof value === "object"
+        ) {
+          // Ensure institute_department object is properly formatted
+          stepData[field] = value;
+          console.log("Setting institute_department defaultValue:", value);
         } else {
           stepData[field] = value;
         }
@@ -416,6 +424,7 @@ const OnboardingForm = () => {
     });
 
     console.log(`Step ${step + 1} current data:`, stepData);
+    console.log(`Full formData for debugging:`, formData);
     return stepData;
   };
 
@@ -427,7 +436,8 @@ const OnboardingForm = () => {
       if (
         typeof value === "string" ||
         typeof value === "number" ||
-        Array.isArray(value)
+        Array.isArray(value) ||
+        (typeof value === "object" && value !== null && !Array.isArray(value))
       ) {
         sanitized[key] = value;
       }
@@ -447,7 +457,10 @@ const OnboardingForm = () => {
   }, [step, currentStepFormData]);
 
   const handleStepSubmit = (data: any) => {
+    console.log("🚀 handleStepSubmit called!");
     console.log(`Step ${step + 1} data:`, data);
+    console.log("Type of data:", typeof data);
+    console.log("Data keys:", Object.keys(data || {}));
 
     // Merge current step data with existing form data
     const updatedFormData = { ...formData, ...data };
@@ -512,10 +525,15 @@ const OnboardingForm = () => {
   };
 
   const next = async () => {
+    console.log("🔄 Next button clicked!");
     // Trigger form submission for current step
     const currentForm = document.querySelector("form");
+    console.log("Found form:", currentForm);
     if (currentForm) {
+      console.log("Calling requestSubmit...");
       currentForm.requestSubmit();
+    } else {
+      console.error("No form found!");
     }
   };
 
@@ -669,6 +687,7 @@ const OnboardingForm = () => {
                       input: CustomInput, // Register for fieldType: "input" (with icon support)
                       number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
+                      "search-multiselect": CustomSearchMultiSelect, // Register for fieldType: "search-multiselect"
                       date: CustomDatePicker, // Register for fieldType: "date"
                       "select-command": SelectCommand, // Register for fieldType: "select-command"
                       "profile-photo": ProfilePhotoField, // Register for fieldType: "profile-photo"
