@@ -45,24 +45,6 @@ const CustomSearchMultiSelect: React.FC<AutoFormFieldProps> = ({
     // Set initial selected values from current value (for form persistence)
     let currentValues = Array.isArray(value) ? value : [];
 
-    // If no value from props, try to get it from form data in DOM
-    if (currentValues.length === 0) {
-      const formElement = document.querySelector("form");
-      if (formElement) {
-        const formDataAttr = formElement.getAttribute("data-form-values");
-        if (formDataAttr) {
-          try {
-            const formData = JSON.parse(formDataAttr);
-            if (formData[field.key] && Array.isArray(formData[field.key])) {
-              currentValues = formData[field.key];
-            }
-          } catch (e) {
-            // Ignore JSON parse errors
-          }
-        }
-      }
-    }
-
     // Only update if the values have actually changed to prevent unnecessary re-renders
     const currentValueStrings = currentValues.sort().join(",");
     const selectedValueStrings = selected

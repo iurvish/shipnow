@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { getSkillsForFormOptions, validateSkills } from "@/lib/config/skills";
+import { useOnboardingStore } from "@/stores/form-store";
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { StepIndicator } from "@/components/shared/StepIndicator";
 import CustomInput from "@/components/ui/autoform/custom/input";
+import CustomPrefixInput from "@/components/ui/autoform/custom/prefix-input";
 import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import CustomSearchMultiSelect from "@/components/ui/autoform/custom/search-multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
@@ -205,10 +207,10 @@ const technicalProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Github/Twitter Profile",
-        fieldType: "input", // Use custom input for beforeInput support
+        fieldType: "prefix-input", // Use prefix-input for URL fields
         inputProps: {
+          prefix: "https://",
           placeholder: "github.com/username",
-          beforeInput: <span className="text-muted-foreground">https://</span>,
           className: "url-field-github",
         },
       })
@@ -244,10 +246,10 @@ const technicalProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Portfolio Link",
-        fieldType: "input", // Use custom input for beforeInput support
+        fieldType: "prefix-input", // Use prefix-input for URL fields
         inputProps: {
+          prefix: "https://",
           placeholder: "portfolio.com",
-          beforeInput: <span className="text-muted-foreground">https://</span>,
           className: "url-field-portfolio",
         },
       })
@@ -284,10 +286,10 @@ const technicalProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "LinkedIn Profile",
-        fieldType: "input", // Use custom input for beforeInput support
+        fieldType: "prefix-input", // Use prefix-input for URL fields
         inputProps: {
+          prefix: "https://",
           placeholder: "linkedin.com/in/username",
-          beforeInput: <span className="text-muted-foreground">https://</span>,
           className: "url-field-linkedin",
         },
       })
@@ -318,10 +320,10 @@ const setupProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Username",
-        fieldType: "input", // Use custom input for icon support
+        fieldType: "prefix-input", // Use prefix-input for username with @
         inputProps: {
+          prefix: "@",
           placeholder: "username",
-          beforeInput: <AtSign className="h-4 w-4" />,
         },
       })
     ),
@@ -379,11 +381,26 @@ const steps = [
 ];
 
 const OnboardingForm = () => {
+  // Use Zustand store for step-based persistence
+  const { saveStepData, getStepData, getAllFormData } = useOnboardingStore();
+
   const [step, setStep] = useState(0);
   const [previousStep, setPreviousStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Handle hydration to prevent SSR/client mismatches
+  useEffect(() => {
+    setIsHydrated(true);
+
+    // Load initial data from store after hydration
+    const allData = getAllFormData();
+    if (Object.keys(allData).length > 0) {
+      setFormData(allData);
+    }
+  }, [getAllFormData]);
 
   const getStepStatus = (stepIndex: number) => {
     if (stepIndex < step) return "done";
@@ -391,30 +408,34 @@ const OnboardingForm = () => {
     return "pending";
   };
 
-  // Get current step's data from formData for defaultValues
+  // Get current step's data from Zustand store for defaultValues (after hydration)
   const getCurrentStepData = () => {
+    // Only use store data after hydration to prevent SSR/client mismatches
+    const storeData = isHydrated ? getStepData(step) : {};
     const currentStepData = steps[step];
-    if (!currentStepData) return {};
+
+    if (!currentStepData) return storeData || {};
 
     const currentFields = currentStepData.fields;
-    const stepData: Record<string, any> = {};
+    const stepData: Record<string, any> = { ...storeData }; // Start with store data
 
+    // Merge with formData for backward compatibility
     currentFields.forEach((field) => {
-      if (formData[field] !== undefined) {
+      // Prefer store data, fallback to formData
+      if (storeData[field] !== undefined) {
+        stepData[field] = storeData[field];
+      } else if (formData[field] !== undefined) {
         let value = formData[field];
 
         // Handle type conversions for specific fields
         if (field === "date_of_birth" && typeof value === "string") {
-          // Keep as string since the date picker expects ISO string
           stepData[field] = value;
         } else if (field === "skills" && Array.isArray(value)) {
-          // Ensure skills array is properly formatted
           stepData[field] = value;
         } else if (
           field === "institute_department" &&
           typeof value === "object"
         ) {
-          // Ensure institute_department object is properly formatted
           stepData[field] = value;
           console.log("Setting institute_department defaultValue:", value);
         } else {
@@ -424,31 +445,15 @@ const OnboardingForm = () => {
     });
 
     console.log(`Step ${step + 1} current data:`, stepData);
+    console.log(`Store data (hydrated: ${isHydrated}):`, storeData);
     console.log(`Full formData for debugging:`, formData);
     return stepData;
   };
 
-  // Sanitize form data before passing to DOM
-  const sanitizeFormData = (data: Record<string, any>) => {
-    const sanitized: Record<string, any> = {};
-    Object.entries(data).forEach(([key, value]) => {
-      // Only include safe, expected fields
-      if (
-        typeof value === "string" ||
-        typeof value === "number" ||
-        Array.isArray(value) ||
-        (typeof value === "object" && value !== null && !Array.isArray(value))
-      ) {
-        sanitized[key] = value;
-      }
-    });
-    return sanitized;
-  };
-
-  // Get current step form data
+  // Get current step form data with proper dependency
   const currentStepFormData = useMemo(() => {
     return getCurrentStepData();
-  }, [step, formData]);
+  }, [step, formData, getStepData, isHydrated]);
 
   // Get a stable key for the form that forces re-render when data changes
   const formKey = useMemo(() => {
@@ -462,11 +467,15 @@ const OnboardingForm = () => {
     console.log("Type of data:", typeof data);
     console.log("Data keys:", Object.keys(data || {}));
 
-    // Merge current step data with existing form data
+    // Save step data to Zustand store
+    saveStepData(step, data);
+
+    // Merge current step data with existing form data (for backward compatibility)
     const updatedFormData = { ...formData, ...data };
     setFormData(updatedFormData);
 
     console.log("Updated form data:", updatedFormData);
+    console.log("Saved to store - Step:", step, "Data:", data);
 
     if (step < steps.length - 1) {
       // Show success toast for step completion
@@ -616,6 +625,18 @@ const OnboardingForm = () => {
     );
   }
 
+  // Prevent hydration mismatches by ensuring client has loaded
+  if (!isHydrated) {
+    return (
+      <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8 md:border-l md:border-r lg:px-0">
       <div className=" w-full border lg:border-l-0 lg:border-r-0  h-full ">
@@ -684,14 +705,15 @@ const OnboardingForm = () => {
                       string: StringField,
                       select: SelectField,
                       textarea: StringField, // Use StringField for textareas
-                      input: CustomInput, // Register for fieldType: "input" (with icon support)
-                      number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
+                      input: CustomInput, // Register for fieldType: "input"
+                      number: CustomInput, // Use custom input for numbers
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
                       "search-multiselect": CustomSearchMultiSelect, // Register for fieldType: "search-multiselect"
                       date: CustomDatePicker, // Register for fieldType: "date"
                       "select-command": SelectCommand, // Register for fieldType: "select-command"
                       "profile-photo": ProfilePhotoField, // Register for fieldType: "profile-photo"
                       "two-select-input": TwoSelectInput, // Register for fieldType: "two-select-input"
+                      "prefix-input": CustomPrefixInput, // Register for fieldType: "prefix-input"
                     }}
                     formProps={{
                       className:
@@ -702,10 +724,6 @@ const OnboardingForm = () => {
                             : step === 2
                               ? "setup-profile-form space-y-6"
                               : "grid grid-cols-1 gap-6",
-                      // Pass sanitized form data through data attributes
-                      "data-form-values": JSON.stringify(
-                        sanitizeFormData(currentStepFormData)
-                      ),
                     }}
                     onSubmit={handleStepSubmit}
                     withSubmit={false} // We'll handle submission with custom buttons
