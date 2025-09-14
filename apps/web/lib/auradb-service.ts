@@ -29,6 +29,7 @@ export interface AuraDBUserProfile {
   degreeLevel: string;
   skills: string[];
   university: string;
+  institute: string;
   department: string;
   projects: AuraDBProject[];
 }
@@ -84,6 +85,7 @@ export function transformOnboardingDataForAuraDB(
     degreeLevel: onboardingData.degree_level,
     skills: onboardingData.skills || [],
     university: onboardingData.university,
+    institute: onboardingData.institute,
     department: onboardingData.department,
     projects: auraDBProjects
   };

@@ -37,12 +37,7 @@ const schema = z.object({
 });
 
 function LoginForm() {
-  return (
-    <AutoForm
-      schema={schema}
-      onSubmit={(data) => console.log(data)}
-    />
-  );
+  return <AutoForm schema={schema} onSubmit={(data) => console.log(data)} />;
 }
 ```
 
@@ -51,37 +46,39 @@ function LoginForm() {
 ```tsx
 import { Shield, Lock } from "lucide-react";
 
-const signupSchema = z.object({
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .superRefine(
-      fieldConfig({
-        label: "Create Password",
-        fieldType: "password-input",
-        inputProps: {
-          placeholder: "Create a secure password",
-          beforeInput: <Shield className="h-4 w-4" />,
-        },
-      })
-    ),
-  confirmPassword: z
-    .string()
-    .min(8)
-    .superRefine(
-      fieldConfig({
-        label: "Confirm Password",
-        fieldType: "password-input",
-        inputProps: {
-          placeholder: "Confirm your password",
-          beforeInput: <Lock className="h-4 w-4" />,
-        },
-      })
-    ),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .superRefine(
+        fieldConfig({
+          label: "Create Password",
+          fieldType: "password-input",
+          inputProps: {
+            placeholder: "Create a secure password",
+            beforeInput: <Shield className="h-4 w-4" />,
+          },
+        })
+      ),
+    confirmPassword: z
+      .string()
+      .min(8)
+      .superRefine(
+        fieldConfig({
+          label: "Confirm Password",
+          fieldType: "password-input",
+          inputProps: {
+            placeholder: "Confirm your password",
+            beforeInput: <Lock className="h-4 w-4" />,
+          },
+        })
+      ),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 ```
 
 ### Advanced Validation
@@ -111,13 +108,13 @@ const securePasswordSchema = z.object({
 
 The component accepts all standard input props plus:
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `beforeInput` | `ReactNode` | `<Lock />` | Icon or element shown before input |
-| `afterInput` | `ReactNode` | - | Icon or element shown after input (before eye button) |
-| `placeholder` | `string` | "Enter your password" | Input placeholder text |
-| `disabled` | `boolean` | `false` | Whether the input is disabled |
-| `error` | `string` | - | Error message to display |
+| Prop          | Type        | Default               | Description                                           |
+| ------------- | ----------- | --------------------- | ----------------------------------------------------- |
+| `beforeInput` | `ReactNode` | `<Lock />`            | Icon or element shown before input                    |
+| `afterInput`  | `ReactNode` | -                     | Icon or element shown after input (before eye button) |
+| `placeholder` | `string`    | "Enter your password" | Input placeholder text                                |
+| `disabled`    | `boolean`   | `false`               | Whether the input is disabled                         |
+| `error`       | `string`    | -                     | Error message to display                              |
 
 ## Integration with AutoForm
 
@@ -132,7 +129,7 @@ import { AutoForm } from "@/components/ui/autoform";
   formComponents={{
     "password-input": PasswordInputField, // Already registered by default
   }}
-/>
+/>;
 ```
 
 ## Styling

@@ -26,6 +26,7 @@ import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import SelectCommand from "@/components/ui/autoform/custom/select-command";
 import ProfilePhotoField from "@/components/ui/autoform/custom/profile-photo";
+import TwoSelectInput from "@/components/ui/autoform/custom/two-select-input";
 import PasswordInputField from "@/components/ui/autoform/custom/password-input";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
@@ -80,105 +81,63 @@ const personalDetailsSchema = z.object({
         },
       })
     ),
-  department: z
-    .string()
-    .min(2)
+  institute_department: z
+    .object({
+      institute: z.string().min(1, "Please select an institute"),
+      department: z.string().min(1, "Please select a department"),
+    })
     .superRefine(
       fieldConfig({
-        label: "Department",
-        fieldType: "select-command", // Use SelectCommand with conditional options
+        label: "Institute & Department",
+        fieldType: "two-select-input",
         inputProps: {
-          placeholder: "Select your department",
-          conditionalOptions: {
-            fieldName: "university",
-            fn: async (universityValue: string) => {
-              // Simulate API call delay
-              await new Promise((resolve) => setTimeout(resolve, 300));
+          separateFields: true,
+          firstFieldName: "institute",
+          secondFieldName: "department",
+          firstSelectLabel: "Institute",
+          secondSelectLabel: "Department",
+          firstSelectPlaceholder: "Choose institute...",
+          secondSelectPlaceholder: "Choose department...",
+          firstSelectOptions: [
+            { label: "CSPIT (Computer Science)", value: "cspit" },
+            { label: "DEPSTAR (Engineering)", value: "depstar" },
+            { label: "Other Institute", value: "other" },
+          ],
+          getSecondOptions: async (institute: string) => {
+            // Simulate API delay
+            await new Promise((resolve) => setTimeout(resolve, 300));
 
-              // Common departments for most universities
-              const commonDepartments = [
-                { value: "computer-science", label: "Computer Science" },
-                { value: "engineering", label: "Engineering" },
-                { value: "business", label: "Business Administration" },
-                { value: "mathematics", label: "Mathematics" },
-                { value: "physics", label: "Physics" },
-                { value: "chemistry", label: "Chemistry" },
-                { value: "biology", label: "Biology" },
-                { value: "psychology", label: "Psychology" },
-                { value: "economics", label: "Economics" },
-                { value: "english", label: "English Literature" },
-                { value: "history", label: "History" },
-                { value: "political-science", label: "Political Science" },
-                { value: "art", label: "Art & Design" },
-                { value: "music", label: "Music" },
-                { value: "philosophy", label: "Philosophy" },
-                { value: "sociology", label: "Sociology" },
-                { value: "anthropology", label: "Anthropology" },
-                {
-                  value: "environmental-science",
-                  label: "Environmental Science",
-                },
-                { value: "medicine", label: "Medicine" },
-                { value: "law", label: "Law" },
-              ];
-
-              // Special departments for tech-focused universities
-              const techDepartments = [
-                { value: "computer-science", label: "Computer Science" },
-                {
-                  value: "software-engineering",
-                  label: "Software Engineering",
-                },
-                {
-                  value: "electrical-engineering",
-                  label: "Electrical Engineering",
-                },
-                {
-                  value: "mechanical-engineering",
-                  label: "Mechanical Engineering",
-                },
-                { value: "civil-engineering", label: "Civil Engineering" },
-                {
-                  value: "aerospace-engineering",
-                  label: "Aerospace Engineering",
-                },
-                {
-                  value: "biomedical-engineering",
-                  label: "Biomedical Engineering",
-                },
-                {
-                  value: "chemical-engineering",
-                  label: "Chemical Engineering",
-                },
-                { value: "data-science", label: "Data Science" },
-                {
-                  value: "artificial-intelligence",
-                  label: "Artificial Intelligence",
-                },
-                { value: "cybersecurity", label: "Cybersecurity" },
-                { value: "robotics", label: "Robotics" },
-                { value: "information-systems", label: "Information Systems" },
-                { value: "mathematics", label: "Mathematics" },
-                { value: "physics", label: "Physics" },
-                { value: "statistics", label: "Statistics" },
-              ];
-
-              // Return departments based on university
-              switch (universityValue) {
-                case "mit":
-                case "caltech":
-                case "stanford":
-                case "carnegie-mellon":
-                  return techDepartments;
-                case "other":
-                  return [
-                    ...commonDepartments,
-                    { value: "other", label: "Other (Please specify)" },
-                  ];
-                default:
-                  return commonDepartments;
-              }
-            },
+            switch (institute) {
+              case "cspit":
+                return [
+                  { label: "Computer Science & Engineering", value: "cse" },
+                  { label: "Information Technology", value: "it" },
+                  { label: "Computer Engineering", value: "ce" },
+                  { label: "Data Science", value: "ds" },
+                  { label: "Artificial Intelligence", value: "ai" },
+                  { label: "Cyber Security", value: "cs" },
+                ];
+              case "depstar":
+                return [
+                  { label: "Mechanical Engineering", value: "me" },
+                  { label: "Civil Engineering", value: "civil" },
+                  { label: "Electrical Engineering", value: "ee" },
+                  { label: "Electronics & Communication", value: "ec" },
+                  { label: "Chemical Engineering", value: "che" },
+                  { label: "Automobile Engineering", value: "auto" },
+                ];
+              case "other":
+                return [
+                  { label: "Computer Science", value: "cs" },
+                  { label: "Engineering", value: "eng" },
+                  { label: "Business", value: "business" },
+                  { label: "Arts", value: "arts" },
+                  { label: "Science", value: "science" },
+                  { label: "Other", value: "other" },
+                ];
+              default:
+                return [];
+            }
           },
         },
       })
@@ -396,7 +355,7 @@ const steps = [
       "last_name",
       "date_of_birth",
       "university",
-      "department",
+      "institute_department",
       "degree_level",
     ],
   },
@@ -713,6 +672,7 @@ const OnboardingForm = () => {
                       date: CustomDatePicker, // Register for fieldType: "date"
                       "select-command": SelectCommand, // Register for fieldType: "select-command"
                       "profile-photo": ProfilePhotoField, // Register for fieldType: "profile-photo"
+                      "two-select-input": TwoSelectInput, // Register for fieldType: "two-select-input"
                     }}
                     formProps={{
                       className:

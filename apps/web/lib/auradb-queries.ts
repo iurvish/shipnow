@@ -32,17 +32,24 @@ WHERE skillName IS NOT NULL
 MERGE (s:Skill {name: skillName})
 MERGE (u)-[:HAS_SKILL]->(s)
 
-// Step 3: Handle University and Department
+// Step 3: Handle University, Institute and Department
 WITH u, data
 WHERE data.university IS NOT NULL
 MERGE (uni:University {name: data.university})
 MERGE (u)-[:STUDIED_AT]->(uni)
 
 WITH u, data, uni
+WHERE data.institute IS NOT NULL
+MERGE (inst:Institute {name: data.institute})
+MERGE (u)-[:IN_INSTITUTE]->(inst)
+MERGE (inst)-[:INSTITUTE_OF]->(uni)
+
+WITH u, data, uni, inst
 WHERE data.department IS NOT NULL
 MERGE (dept:Department {name: data.department})
 MERGE (u)-[:IN_DEPARTMENT]->(dept)
-MERGE (dept)-[:DEPARTMENT_OF]->(uni)
+MERGE (dept)-[:DEPARTMENT_OF]->(inst)
+MERGE (dept)-[:DEPARTMENT_OF_UNIVERSITY]->(uni)
 
 // Step 4: Handle Projects (Main UNWIND for projects array)
 WITH u, data

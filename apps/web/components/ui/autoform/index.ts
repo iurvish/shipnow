@@ -9,3 +9,4 @@ export { default as CustomMultiSelect } from "./custom/multiselect";
 export { default as CustomDatePicker } from "./custom/date-picker";
 export { default as ProfilePhotoField } from "./custom/profile-photo";
 export { default as SelectCommand } from "./custom/select-command";
+export { default as TwoSelectInput } from "./custom/two-select-input";

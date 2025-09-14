@@ -18,7 +18,8 @@ const onboardingSchema = z.object({
   last_name: z.string().min(2, "Last name must be at least 2 characters"),
   date_of_birth: z.string().optional(),
   university: z.string().min(2, "University is required"),
-  department: z.string().min(2, "Department is required"),
+  institute: z.string().min(1, "Institute is required"),
+  department: z.string().min(1, "Department is required"),
   degree_level: z.enum(["Bachelor", "Master", "Self_taught", "Diploma", "Other"]),
   
   // Technical Profile
@@ -225,6 +226,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
         user_id: user.id,
         date_of_birth: validatedData.date_of_birth || null,
         university: validatedData.university,
+        institute: validatedData.institute,
         department: validatedData.department,
         degree_level: validatedData.degree_level,
         updated_at: new Date().toISOString()
@@ -274,6 +276,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
           last_name: validatedData.last_name,
           date_of_birth: validatedData.date_of_birth,
           university: validatedData.university,
+          institute: validatedData.institute,
           department: validatedData.department,
           degree_level: validatedData.degree_level,
           skills: validatedData.skills,
