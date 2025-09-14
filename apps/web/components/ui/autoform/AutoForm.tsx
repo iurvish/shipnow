@@ -18,6 +18,8 @@ import { SelectField } from "./components/SelectField";
 import { ObjectWrapper } from "./components/ObjectWrapper";
 import { ArrayWrapper } from "./components/ArrayWrapper";
 import { ArrayElementWrapper } from "./components/ArrayElementWrapper";
+import PasswordInputField from "./custom/password-input";
+import TwoSelectInput from "./custom/two-select-input";
 
 const ShadcnUIComponents: AutoFormUIComponents = {
   Form,
@@ -35,6 +37,8 @@ export const ShadcnAutoFormFieldComponents = {
   boolean: BooleanField,
   date: DateField,
   select: SelectField,
+  "password-input": PasswordInputField,
+  "two-select-input": TwoSelectInput,
 } as const;
 export type FieldTypes = keyof typeof ShadcnAutoFormFieldComponents;
 

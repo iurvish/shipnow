@@ -35,6 +35,7 @@ interface SimpleArtifactContextType {
   closeArtifact: () => void;
   setMessages: (messages: ChatMessage[]) => void;
   sendMessage?: (content: string) => void;
+  onAIResponse?: (response: ChatResponse) => void;
 }
 
 const SimpleArtifactContext = createContext<
@@ -44,7 +45,8 @@ const SimpleArtifactContext = createContext<
 export const SimpleArtifactProvider: React.FC<{
   children: ReactNode;
   sendMessage?: (content: string) => void;
-}> = ({ children, sendMessage }) => {
+  onAIResponse?: (response: ChatResponse) => void;
+}> = ({ children, sendMessage, onAIResponse }) => {
   // Simple artifact provider for user details
   const [isVisible, setIsVisible] = useState(false);
   const [artifactData, setArtifactData] = useState<ArtifactData | null>(null);
@@ -75,6 +77,7 @@ export const SimpleArtifactProvider: React.FC<{
         closeArtifact,
         setMessages,
         sendMessage,
+        onAIResponse,
       }}
     >
       {children}

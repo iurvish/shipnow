@@ -254,7 +254,8 @@ const SelectCommand: React.FC<AutoFormFieldProps> = ({
             disabled={disabledFromConfig}
             className={cn(
               "w-full justify-between bg-background px-3 font-normal outline-offset-0 hover:bg-background focus-visible:border-ring focus-visible:outline-[3px] focus-visible:outline-ring/20",
-              className
+              className,
+              props.className
             )}
           >
             <span

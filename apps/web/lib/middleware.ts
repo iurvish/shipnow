@@ -35,16 +35,59 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
 
   const user = data?.claims
+  const pathname = request.nextUrl.pathname
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
+  // Define protected routes
+  const protectedRoutes = ['/onboarding', '/chat', '/protected']
+  const authRoutes = ['/auth/login', '/auth/sign-up', '/auth/forgot-password']
+
+  if (!user) {
+    // User is not authenticated
+    if (protectedRoutes.some(route => pathname.startsWith(route))) {
+      // Redirect unauthenticated users trying to access protected routes to login
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+  } else {
+    // User is authenticated, check onboarding status
+    try {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('onboarded')
+        .eq('id', user.sub)
+        .single()
+
+      const isOnboarded = userData?.onboarded || false
+
+      if (!isOnboarded) {
+        // User is not onboarded
+        if (pathname !== '/onboarding' && !authRoutes.some(route => pathname.startsWith(route))) {
+          // Redirect to onboarding if not already there
+          const url = request.nextUrl.clone()
+          url.pathname = '/onboarding'
+          return NextResponse.redirect(url)
+        }
+      } else {
+        // User is onboarded
+        if (pathname === '/onboarding') {
+          // Redirect onboarded users away from onboarding to chat
+          const url = request.nextUrl.clone()
+          url.pathname = '/chat'
+          return NextResponse.redirect(url)
+        }
+        
+        // Redirect from root to chat for onboarded users
+        if (pathname === '/') {
+          const url = request.nextUrl.clone()
+          url.pathname = '/chat'
+          return NextResponse.redirect(url)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error)
+      // On error, allow the request to continue
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

@@ -10,11 +10,20 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageSquare, MoreHorizontal, HomeIcon } from "lucide-react";
+import {
+  Plus,
+  MessageSquare,
+  MoreHorizontal,
+  HomeIcon,
+  FolderOpen,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { UserMenu } from "./user-menu";
 import { ActiveDecorator } from "@/components/ui/active-decorator";
+import { useSessionUser } from "@/hooks/use-session-user";
 
 // Mock chat history data
 const chatHistory = [
@@ -30,6 +39,29 @@ const timeGroups = {
 
 export function AppSidebar() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
+  const { user, loading } = useSessionUser();
+  const pathname = usePathname();
+
+  // Format user data for UserMenu
+  const userData = user
+    ? {
+        name:
+          [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+          "Anonymous User",
+        email: user.email,
+        avatar: user.profile_picture || "", // Empty string will fallback to initials
+      }
+    : loading
+      ? {
+          name: "Loading...",
+          email: "loading...",
+          avatar: "",
+        }
+      : {
+          name: "Guest User",
+          email: "guest@example.com",
+          avatar: "",
+        };
 
   return (
     <Sidebar className="border-r border-border/40">
@@ -46,6 +78,45 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4">
+        {/* Projects Section */}
+        <div className="mb-6">
+          <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Portfolio
+          </div>
+          <SidebarMenu className="mt-2">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link
+                  href="/projects"
+                  className={cn(
+                    "relative w-full justify-start text-left h-auto p-3 hover:bg-accent/50 group transition-colors rounded-none",
+                    pathname?.startsWith("/dashboard/projects") &&
+                      "bg-accent/80"
+                  )}
+                >
+                  <ActiveDecorator
+                    isActive={
+                      pathname?.startsWith("/dashboard/projects") ?? false
+                    }
+                  />
+                  <div className="flex items-start gap-3 w-full">
+                    <FolderOpen className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">
+                        My Projects
+                      </div>
+                    </div>
+                    <div className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity">
+                      <Plus className="h-3 w-3" />
+                    </div>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
+
+        {/* Chat History */}
         {Object.entries(timeGroups).map(([groupName, chats]) => (
           <div key={groupName} className="mb-6">
             <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -88,13 +159,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/40 p-4">
-        <UserMenu
-          user={{
-            name: "John Doe",
-            email: "john@example.com",
-            avatar: "/avatars/avatar.jpg",
-          }}
-        />
+        <UserMenu user={userData} />
       </SidebarFooter>
     </Sidebar>
   );

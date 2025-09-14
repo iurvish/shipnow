@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { getSkillsForFormOptions, validateSkills } from "@/lib/config/skills";
+import { useOnboardingStore } from "@/stores/form-store";
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,13 +23,17 @@ import {
 import { cn } from "@/lib/utils";
 import { StepIndicator } from "@/components/shared/StepIndicator";
 import CustomInput from "@/components/ui/autoform/custom/input";
+import CustomPrefixInput from "@/components/ui/autoform/custom/prefix-input";
 import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
+import CustomSearchMultiSelect from "@/components/ui/autoform/custom/search-multiselect";
 import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
 import SelectCommand from "@/components/ui/autoform/custom/select-command";
 import ProfilePhotoField from "@/components/ui/autoform/custom/profile-photo";
+import TwoSelectInput from "@/components/ui/autoform/custom/two-select-input";
+import PasswordInputField from "@/components/ui/autoform/custom/password-input";
 import { StringField } from "@/components/ui/autoform/components/StringField";
 import { SelectField } from "@/components/ui/autoform/components/SelectField";
-
+import { submitOnboardingForm } from "@/lib/actions/onboarding";
 // Step 1: Personal Details
 const personalDetailsSchema = z.object({
   first_name: z
@@ -74,141 +80,67 @@ const personalDetailsSchema = z.object({
         fieldType: "select-command", // Use SelectCommand instead of input
         inputProps: {
           placeholder: "Search and select your university",
-          options: [
-            { value: "harvard", label: "Harvard University" },
-            { value: "mit", label: "Massachusetts Institute of Technology" },
-            { value: "stanford", label: "Stanford University" },
-            { value: "berkeley", label: "University of California, Berkeley" },
-            { value: "caltech", label: "California Institute of Technology" },
-            { value: "princeton", label: "Princeton University" },
-            { value: "yale", label: "Yale University" },
-            { value: "columbia", label: "Columbia University" },
-            { value: "chicago", label: "University of Chicago" },
-            { value: "upenn", label: "University of Pennsylvania" },
-            { value: "cornell", label: "Cornell University" },
-            { value: "northwestern", label: "Northwestern University" },
-            { value: "johns-hopkins", label: "Johns Hopkins University" },
-            { value: "duke", label: "Duke University" },
-            { value: "brown", label: "Brown University" },
-            { value: "vanderbilt", label: "Vanderbilt University" },
-            { value: "rice", label: "Rice University" },
-            { value: "notre-dame", label: "University of Notre Dame" },
-            { value: "ucla", label: "University of California, Los Angeles" },
-            { value: "michigan", label: "University of Michigan" },
-            { value: "virginia", label: "University of Virginia" },
-            { value: "emory", label: "Emory University" },
-            { value: "carnegie-mellon", label: "Carnegie Mellon University" },
-            { value: "georgetown", label: "Georgetown University" },
-            { value: "wake-forest", label: "Wake Forest University" },
-            { value: "tufts", label: "Tufts University" },
-            { value: "boston-college", label: "Boston College" },
-            { value: "nyu", label: "New York University" },
-            { value: "brandeis", label: "Brandeis University" },
-            { value: "case-western", label: "Case Western Reserve University" },
-            { value: "other", label: "Other (Please specify in next field)" },
-          ],
+          options: [{ value: "charusat", label: "Charusat University" }],
         },
       })
     ),
-  department: z
-    .string()
-    .min(2)
+  institute_department: z
+    .object({
+      institute: z.string().min(1, "Please select an institute"),
+      department: z.string().min(1, "Please select a department"),
+    })
     .superRefine(
       fieldConfig({
-        label: "Department",
-        fieldType: "select-command", // Use SelectCommand with conditional options
+        label: "Institute & Department",
+        fieldType: "two-select-input",
         inputProps: {
-          placeholder: "Select your department",
-          conditionalOptions: {
-            fieldName: "university",
-            fn: async (universityValue: string) => {
-              // Simulate API call delay
-              await new Promise((resolve) => setTimeout(resolve, 300));
+          separateFields: true,
+          firstFieldName: "institute",
+          secondFieldName: "department",
+          firstSelectLabel: "Institute",
+          secondSelectLabel: "Department",
+          firstSelectPlaceholder: "Choose institute...",
+          secondSelectPlaceholder: "Choose department...",
+          firstSelectOptions: [
+            { label: "CSPIT (Computer Science)", value: "cspit" },
+            { label: "DEPSTAR (Engineering)", value: "depstar" },
+            { label: "Other Institute", value: "other" },
+          ],
+          getSecondOptions: async (institute: string) => {
+            // Simulate API delay
+            await new Promise((resolve) => setTimeout(resolve, 300));
 
-              // Common departments for most universities
-              const commonDepartments = [
-                { value: "computer-science", label: "Computer Science" },
-                { value: "engineering", label: "Engineering" },
-                { value: "business", label: "Business Administration" },
-                { value: "mathematics", label: "Mathematics" },
-                { value: "physics", label: "Physics" },
-                { value: "chemistry", label: "Chemistry" },
-                { value: "biology", label: "Biology" },
-                { value: "psychology", label: "Psychology" },
-                { value: "economics", label: "Economics" },
-                { value: "english", label: "English Literature" },
-                { value: "history", label: "History" },
-                { value: "political-science", label: "Political Science" },
-                { value: "art", label: "Art & Design" },
-                { value: "music", label: "Music" },
-                { value: "philosophy", label: "Philosophy" },
-                { value: "sociology", label: "Sociology" },
-                { value: "anthropology", label: "Anthropology" },
-                {
-                  value: "environmental-science",
-                  label: "Environmental Science",
-                },
-                { value: "medicine", label: "Medicine" },
-                { value: "law", label: "Law" },
-              ];
-
-              // Special departments for tech-focused universities
-              const techDepartments = [
-                { value: "computer-science", label: "Computer Science" },
-                {
-                  value: "software-engineering",
-                  label: "Software Engineering",
-                },
-                {
-                  value: "electrical-engineering",
-                  label: "Electrical Engineering",
-                },
-                {
-                  value: "mechanical-engineering",
-                  label: "Mechanical Engineering",
-                },
-                { value: "civil-engineering", label: "Civil Engineering" },
-                {
-                  value: "aerospace-engineering",
-                  label: "Aerospace Engineering",
-                },
-                {
-                  value: "biomedical-engineering",
-                  label: "Biomedical Engineering",
-                },
-                {
-                  value: "chemical-engineering",
-                  label: "Chemical Engineering",
-                },
-                { value: "data-science", label: "Data Science" },
-                {
-                  value: "artificial-intelligence",
-                  label: "Artificial Intelligence",
-                },
-                { value: "cybersecurity", label: "Cybersecurity" },
-                { value: "robotics", label: "Robotics" },
-                { value: "information-systems", label: "Information Systems" },
-                { value: "mathematics", label: "Mathematics" },
-                { value: "physics", label: "Physics" },
-                { value: "statistics", label: "Statistics" },
-              ];
-
-              // Return departments based on university
-              switch (universityValue) {
-                case "mit":
-                case "caltech":
-                case "stanford":
-                case "carnegie-mellon":
-                  return techDepartments;
-                case "other":
-                  return [
-                    ...commonDepartments,
-                    { value: "other", label: "Other (Please specify)" },
-                  ];
-                default:
-                  return commonDepartments;
-              }
-            },
+            switch (institute) {
+              case "cspit":
+                return [
+                  { label: "Computer Science & Engineering", value: "cse" },
+                  { label: "Information Technology", value: "it" },
+                  { label: "Computer Engineering", value: "ce" },
+                  { label: "Data Science", value: "ds" },
+                  { label: "Artificial Intelligence", value: "ai" },
+                  { label: "Cyber Security", value: "cs" },
+                ];
+              case "depstar":
+                return [
+                  { label: "Mechanical Engineering", value: "me" },
+                  { label: "Civil Engineering", value: "civil" },
+                  { label: "Electrical Engineering", value: "ee" },
+                  { label: "Electronics & Communication", value: "ec" },
+                  { label: "Chemical Engineering", value: "che" },
+                  { label: "Automobile Engineering", value: "auto" },
+                ];
+              case "other":
+                return [
+                  { label: "Computer Science", value: "cs" },
+                  { label: "Engineering", value: "eng" },
+                  { label: "Business", value: "business" },
+                  { label: "Arts", value: "arts" },
+                  { label: "Science", value: "science" },
+                  { label: "Other", value: "other" },
+                ];
+              default:
+                return [];
+            }
           },
         },
       })
@@ -230,84 +162,135 @@ const technicalProfileSchema = z.object({
   skills: z
     .array(z.string())
     .min(1, "Select at least one skill")
+    .refine((skills) => validateSkills(skills), {
+      message: "Invalid skill selected",
+    })
     .superRefine(
       fieldConfig({
         label: "Technical Skills",
-        fieldType: "multiselect", // Add fieldType to specify component
+        fieldType: "search-multiselect",
         inputProps: {
-          placeholder: "Select skills...",
+          placeholder: "Search and select skills...",
           className: "w-full",
-          options: [
-            { value: "react", label: "React" },
-            { value: "typescript", label: "TypeScript" },
-            { value: "node", label: "Node.js" },
-            { value: "graphql", label: "GraphQL" },
-            { value: "next", label: "Next.js" },
-            { value: "vue", label: "Vue" },
-            { value: "svelte", label: "Svelte" },
-            { value: "angular", label: "Angular" },
-            { value: "tailwind", label: "Tailwind CSS" },
-            { value: "bootstrap", label: "Bootstrap" },
-            { value: "chakra", label: "Chakra UI" },
-            { value: "material", label: "Material UI" },
-            { value: "ant", label: "Ant Design" },
-          ],
-        },
-      })
-    ),
-  experience: z
-    .enum(["Beginner", "Intermediate", "Advanced", "Expert"])
-    .superRefine(
-      fieldConfig({
-        label: "Experience Level",
-        inputProps: {
-          placeholder: "Select your experience level",
+          options: getSkillsForFormOptions(),
         },
       })
     ),
   github: z
     .string()
-    .url()
     .optional()
     .transform((val) => {
       if (!val || val.trim() === "") return undefined;
-      // Add https:// if not present
-      if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
-        return `https://${val}`;
-      }
-      return val;
+
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
+
+      // Add https:// prefix
+      return `https://${cleanVal}`;
     })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field, so undefined/empty is valid
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., github.com/username)",
+      }
+    )
     .superRefine(
       fieldConfig({
         label: "Github/Twitter Profile",
-        fieldType: "input", // Use custom input for beforeInput support
+        fieldType: "prefix-input", // Use prefix-input for URL fields
         inputProps: {
+          prefix: "https://",
           placeholder: "github.com/username",
-          beforeInput: <span className="text-muted-foreground">https://</span>,
           className: "url-field-github",
         },
       })
     ),
   portfolio: z
     .string()
-    .url()
     .optional()
     .transform((val) => {
       if (!val || val.trim() === "") return undefined;
-      // Add https:// if not present
-      if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
-        return `https://${val}`;
-      }
-      return val;
+
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
+
+      // Add https:// prefix
+      return `https://${cleanVal}`;
     })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field, so undefined/empty is valid
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., portfolio.com)",
+      }
+    )
     .superRefine(
       fieldConfig({
         label: "Portfolio Link",
-        fieldType: "input", // Use custom input for beforeInput support
+        fieldType: "prefix-input", // Use prefix-input for URL fields
         inputProps: {
+          prefix: "https://",
           placeholder: "portfolio.com",
-          beforeInput: <span className="text-muted-foreground">https://</span>,
           className: "url-field-portfolio",
+        },
+      })
+    ),
+  linkedin: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
+
+      // Add https:// prefix
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field, so undefined/empty is valid
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message:
+          "Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)",
+      }
+    )
+    .superRefine(
+      fieldConfig({
+        label: "LinkedIn Profile",
+        fieldType: "prefix-input", // Use prefix-input for URL fields
+        inputProps: {
+          prefix: "https://",
+          placeholder: "linkedin.com/in/username",
+          className: "url-field-linkedin",
         },
       })
     ),
@@ -337,10 +320,10 @@ const setupProfileSchema = z.object({
     .superRefine(
       fieldConfig({
         label: "Username",
-        fieldType: "input", // Use custom input for icon support
+        fieldType: "prefix-input", // Use prefix-input for username with @
         inputProps: {
+          prefix: "@",
           placeholder: "username",
-          beforeInput: <AtSign className="h-4 w-4" />,
         },
       })
     ),
@@ -375,7 +358,7 @@ const steps = [
       "last_name",
       "date_of_birth",
       "university",
-      "department",
+      "institute_department",
       "degree_level",
     ],
   },
@@ -385,7 +368,7 @@ const steps = [
     title: "Technical Profile",
     icon: GraduationCap,
     schema: new ZodProvider(technicalProfileSchema),
-    fields: ["skills", "experience", "github", "portfolio"],
+    fields: ["skills", "github", "portfolio", "linkedin"],
   },
   {
     id: "step-3",
@@ -398,11 +381,26 @@ const steps = [
 ];
 
 const OnboardingForm = () => {
+  // Use Zustand store for step-based persistence
+  const { saveStepData, getStepData, getAllFormData } = useOnboardingStore();
+
   const [step, setStep] = useState(0);
   const [previousStep, setPreviousStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Handle hydration to prevent SSR/client mismatches
+  useEffect(() => {
+    setIsHydrated(true);
+
+    // Load initial data from store after hydration
+    const allData = getAllFormData();
+    if (Object.keys(allData).length > 0) {
+      setFormData(allData);
+    }
+  }, [getAllFormData]);
 
   const getStepStatus = (stepIndex: number) => {
     if (stepIndex < step) return "done";
@@ -410,25 +408,36 @@ const OnboardingForm = () => {
     return "pending";
   };
 
-  // Get current step's data from formData for defaultValues
+  // Get current step's data from Zustand store for defaultValues (after hydration)
   const getCurrentStepData = () => {
+    // Only use store data after hydration to prevent SSR/client mismatches
+    const storeData = isHydrated ? getStepData(step) : {};
     const currentStepData = steps[step];
-    if (!currentStepData) return {};
+
+    if (!currentStepData) return storeData || {};
 
     const currentFields = currentStepData.fields;
-    const stepData: Record<string, any> = {};
+    const stepData: Record<string, any> = { ...storeData }; // Start with store data
 
+    // Merge with formData for backward compatibility
     currentFields.forEach((field) => {
-      if (formData[field] !== undefined) {
+      // Prefer store data, fallback to formData
+      if (storeData[field] !== undefined) {
+        stepData[field] = storeData[field];
+      } else if (formData[field] !== undefined) {
         let value = formData[field];
 
         // Handle type conversions for specific fields
         if (field === "date_of_birth" && typeof value === "string") {
-          // Keep as string since the date picker expects ISO string
           stepData[field] = value;
         } else if (field === "skills" && Array.isArray(value)) {
-          // Ensure skills array is properly formatted
           stepData[field] = value;
+        } else if (
+          field === "institute_department" &&
+          typeof value === "object"
+        ) {
+          stepData[field] = value;
+          console.log("Setting institute_department defaultValue:", value);
         } else {
           stepData[field] = value;
         }
@@ -436,29 +445,15 @@ const OnboardingForm = () => {
     });
 
     console.log(`Step ${step + 1} current data:`, stepData);
+    console.log(`Store data (hydrated: ${isHydrated}):`, storeData);
+    console.log(`Full formData for debugging:`, formData);
     return stepData;
   };
 
-  // Sanitize form data before passing to DOM
-  const sanitizeFormData = (data: Record<string, any>) => {
-    const sanitized: Record<string, any> = {};
-    Object.entries(data).forEach(([key, value]) => {
-      // Only include safe, expected fields
-      if (
-        typeof value === "string" ||
-        typeof value === "number" ||
-        Array.isArray(value)
-      ) {
-        sanitized[key] = value;
-      }
-    });
-    return sanitized;
-  };
-
-  // Get current step form data
+  // Get current step form data with proper dependency
   const currentStepFormData = useMemo(() => {
     return getCurrentStepData();
-  }, [step, formData]);
+  }, [step, formData, getStepData, isHydrated]);
 
   // Get a stable key for the form that forces re-render when data changes
   const formKey = useMemo(() => {
@@ -467,13 +462,20 @@ const OnboardingForm = () => {
   }, [step, currentStepFormData]);
 
   const handleStepSubmit = (data: any) => {
+    console.log("🚀 handleStepSubmit called!");
     console.log(`Step ${step + 1} data:`, data);
+    console.log("Type of data:", typeof data);
+    console.log("Data keys:", Object.keys(data || {}));
 
-    // Merge current step data with existing form data
+    // Save step data to Zustand store
+    saveStepData(step, data);
+
+    // Merge current step data with existing form data (for backward compatibility)
     const updatedFormData = { ...formData, ...data };
     setFormData(updatedFormData);
 
     console.log("Updated form data:", updatedFormData);
+    console.log("Saved to store - Step:", step, "Data:", data);
 
     if (step < steps.length - 1) {
       // Show success toast for step completion
@@ -499,10 +501,6 @@ const OnboardingForm = () => {
     try {
       console.log("Submitting complete onboarding data:", completeData);
 
-      // Import the server action
-      const { submitOnboardingForm } = await import("@/lib/actions/onboarding");
-
-      // Submit the data using server action
       const result = await submitOnboardingForm(completeData);
 
       if (result.success) {
@@ -512,10 +510,10 @@ const OnboardingForm = () => {
         });
         setShowSuccess(true);
 
-        // Redirect to protected area after 3 seconds
+        // Redirect to chat after 3 seconds
         setTimeout(() => {
-          window.location.href = "/protected";
-        }, 3000);
+          window.location.href = "/chat";
+        }, 2500);
       } else {
         throw new Error(result.error || "Failed to submit onboarding data");
       }
@@ -536,10 +534,15 @@ const OnboardingForm = () => {
   };
 
   const next = async () => {
+    console.log("🔄 Next button clicked!");
     // Trigger form submission for current step
     const currentForm = document.querySelector("form");
+    console.log("Found form:", currentForm);
     if (currentForm) {
+      console.log("Calling requestSubmit...");
       currentForm.requestSubmit();
+    } else {
+      console.error("No form found!");
     }
   };
 
@@ -622,6 +625,18 @@ const OnboardingForm = () => {
     );
   }
 
+  // Prevent hydration mismatches by ensuring client has loaded
+  if (!isHydrated) {
+    return (
+      <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8 md:border-l md:border-r lg:px-0">
       <div className=" w-full border lg:border-l-0 lg:border-r-0  h-full ">
@@ -690,12 +705,15 @@ const OnboardingForm = () => {
                       string: StringField,
                       select: SelectField,
                       textarea: StringField, // Use StringField for textareas
-                      input: CustomInput, // Register for fieldType: "input" (with icon support)
-                      number: CustomInput, // Use custom input for numbers (with beforeInput/afterInput support)
+                      input: CustomInput, // Register for fieldType: "input"
+                      number: CustomInput, // Use custom input for numbers
                       multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
+                      "search-multiselect": CustomSearchMultiSelect, // Register for fieldType: "search-multiselect"
                       date: CustomDatePicker, // Register for fieldType: "date"
                       "select-command": SelectCommand, // Register for fieldType: "select-command"
                       "profile-photo": ProfilePhotoField, // Register for fieldType: "profile-photo"
+                      "two-select-input": TwoSelectInput, // Register for fieldType: "two-select-input"
+                      "prefix-input": CustomPrefixInput, // Register for fieldType: "prefix-input"
                     }}
                     formProps={{
                       className:
@@ -706,10 +724,6 @@ const OnboardingForm = () => {
                             : step === 2
                               ? "setup-profile-form space-y-6"
                               : "grid grid-cols-1 gap-6",
-                      // Pass sanitized form data through data attributes
-                      "data-form-values": JSON.stringify(
-                        sanitizeFormData(currentStepFormData)
-                      ),
                     }}
                     onSubmit={handleStepSubmit}
                     withSubmit={false} // We'll handle submission with custom buttons

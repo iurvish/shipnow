@@ -4,6 +4,12 @@ import { createClient } from "@/lib/server";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { 
+  syncUserProfileToAuraDB, 
+  transformOnboardingDataForAuraDB,
+  checkUserSkillsInAuraDB 
+} from "@/lib/auradb-service";
+import { validateSkills } from "@/lib/config/skills";
 
 // Define the complete onboarding schema
 const onboardingSchema = z.object({
@@ -12,14 +18,103 @@ const onboardingSchema = z.object({
   last_name: z.string().min(2, "Last name must be at least 2 characters"),
   date_of_birth: z.string().optional(),
   university: z.string().min(2, "University is required"),
-  department: z.string().min(2, "Department is required"),
+  institute: z.string().min(1, "Institute is required"),
+  department: z.string().min(1, "Department is required"),
   degree_level: z.enum(["Bachelor", "Master", "Self_taught", "Diploma", "Other"]),
   
   // Technical Profile
-  skills: z.array(z.string()).min(1, "At least one skill is required"),
-  experience: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"]),
-  github: z.string().url().optional().or(z.literal("")),
-  portfolio: z.string().url().optional().or(z.literal("")),
+  skills: z
+    .array(z.string())
+    .min(1, "At least one skill is required")
+    .refine(
+      (skills) => validateSkills(skills),
+      { message: "Invalid skill selected" }
+    ),
+  github: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ''); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ''); // Remove www.
+      
+      // Add https:// prefix for storage
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., github.com/username)",
+      }
+    ),
+  portfolio: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ''); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ''); // Remove www.
+      
+      // Add https:// prefix for storage
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid URL (e.g., portfolio.com)",
+      }
+    ),
+  
+  linkedin: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === "") return undefined;
+      
+      // Clean the input: remove existing protocol and www prefix if present
+      let cleanVal = val.trim();
+      cleanVal = cleanVal.replace(/^https?:\/\//, ''); // Remove http:// or https://
+      cleanVal = cleanVal.replace(/^www\./, ''); // Remove www.
+      
+      // Add https:// prefix for storage
+      return `https://${cleanVal}`;
+    })
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)",
+      }
+    ),
   
   // Setup Profile
   profilePhoto: z.string().url().optional().or(z.literal("")),
@@ -131,6 +226,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
         user_id: user.id,
         date_of_birth: validatedData.date_of_birth || null,
         university: validatedData.university,
+        institute: validatedData.institute,
         department: validatedData.department,
         degree_level: validatedData.degree_level,
         updated_at: new Date().toISOString()
@@ -148,10 +244,10 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
       .from('technical_profiles')
       .upsert({
         user_id: user.id,
-        experience: validatedData.experience,
         skills: validatedData.skills,
         github: validatedData.github || null,
         portfolio: validatedData.portfolio || null,
+        linkedin: validatedData.linkedin || null,
         updated_at: new Date().toISOString()
       });
 
@@ -164,8 +260,55 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
 
     // Revalidate relevant paths
     revalidatePath('/onboarding');
-    revalidatePath('/protected');
+    revalidatePath('/chat');
     revalidatePath('/');
+
+    // Step 4: Sync to AuraDB for AI-powered search
+    try {
+      console.log("🔄 Syncing user profile to AuraDB...");
+      
+      // Transform the data for AuraDB (no projects during onboarding)
+      const auraDBProfile = transformOnboardingDataForAuraDB(
+        user.id,
+        user.email || '',
+        {
+          first_name: validatedData.first_name,
+          last_name: validatedData.last_name,
+          date_of_birth: validatedData.date_of_birth,
+          university: validatedData.university,
+          institute: validatedData.institute,
+          department: validatedData.department,
+          degree_level: validatedData.degree_level,
+          skills: validatedData.skills,
+          github: validatedData.github,
+          portfolio: validatedData.portfolio,
+          linkedin: validatedData.linkedin,
+          profilePhoto: validatedData.profilePhoto,
+          username: validatedData.username,
+          bio: validatedData.bio,
+        },
+        [] // Empty projects array - projects will be added when user creates them
+      );
+      
+      // Sync to AuraDB
+      await syncUserProfileToAuraDB(auraDBProfile);
+      
+      console.log("✅ User profile synced to AuraDB successfully!");
+      
+      // Debug: Check what was actually created in AuraDB
+      setTimeout(async () => {
+        try {
+          await checkUserSkillsInAuraDB(user.id);
+        } catch (debugError) {
+          console.error("Debug check failed:", debugError);
+        }
+      }, 1000); // Wait 1 second to allow sync to complete
+      
+    } catch (auraDBError) {
+      console.error("⚠️  Warning: Failed to sync to AuraDB:", auraDBError);
+      // Don't fail the entire onboarding process if AuraDB sync fails
+      // This allows the app to continue working even if the graph database is down
+    }
 
     return {
       success: true,

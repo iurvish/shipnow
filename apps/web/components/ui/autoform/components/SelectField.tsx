@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/select";
 import { AutoFormFieldProps } from "@autoform/react";
 import React, { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export const SelectField: React.FC<AutoFormFieldProps> = ({
   field,
@@ -85,14 +86,21 @@ export const SelectField: React.FC<AutoFormFieldProps> = ({
     <Select {...props} onValueChange={handleValueChange} value={selectValue}>
       <SelectTrigger
         id={id}
-        className={` ${error ? "border-destructive" : ""} w-full`}
+        className={cn(
+          "w-full",
+          error ? "border-destructive" : "",
+          props.className
+        )}
       >
-        <SelectValue placeholder="Select an option" />
+        <SelectValue
+          placeholder={props.placeholder || "Select an option"}
+          className="truncate"
+        />
       </SelectTrigger>
       <SelectContent>
         {(field.options || []).map(([key, label]) => (
           <SelectItem key={key} value={key}>
-            {label}
+            <span className="truncate">{label}</span>
           </SelectItem>
         ))}
       </SelectContent>

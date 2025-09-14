@@ -27,7 +27,7 @@ const CustomDatePicker: React.FC<AutoFormFieldProps> = ({
   id,
   field,
 }) => {
-  const { onChange, value, name, ...props } = inputProps;
+  const { onChange, value, name, key, ...props } = inputProps;
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
 

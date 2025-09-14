@@ -1,52 +1,23 @@
 "use server";
 
-import { generateObject } from "ai";
+import { generateObject, streamText } from "ai";
 import { z } from "zod";
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@/lib/server";
+import { getAuraDBDriver } from "@/lib/auradb-client";
 import { google } from "@ai-sdk/google";
+import { SKILLS } from "@/lib/config/skills";
 
-// Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-// Define the schema for AI generation
-const querySchema = z.object({
-  supabaseQuery: z
-    .string()
-    .describe("The Supabase query code to execute against the database"),
-  explanation: z
-    .string()
-    .describe("A plain English explanation of what the query does"),
-  skillsMapping: z
-    .array(z.string())
-    .describe("The specific technologies/skills being searched for"),
+// Schema for the search_people tool parameters
+const SearchPeopleToolSchema = z.object({
+  skills: z.array(z.string()).optional().describe("Technical skills to search for"),
+  university: z.string().optional().describe("University name or 'CURRENT_USER_UNIVERSITY'"),
+  department: z.string().optional().describe("Department name or 'CURRENT_USER_DEPARTMENT'"), 
+  projectTags: z.array(z.string()).optional().describe("Project tags to match"),
+  age_greater_than: z.number().optional().describe("Minimum age filter"),
+  has_portfolio: z.boolean().optional().describe("Must have portfolio URL"),
+  projectName: z.string().optional().describe("Specific project name to search"),
+  projectFeature: z.string().optional().describe("Specific project feature to match"),
 });
-
-// Define type for the schema
-type QuerySchemaType = z.infer<typeof querySchema>;
-
-// Type for raw Supabase data
-type SupabaseUserData = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  bio: string | null;
-  personal_details: Array<{
-    university: string;
-    department: string;
-    degree_level: string;
-    date_of_birth: string | null;
-  }>;
-  technical_profiles: Array<{
-    skills: string[];
-    experience: string;
-    github: string | null;
-    portfolio: string | null;
-  }>;
-};
 
 // Schema for person from database
 const DatabasePersonSchema = z.object({
@@ -63,267 +34,411 @@ const DatabasePersonSchema = z.object({
   }).nullable(),
   technical_profile: z.object({
     skills: z.array(z.string()),
-    experience: z.string(),
     github: z.string().nullable(),
     portfolio: z.string().nullable(),
+    linkedin: z.string().nullable(),
   }).nullable(),
 });
 
-// Schema for final response
+// Schema for chat response
 const ChatResponseSchema = z.object({
-  query_type: z.enum(['people_search', 'general_question']).describe('Type of query'),
-  reasoning: z.string().describe('Why this query type was chosen'),
-  people: z.array(DatabasePersonSchema).optional().describe('List of people from database if query_type is people_search'),
-  message: z.string().optional().describe('Response message for general questions'),
-  sql_query: z.string().optional().describe('The SQL query that was executed'),
-  explanation: z.string().optional().describe('Explanation of the search'),
+  query_type: z.enum(['people_search', 'general_question']),
+  reasoning: z.string(),
+  people: z.array(DatabasePersonSchema).optional(),
+  message: z.string().optional(),
+  connections: z.array(z.object({
+    path: z.string(),
+    connection_strength: z.number(),
+  })).optional(),
+  cypher_query: z.string().optional(),
 });
 
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 export type DatabasePerson = z.infer<typeof DatabasePersonSchema>;
+export type SearchPeopleParams = z.infer<typeof SearchPeopleToolSchema>;
 
-// Tool calling status type
-export type ToolStatus = {
-  step: string;
-  message: string;
-  completed: boolean;
+// Define search_people tool for LLM
+const searchPeopleTool = {
+  name: "search_people",
+  description: "Extract structured parameters for people search from natural language queries",
+  parameters: {
+    type: "object",
+    properties: {
+      skills: {
+        type: "array",
+        items: { type: "string" },
+        description: "Technical skills to search for"
+      },
+      university: {
+        type: "string", 
+        description: "University name or use 'CURRENT_USER_UNIVERSITY' for user's university"
+      },
+      department: {
+        type: "string",
+        description: "Department name or use 'CURRENT_USER_DEPARTMENT' for user's department"
+      },
+      projectTags: {
+        type: "array",
+        items: { type: "string" },
+        description: "Project tags/technologies to match"
+      },
+      age_greater_than: {
+        type: "number",
+        description: "Minimum age filter"
+      },
+      has_portfolio: {
+        type: "boolean", 
+        description: "Must have portfolio URL"
+      },
+      projectName: {
+        type: "string",
+        description: "Specific project name to search for"
+      },
+      projectFeature: {
+        type: "string", 
+        description: "Specific project feature to match"
+      }
+    }
+  }
 };
 
-function isSupabaseQuerySafe(query: string): boolean {
-  // Check for safe Supabase operations only
-  const allowedMethods = [
-    ".from(",
-    ".select(",
-    ".eq(",
-    ".ilike(",
-    ".contains(",
-    ".overlaps(",
-    ".in(",
-    ".limit(",
-    ".order(",
-  ];
-
-  const hasAllowedMethods = allowedMethods.some(method => query.includes(method));
+// Helper function to get current user context from session and Supabase
+async function getCurrentUserContext(userId: string) {
+  const supabase = await createClient();
+  const { data: userProfile, error } = await supabase
+    .from("users")
+    .select(`
+      id, first_name, last_name, email,
+      personal_details!inner(university, department),
+      technical_profiles(skills)
+    `)
+    .eq("id", userId)
+    .single();
+    
+  if (error) {
+    console.error("Failed to fetch user context:", error);
+    throw new Error("User context fetch failed");
+  }
   
-  // Ensure no dangerous operations
-  const hasNoDangerousOps = 
-    !query.includes(".delete") &&
-    !query.includes(".update") &&
-    !query.includes(".insert") &&
-    !query.includes(".upsert") &&
-    !query.includes("DROP") &&
-    !query.includes("DELETE") &&
-    !query.includes("UPDATE") &&
-    !query.includes("INSERT");
-
-  const startsWithSupabase = query.trim().startsWith("supabase");
-
-  return hasAllowedMethods && hasNoDangerousOps && startsWithSupabase;
+  return {
+    userId,
+    university: Array.isArray(userProfile.personal_details) && userProfile.personal_details[0]?.university || null,
+    department: Array.isArray(userProfile.personal_details) && userProfile.personal_details[0]?.department || null,
+    skills: userProfile.technical_profiles?.[0]?.skills || []
+  };
 }
 
+// Helper function to build dynamic Cypher query from search parameters
+function buildDynamicCypherQuery(currentUserId: string, params: SearchPeopleParams): string {
+  let query = `
+    MATCH (currentUser:User {userId: $currentUserId})
+    MATCH (targetUser:User)
+    WHERE targetUser.userId <> $currentUserId
+  `;
+  
+  const conditions: string[] = [];
+  
+  // Skills filtering
+  if (params.skills && params.skills.length > 0) {
+    conditions.push(`
+      MATCH (targetUser)-[:HAS_SKILL]->(skill:Skill)
+      WHERE skill.name IN $skills
+    `);
+  }
+  
+  // University filtering  
+  if (params.university) {
+    conditions.push(`
+      MATCH (targetUser)-[:STUDIED_AT]->(uni:University)
+      WHERE uni.name = $university
+    `);
+  }
+  
+  // Department filtering
+  if (params.department) {
+    conditions.push(`
+      MATCH (targetUser)-[:IN_DEPARTMENT]->(dept:Department)
+      WHERE dept.name = $department
+    `);
+  }
+  
+  // Project tags filtering
+  if (params.projectTags && params.projectTags.length > 0) {
+    conditions.push(`
+      MATCH (targetUser)-[:BUILT]->(project:Project)-[:HAS_TAG]->(tag:Tag)
+      WHERE tag.name IN $projectTags
+    `);
+  }
+  
+  // Project name filtering
+  if (params.projectName) {
+    conditions.push(`
+      MATCH (targetUser)-[:BUILT]->(project:Project)
+      WHERE project.name CONTAINS $projectName
+    `);
+  }
+  
+  // Project feature filtering
+  if (params.projectFeature) {
+    conditions.push(`
+      MATCH (targetUser)-[:BUILT]->(project:Project)-[:HAS_FEATURE]->(feature:Feature)
+      WHERE feature.name CONTAINS $projectFeature
+    `);
+  }
+  
+  // Portfolio filtering
+  if (params.has_portfolio === true) {
+    conditions.push(`
+      WHERE targetUser.portfolioUrl IS NOT NULL
+    `);
+  }
+  
+  // Age filtering (based on birth year)
+  if (params.age_greater_than) {
+    const currentYear = new Date().getFullYear();
+    const maxBirthYear = currentYear - params.age_greater_than;
+    conditions.push(`
+      WHERE targetUser.birthYear <= ${maxBirthYear}
+    `);
+  }
+  
+  // Add conditions to query
+  query += conditions.join(' ');
+  
+  // Find connection paths and return results (including unconnected users)
+  query += `
+    WITH targetUser, currentUser
+    OPTIONAL MATCH path = shortestPath((currentUser)-[*1..3]-(targetUser))
+    RETURN DISTINCT targetUser.userId as userId,
+           CASE 
+             WHEN path IS NULL THEN 999
+             ELSE length(path)
+           END as connectionDistance,
+           path,
+           CASE 
+             WHEN EXISTS((currentUser)-[:IN_DEPARTMENT]->()<-[:IN_DEPARTMENT]-(targetUser)) THEN 3
+             WHEN EXISTS((currentUser)-[:STUDIED_AT]->()<-[:STUDIED_AT]-(targetUser)) THEN 2
+             WHEN path IS NOT NULL THEN 1
+             ELSE 0
+           END as connectionStrength
+    ORDER BY connectionStrength DESC, connectionDistance ASC
+    LIMIT 20
+  `;
+  
+  return query;
+}
+
+// Helper function to fetch detailed profiles from Supabase
+async function fetchDetailedProfiles(userIds: string[]): Promise<DatabasePerson[]> {
+  if (userIds.length === 0) return [];
+  
+  const supabase = await createClient();
+  const { data: profiles, error } = await supabase
+    .from("users")
+    .select(`
+      id, first_name, last_name, email, bio,
+      personal_details(university, department, degree_level, date_of_birth),
+      technical_profiles(skills, github, portfolio, linkedin)
+    `)
+    .in("id", userIds);
+    
+  if (error) {
+    console.error("Failed to fetch detailed profiles:", error);
+    throw new Error("Profile fetch failed");
+  }
+  
+  // Transform the data to match schema
+  return (profiles || []).map((user: any) => {
+    const personalDetail = Array.isArray(user.personal_details) && user.personal_details.length > 0 
+      ? user.personal_details[0] 
+      : user.personal_details || null;
+    
+    const technicalProfile = Array.isArray(user.technical_profiles) && user.technical_profiles.length > 0 
+      ? user.technical_profiles[0] 
+      : user.technical_profiles || null;
+
+    return {
+      id: String(user.id),
+      first_name: user.first_name ? String(user.first_name) : "",
+      last_name: user.last_name ? String(user.last_name) : "",
+      email: String(user.email),
+      bio: user.bio ? String(user.bio) : null,
+      personal_details: personalDetail ? {
+        university: String(personalDetail.university || ''),
+        department: String(personalDetail.department || ''),
+        degree_level: String(personalDetail.degree_level || ''),
+        date_of_birth: personalDetail.date_of_birth ? String(personalDetail.date_of_birth) : null,
+      } : null,
+      technical_profile: technicalProfile ? {
+        skills: Array.isArray(technicalProfile.skills) 
+          ? technicalProfile.skills.map(String)
+          : [],
+        github: technicalProfile.github ? String(technicalProfile.github) : null,
+        portfolio: technicalProfile.portfolio ? String(technicalProfile.portfolio) : null,
+        linkedin: technicalProfile.linkedin ? String(technicalProfile.linkedin) : null,
+      } : null,
+    };
+  });
+}
+
+// Main function: AI-powered graph search with LLM tool calling
 export async function generatePeopleSuggestions(
-  message: string
+  message: string,
+  userId: string // Now required - should come from session
 ): Promise<ChatResponse> {
   try {
-    if (!message || message.trim().length === 0) {
-      throw new Error('Message is required');
+    if (!message?.trim() || !userId) {
+      throw new Error('Message and userId are required');
     }
 
-    console.log('Starting AI-powered people suggestions with message:', message);
+    console.log('🚀 Starting AI-powered graph search for user:', userId);
+    console.log('📝 Query:', message);
 
-    // Generate the Supabase query using AI
-    const response = await generateObject({
+    // Step 1: Retrieve current user context from Supabase
+    const userContext = await getCurrentUserContext(userId);
+    console.log('👤 User context:', userContext);
+
+    // Step 2: LLM Intent Recognition & Entity Extraction  
+    const availableSkills = SKILLS.slice(0, 20).map(s => s.value).join(', ');
+    
+    const llmResponse = await generateObject({
       model: google("gemini-2.0-flash-001"),
-      system: `You are an AI assistant that creates Supabase queries based on natural language.
+      system: `You are an expert people search assistant. Analyze the user's query and determine if they want to search for people or have a general conversation.
       
-      DATABASE SCHEMA:
-      Table: users
-      - id (text, primary key)
-      - first_name (text)
-      - last_name (text)
-      - email (text)
-      - bio (text)
-      - username (text)
-      - onboarded (boolean)
+      If it's a people search, extract structured parameters. If it's general conversation, provide a helpful response.
       
-      Table: personal_details
-      - user_id (text, foreign key to users.id)
-      - university (text)
-      - department (text)
-      - degree_level (text) // Diploma, Master, Bachelor, Other
-      - date_of_birth (date)
+      AVAILABLE SKILLS IN DATABASE (use exact format):
+      ${availableSkills}, and more...
       
-      Table: technical_profiles
-      - user_id (text, foreign key to users.id)
-      - skills (text[]) // Array of skills
-      - experience (text) // Beginner, Mid-level, Senior
-      - github (text)
-      - portfolio (text)
+      SKILL FORMAT RULES:
+      - Use exact proper case: "React" (not "react"), "Next.js" (not "nextjs"), "TypeScript" (not "typescript")
+      - For "Representational State Transfer" → use "REST API"
+      - For "NoSQL document database" → use "MongoDB"  
+      - For "graph database" → use "Neo4j"
+      - For "container orchestration" → use "Kubernetes"
       
-      CRITICAL DATA FORMATTING RULES:
-      1. University names: Use proper title case (e.g., "Stanford University", "Harvard University", "MIT")
-      2. Skills array: Use double quotes for strings (e.g., ["Python", "Machine Learning", "TensorFlow"])
-      3. For filtering nested relationships, use .not('table', 'is', null) first, then use .eq() with exact values
-      4. Always capitalize first letter of each word in university names
-      5. For university searches, use .eq() with exact university name instead of .ilike()
-      6. For case sensitivity, ensure exact matches in the database
+      Current user context:
+      - University: ${userContext.university || 'Unknown'}
+      - Department: ${userContext.department || 'Unknown'}
+      - Skills: ${userContext.skills.join(', ') || 'None'}
       
-      TECHNOLOGY MAPPINGS:
-      - For "web development" or "web developers", search for: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Angular", "Vue", "Next.js", "Node.js"]
-      - For "mobile development", search for: ["React Native", "Flutter", "Swift", "Kotlin", "Android", "iOS"]
-      - For "data science", search for: ["Python", "R", "SQL", "TensorFlow", "PyTorch", "Pandas", "NumPy", "Machine Learning", "Data Analysis", "Scikit-learn"]
-      - For "cloud", search for: ["AWS", "Azure", "GCP", "Docker", "Kubernetes"]
-      - For "backend", search for: ["Node.js", "Java", "Python", "C#", "Go", "Ruby", "PHP", "Express"]
-      - For "frontend", search for: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Angular", "Vue"]
-      
-      Your task is to create a Supabase query that:
-      1. Maps general categories to specific technologies
-      2. Uses the overlaps operator for array searches with proper double quotes
-      3. Always searches for specific technologies, not generic terms
-      4. Use .not('personal_details', 'is', null) to ensure users have personal details
-      5. Use .eq() for exact matches on nested fields like university and degree_level
-      6. Use proper title case for university names
-      7. Limit results to 10 users
-      8. Include joins with personal_details and technical_profiles
-      
-      For experience levels:
-      - "experienced" or "with experience" should filter for "Senior" or "Mid-level"
-      - "beginners" should filter for "Beginner"
-      
-      EXAMPLE QUERIES:
-      For skills search:
-      supabase
-        .from('users')
-        .select(\`
-          id, first_name, last_name, email, bio,
-          personal_details (university, department, degree_level, date_of_birth),
-          technical_profiles (skills, experience, github, portfolio)
-        \`)
-        .overlaps('technical_profiles.skills', ["React", "JavaScript", "TypeScript"])
-        .limit(10)
-        
-      For university search (case-insensitive):
-      supabase
-        .from('users')
-        .select(\`
-          id, first_name, last_name, email, bio,
-          personal_details (university, department, degree_level, date_of_birth),
-          technical_profiles (skills, experience, github, portfolio)
-        \`)
-        .not('personal_details', 'is', null)
-        .eq('personal_details.university', 'Stanford University')
-        .eq('personal_details.degree_level', 'Diploma')
-        .limit(10)  
-        
-      For skills searches, always use the overlaps operator with an array of technologies using double quotes.
-      For text searches (university, department), always use .eq() for exact matching with proper capitalization.
-      If no specific skills are mentioned, return all users.`,
+      For people searches, extract and EXPAND skills with related technologies:
+      - "React developers" → skills: ["React", "Next.js", "JavaScript", "TypeScript"]
+      - "Python backend" → skills: ["Python", "Django", "Flask", "FastAPI"]
+      - skills: Array of technical skills (use exact database format)
+      - university: University name (use "CURRENT_USER_UNIVERSITY" for user's university)
+      - department: Department name (use "CURRENT_USER_DEPARTMENT" for user's department)
+      - projectTags: Array of project technologies/frameworks
+      - age_greater_than: Minimum age as number
+      - has_portfolio: Boolean if must have portfolio
+      - projectName: String for specific project name
+      - projectFeature: String for specific project feature`,
       messages: [
         {
-          role: "user",
-          content: message,
-        },
+          role: "user", 
+          content: message
+        }
       ],
-      schema: querySchema,
+      schema: z.object({
+        intent: z.enum(['people_search', 'general_conversation']),
+        reasoning: z.string(),
+        response: z.string().optional(),
+        searchParams: z.object({
+          skills: z.array(z.string()).optional(),
+          university: z.string().optional(),
+          department: z.string().optional(), 
+          projectTags: z.array(z.string()).optional(),
+          age_greater_than: z.number().optional(),
+          has_portfolio: z.boolean().optional(),
+          projectName: z.string().optional(),
+          projectFeature: z.string().optional(),
+        }).optional()
+      })
     });
 
-    // Extract the generated values
-    const data = response.object;
-    const supabaseQuery = data.supabaseQuery;
-    const explanation = data.explanation;
-    const skillsMapping = data.skillsMapping;
+    const intent = llmResponse.object;
+    console.log('🧠 LLM Intent:', intent);
 
-    console.log("Generated Supabase Query:", supabaseQuery);
-    console.log("Explanation:", explanation);
-    console.log("Skills Mapping:", skillsMapping);
-
-    // Safety check
-    if (!isSupabaseQuerySafe(supabaseQuery)) {
-      throw new Error("Generated query contains unsafe operations");
-    }
-
-    // Execute the Supabase query safely
-    try {
-      const queryFunction = new Function("supabase", `return ${supabaseQuery}`);
-      const queryResult = await queryFunction(supabase);
+    // Step 3: Check intent and process search
+    if (intent.intent === 'people_search' && intent.searchParams) {
+      const searchParams = intent.searchParams;
+      console.log('🔍 Search parameters:', searchParams);
       
-      console.log('Query execution result:', queryResult);
-
-      const { data: results, error } = queryResult;
-      
-      if (error) {
-        console.error('Supabase query error:', error);
-        throw new Error(`Query execution failed: ${error.message}`);
+      // Step 4: Substitute placeholders with actual user context
+      const processedParams = { ...searchParams };
+      if (processedParams.university === 'CURRENT_USER_UNIVERSITY') {
+        processedParams.university = userContext.university;
       }
-
-      console.log('Raw results from database:', results);
-
-      // Transform the data to match our schema
-      const transformedData = (results || []).map((user: any) => {
-        // Handle personal_details - it could be an array or single object
-        const personalDetail = Array.isArray(user.personal_details) && user.personal_details.length > 0 
-          ? user.personal_details[0] 
-          : user.personal_details || null;
+      if (processedParams.department === 'CURRENT_USER_DEPARTMENT') {
+        processedParams.department = userContext.department;  
+      }
+      
+      console.log('🔄 Processed search params:', processedParams);
+      
+      // Step 5: Build and execute Cypher query on AuraDB
+      const cypherQuery = buildDynamicCypherQuery(userId, processedParams);
+      console.log('📊 Cypher query:', cypherQuery);
+      
+      const driver = getAuraDBDriver();
+      const session = driver.session();
+      
+      try {
+        const cypherResult = await session.run(cypherQuery, {
+          currentUserId: userId,
+          skills: processedParams.skills,
+          university: processedParams.university,
+          department: processedParams.department,
+          projectTags: processedParams.projectTags,
+          projectName: processedParams.projectName,
+          projectFeature: processedParams.projectFeature
+        });
         
-        // Handle technical_profiles - it could be an array or single object  
-        const technicalProfile = Array.isArray(user.technical_profiles) && user.technical_profiles.length > 0 
-          ? user.technical_profiles[0] 
-          : user.technical_profiles || null;
-
+        const foundUserIds = cypherResult.records.map(record => record.get('userId'));
+        const connections = cypherResult.records.map(record => {
+          const connectionStrength = record.get('connectionStrength');
+          return {
+            path: record.get('path')?.toString() || '',
+            connection_strength: typeof connectionStrength?.toNumber === 'function' 
+              ? connectionStrength.toNumber() 
+              : (typeof connectionStrength === 'number' ? connectionStrength : 1)
+          };
+        });
+        
+        console.log('📈 Found user IDs:', foundUserIds);
+        console.log('🔗 Connections:', connections);
+        
+        // Step 6: Fetch detailed profiles from Supabase
+        const detailedProfiles = await (foundUserIds);
+        console.log('👥 Detailed profiles counfetchDetailedProfilest:', detailedProfiles.length);
+        
         return {
-          id: String(user.id),
-          first_name: user.first_name ? String(user.first_name) : null,
-          last_name: user.last_name ? String(user.last_name) : null,
-          email: String(user.email),
-          bio: user.bio ? String(user.bio) : null,
-          personal_details: personalDetail ? {
-            university: String(personalDetail.university || ''),
-            department: String(personalDetail.department || ''),
-            degree_level: String(personalDetail.degree_level || ''),
-            date_of_birth: personalDetail.date_of_birth ? String(personalDetail.date_of_birth) : null,
-          } : null,
-          technical_profile: technicalProfile ? {
-            skills: Array.isArray(technicalProfile.skills) 
-              ? technicalProfile.skills.map(String)
-              : [],
-            experience: String(technicalProfile.experience || ''),
-            github: technicalProfile.github ? String(technicalProfile.github) : null,
-            portfolio: technicalProfile.portfolio ? String(technicalProfile.portfolio) : null,
-          } : null,
+          query_type: 'people_search',
+          reasoning: intent.reasoning,
+          people: detailedProfiles,
+          connections: connections,
+          cypher_query: cypherQuery
         };
-      });
-
-      console.log('Transformed data:', transformedData);
-
+        
+      } finally {
+        await session.close();
+      }
+      
+    } else {
+      // Step 7: Handle non-search queries with conversational response
       return {
-        query_type: 'people_search',
-        reasoning: `Found people matching your search for: ${message}`,
-        people: transformedData,
-        explanation: explanation,
-        sql_query: supabaseQuery,
+        query_type: 'general_question',
+        reasoning: intent.reasoning,
+        message: intent.response || "I'm here to help you find people and connections. Try asking me to find someone with specific skills or from your university!"
       };
-
-    } catch (queryError) {
-      console.error("Error executing query:", queryError);
-      throw new Error(
-        `Failed to execute query: ${queryError instanceof Error ? queryError.message : String(queryError)}`
-      );
     }
     
   } catch (error) {
-    console.error('Chat action error:', error);
+    console.error('❌ Chat action error:', error);
     
-    // Log more detailed error information
-    if (error instanceof Error) {
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
-    
-    // Return a more informative error response instead of throwing
     return {
-      query_type: 'general_question' as const,
+      query_type: 'general_question',
       reasoning: 'An error occurred while processing your request',
-      message: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or check your environment configuration.`,
+      message: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`
     };
   }
 }
