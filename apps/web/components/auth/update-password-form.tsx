@@ -10,33 +10,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { FormPasswordInput } from "@/components/ui/form-fields";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { fieldConfig, ZodProvider } from "@autoform/zod";
-import { SubmitButton } from "../ui/autoform/components/SubmitButton";
-import { AutoForm } from "../ui/autoform";
-import { Alert, AlertDescription } from "../ui/alert";
-import PasswordInputField from "../ui/autoform/custom/password-input";
 
 const updatePasswordSchema = z.object({
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters long")
-    .superRefine(
-      fieldConfig({
-        label: "New Password",
-        fieldType: "password-input",
-        inputProps: {
-          placeholder: "Enter your new password",
-        },
-      })
-    ),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
 });
-
-const schemaProvider = new ZodProvider(updatePasswordSchema);
 
 export function UpdatePasswordForm({
   className,
@@ -45,6 +37,13 @@ export function UpdatePasswordForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const form = useForm<z.infer<typeof updatePasswordSchema>>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: {
+      password: "",
+    },
+  });
 
   const handleForgotPassword = async (
     values: z.infer<typeof updatePasswordSchema>
@@ -78,34 +77,42 @@ export function UpdatePasswordForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-6">
-            <AutoForm
-              schema={schemaProvider}
-              onSubmit={handleForgotPassword}
-              withSubmit
-              formComponents={{
-                "password-input": PasswordInputField,
-              }}
-              uiComponents={{
-                SubmitButton: (props: any) => (
-                  <SubmitButton
-                    {...props}
-                    loading={isLoading}
-                    disabled={isLoading}
-                    loadingText="Saving..."
-                  >
-                    Save new password
-                  </SubmitButton>
-                ),
-              }}
-            />
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleForgotPassword)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <FormPasswordInput
+                          placeholder="Enter your new password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2" />
+                  ) : null}
+                  {isLoading ? "Saving..." : "Save new password"}
+                </Button>
+              </form>
+            </Form>
+
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
-            )}{" "}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save new password"}
-            </Button>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -10,33 +10,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { FormInput } from "@/components/ui/form-fields";
 import Link from "next/link";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { fieldConfig, ZodProvider } from "@autoform/zod";
-import { AutoForm } from "../ui/autoform";
-import { SubmitButton } from "../ui/autoform/components/SubmitButton";
-import { Alert, AlertDescription } from "../ui/alert";
 
 const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .email("Invalid email address")
-    .min(3, "Email is required")
-    .superRefine(
-      fieldConfig({
-        label: "Email",
-        inputProps: {
-          type: "email",
-          placeholder: "Enter your email address",
-        },
-      })
-    ),
+  email: z.string().email("Invalid email address").min(3, "Email is required"),
 });
 
-const schemaProvider = new ZodProvider(forgotPasswordSchema);
 export function ForgotPasswordForm({
   className,
   ...props
@@ -44,6 +37,13 @@ export function ForgotPasswordForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
   const handleForgotPassword = async (
     values: z.infer<typeof forgotPasswordSchema>
@@ -54,9 +54,12 @@ export function ForgotPasswordForm({
 
     try {
       // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        values.email,
+        {
+          redirectTo: `${window.location.origin}/auth/update-password`,
+        }
+      );
       if (error) throw error;
       setSuccess(true);
     } catch (error: unknown) {
@@ -91,23 +94,37 @@ export function ForgotPasswordForm({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AutoForm
-              schema={schemaProvider}
-              onSubmit={handleForgotPassword}
-              withSubmit
-              uiComponents={{
-                SubmitButton: (props: any) => (
-                  <SubmitButton
-                    {...props}
-                    loading={isLoading}
-                    disabled={isLoading}
-                    loadingText="Sending..."
-                  >
-                    Send reset email
-                  </SubmitButton>
-                ),
-              }}
-            />
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleForgotPassword)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <FormInput
+                          type="email"
+                          placeholder="Enter your email address"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2" />
+                  ) : null}
+                  {isLoading ? "Sending..." : "Send reset email"}
+                </Button>
+              </form>
+            </Form>
 
             {error && (
               <Alert variant="destructive">

@@ -10,17 +10,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { FormInput, FormPasswordInput } from "@/components/ui/form-fields";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
-import { ZodProvider, fieldConfig } from "@autoform/zod";
-import { AutoForm } from "../ui/autoform";
-import { SubmitButton } from "../ui/autoform/components/SubmitButton";
-import { Alert, AlertDescription } from "../ui/alert";
-import PasswordInputField from "../ui/autoform/custom/password-input";
 
 // Google SVG Icon Component
 const GoogleIcon = () => (
@@ -49,34 +54,9 @@ const GoogleIcon = () => (
 );
 
 const signUpSchema = z.object({
-  email: z
-    .string()
-    .email("Invalid email address")
-    .min(3, "Email is required")
-    .superRefine(
-      fieldConfig({
-        label: "Email",
-        inputProps: {
-          type: "email",
-          placeholder: "Enter your email address",
-        },
-      })
-    ),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .superRefine(
-      fieldConfig({
-        label: "Password",
-        fieldType: "password-input",
-        inputProps: {
-          placeholder: "Enter your password",
-        },
-      })
-    ),
+  email: z.string().email("Invalid email address").min(3, "Email is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
-
-const schemaProvider = new ZodProvider(signUpSchema);
 
 export function SignUpForm({
   className,
@@ -86,6 +66,14 @@ export function SignUpForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
+
+  const form = useForm<z.infer<typeof signUpSchema>>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const handleSignUp = async (values: z.infer<typeof signUpSchema>) => {
     const supabase = createClient();
@@ -166,26 +154,58 @@ export function SignUpForm({
           </div>
 
           {/* Email/Password Form */}
-          <AutoForm
-            schema={schemaProvider}
-            onSubmit={handleSignUp}
-            withSubmit
-            formComponents={{
-              "password-input": PasswordInputField,
-            }}
-            uiComponents={{
-              SubmitButton: (props: any) => (
-                <SubmitButton
-                  {...props}
-                  loading={isLoading}
-                  disabled={isLoading || isGoogleLoading}
-                  loadingText="Creating account..."
-                >
-                  Sign up
-                </SubmitButton>
-              ),
-            }}
-          />
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSignUp)}
+              className="space-y-4"
+            >
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <FormInput
+                        type="email"
+                        placeholder="Enter your email address"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <FormPasswordInput
+                        placeholder="Enter your password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || isGoogleLoading}
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2" />
+                ) : null}
+                {isLoading ? "Creating account..." : "Sign up"}
+              </Button>
+            </form>
+          </Form>
 
           {error && (
             <Alert variant="destructive">
