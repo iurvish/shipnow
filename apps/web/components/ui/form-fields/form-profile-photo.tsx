@@ -321,11 +321,11 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                       {/* Overlay buttons container */}
                       <div
                         className={cn(
-                          "absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center",
+                          "absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center",
                           cropShape === "round" ? "rounded-full" : "rounded-lg"
                         )}
                       >
-                        <div className="flex gap-2">
+                        <div className="flex gap-3 items-center justify-center">
                           {/* Edit button */}
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -334,7 +334,7 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                                 variant="secondary"
                                 size="sm"
                                 onClick={handleEdit}
-                                className="w-8 h-8 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900"
+                                className="w-10 h-10 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900 shadow-lg"
                               >
                                 <Edit3 className="w-4 h-4" />
                               </Button>
@@ -352,7 +352,7 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                                 variant="secondary"
                                 size="sm"
                                 onClick={handleRemoveImage}
-                                className="w-8 h-8 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900"
+                                className="w-10 h-10 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900 shadow-lg"
                               >
                                 <X className="w-4 h-4" />
                               </Button>

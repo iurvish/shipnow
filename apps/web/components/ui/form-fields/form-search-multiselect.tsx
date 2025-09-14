@@ -93,47 +93,51 @@ const FormSearchMultiSelect = forwardRef<
           <div
             ref={ref}
             className={cn(
-              "flex min-h-10 w-full flex-wrap items-center justify-between rounded-md border border-input bg-background px-2 py-1.5 text-sm ring-offset-background cursor-pointer",
+              "flex min-h-10 w-full items-center justify-between rounded-md border border-input bg-background px-2 py-1.5 text-sm ring-offset-background cursor-pointer",
               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
               disabled && "cursor-not-allowed opacity-50",
               className
             )}
             {...props}
           >
-            <div className="flex flex-wrap gap-1.5 flex-grow">
-              {selected.map((item) => (
-                <Badge
-                  key={item.value}
-                  variant="secondary"
-                  className="h-6 px-2 py-4 text-base flex items-center gap-0.5 "
-                >
-                  {item.label}
-                  {!disabled && (
-                    <button
-                      type="button"
-                      className=" rounded-full w-5 h-5 flex items-center justify-center"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemove(item);
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </Badge>
-              ))}
-              {selected.length === 0 && (
-                <span className="text-muted-foreground">{placeholder}</span>
-              )}
-            </div>
+            <ScrollArea className="flex-grow min-h-7 w-full">
+              <div className="flex flex-wrap gap-1.5 pr-2 max-w-full  w-full">
+                {selected.map((item) => (
+                  <Badge
+                    key={item.value}
+                    variant="secondary"
+                    className="px-2 py-1 text-sm flex items-center gap-0.5 max-w-[10rem] whitespace-normal break-words"
+                  >
+                    {item.label}
+                    {!disabled && (
+                      <button
+                        type="button"
+                        className=" rounded-full w-5 h-5 flex items-center justify-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(item);
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </Badge>
+                ))}
+                {selected.length === 0 && (
+                  <span className="text-muted-foreground  mt-1">
+                    {placeholder}
+                  </span>
+                )}
+              </div>
+            </ScrollArea>
 
             {selected.length === 0 && (
-              <ChevronDown className="h-4 w-4 opacity-50" />
+              <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
             )}
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0"
+          className="w-[var(--radix-popover-trigger-width)]  p-0 max-h-72  overflow-hidden"
           align="start"
         >
           <div className="p-2 border-b">
@@ -145,44 +149,43 @@ const FormSearchMultiSelect = forwardRef<
               className="h-8"
             />
           </div>
-          <ScrollArea className="max-h-60">
-            <div className="p-3 space-y-4">
+          <ScrollArea className="h-60 w-full" aria-orientation="vertical">
+            <div className="p-3 space-y-4 w-full">
               {Object.entries(groupedOptions).map(
                 ([category, categoryOptions]) => (
                   <div key={category}>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase mb-2">
                       {category}
                     </p>
-                    <ScrollArea className="max-h-32">
-                      <div className="flex flex-wrap gap-3 py-1.5 ">
-                        {categoryOptions.map((option) => (
-                          <Badge
-                            key={option.value}
-                            variant="outline"
-                            className={cn(
-                              "h-9 px-4 py-2 text-base cursor-pointer transition-all duration-200",
-                              "bg-muted hover:bg-accent text-foreground border-border",
-                              "hover:border-ring hover:shadow-sm  ",
-                              maxSelections && selected.length >= maxSelections
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
-                            )}
-                            onClick={() => {
-                              if (
-                                !(
-                                  maxSelections &&
-                                  selected.length >= maxSelections
-                                )
-                              ) {
-                                handleSelect(option);
-                              }
-                            }}
-                          >
-                            {option.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </ScrollArea>
+                    <div className="flex flex-wrap gap-3 py-1.5 max-w-full overflow-hidden">
+                      {categoryOptions.map((option) => (
+                        <Badge
+                          key={option.value}
+                          variant="outline"
+                          className={cn(
+                            // allow wrapping and constrain width so badges don't force horizontal overflow
+                            "min-h-9 px-4 py-2 text-base cursor-pointer transition-all duration-200 whitespace-normal break-words max-w-[12rem]",
+                            "bg-muted hover:bg-accent text-foreground border-border",
+                            "hover:border-ring hover:shadow-sm",
+                            maxSelections && selected.length >= maxSelections
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          )}
+                          onClick={() => {
+                            if (
+                              !(
+                                maxSelections &&
+                                selected.length >= maxSelections
+                              )
+                            ) {
+                              handleSelect(option);
+                            }
+                          }}
+                        >
+                          {option.label}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )
               )}

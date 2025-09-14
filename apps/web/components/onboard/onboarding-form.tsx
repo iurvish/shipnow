@@ -17,7 +17,12 @@ import {
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { getSkillsForFormOptions, validateSkills } from "@/lib/config/skills";
+import {
+  SKILLS,
+  SkillCategory,
+  getSkillsByCategory,
+  validateSkills,
+} from "@/lib/config/skills";
 import { useOnboardingStore } from "@/stores/form-store";
 import {
   ChevronLeft,
@@ -64,10 +69,11 @@ const technicalDetailsSchema = z.object({
   skills: z.array(z.string()).min(3, "Please select at least three skill"),
   github: z
     .string()
-    .min(1, "GitHub profile is required")
+    .optional()
+    .or(z.literal(""))
     .refine(
       (value) => {
-        if (!value) return false;
+        if (!value || value === "") return true; // Allow empty values
         const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
         return (
           cleanUrl.includes("github.com/") &&
@@ -87,9 +93,9 @@ const technicalDetailsSchema = z.object({
         if (!value) return false;
         const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
         return (
-          (cleanUrl.includes("linkedin.com/in/") ||
+          (cleanUrl.includes("linkedin.com/") ||
             cleanUrl.includes("linkedin.com/pub/")) &&
-          (cleanUrl.length > "linkedin.com/in/".length ||
+          (cleanUrl.length > "linkedin.com/".length ||
             cleanUrl.length > "linkedin.com/pub/".length)
         );
       },
@@ -134,6 +140,15 @@ const OnboardingForm: React.FC = () => {
     clearAllData,
     setCurrentStep,
   } = useOnboardingStore();
+
+  // Transform skills data for FormSearchMultiSelect with categories
+  const getSkillsWithCategories = () => {
+    return SKILLS.map((skill) => ({
+      value: skill.value,
+      label: skill.label,
+      category: skill.category,
+    }));
+  };
 
   // Create separate forms for each step
   const personalDetailsForm = useForm<z.infer<typeof personalDetailsSchema>>({
@@ -436,7 +451,10 @@ const OnboardingForm: React.FC = () => {
                             name="first_name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>First Name</FormLabel>
+                                <FormLabel>
+                                  First Name{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormInput
                                     placeholder="Enter your first name"
@@ -452,7 +470,10 @@ const OnboardingForm: React.FC = () => {
                             name="last_name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Last Name</FormLabel>
+                                <FormLabel>
+                                  Last Name{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormInput
                                     placeholder="Enter your last name"
@@ -468,7 +489,10 @@ const OnboardingForm: React.FC = () => {
                             name="date_of_birth"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Date of Birth</FormLabel>
+                                <FormLabel>
+                                  Date of Birth{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormDatePicker
                                     placeholder="Select your birth date"
@@ -485,7 +509,10 @@ const OnboardingForm: React.FC = () => {
                             name="university"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>University</FormLabel>
+                                <FormLabel>
+                                  University{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormCommandSelect
                                     placeholder="Search and select your university"
@@ -508,7 +535,10 @@ const OnboardingForm: React.FC = () => {
                             name="institute"
                             render={({ field }) => (
                               <FormItem className="">
-                                <FormLabel>Institute & Department</FormLabel>
+                                <FormLabel>
+                                  Institute & Department{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormTwoSelect
                                     firstSelectLabel="Institute"
@@ -544,7 +574,10 @@ const OnboardingForm: React.FC = () => {
                             name="degree_level"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Degree Level</FormLabel>
+                                <FormLabel>
+                                  Degree Level{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormSelect
                                     placeholder="Select your degree level"
@@ -604,11 +637,14 @@ const OnboardingForm: React.FC = () => {
                             name="skills"
                             render={({ field }) => (
                               <FormItem className="col-span-full">
-                                <FormLabel>Technical Skills</FormLabel>
+                                <FormLabel>
+                                  Technical Skills{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormSearchMultiSelect
                                     placeholder="Search and select skills..."
-                                    options={getSkillsForFormOptions()}
+                                    options={getSkillsWithCategories()}
                                     value={field.value}
                                     onChange={field.onChange}
                                   />
@@ -622,7 +658,10 @@ const OnboardingForm: React.FC = () => {
                             name="linkedin"
                             render={({ field }) => (
                               <FormItem className="col-span-full">
-                                <FormLabel>LinkedIn Profile *</FormLabel>
+                                <FormLabel>
+                                  LinkedIn Profile{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormPrefixInput
                                     prefix="https://"
@@ -641,7 +680,7 @@ const OnboardingForm: React.FC = () => {
                             name="github"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>GitHub Profile *</FormLabel>
+                                <FormLabel>GitHub Profile</FormLabel>
                                 <FormControl>
                                   <FormPrefixInput
                                     prefix="https://"
@@ -678,7 +717,7 @@ const OnboardingForm: React.FC = () => {
                         </motion.div>
 
                         {/* Navigation Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-2 pt-4 ; max-md:flex-col-reverse">
+                        <div className="flex flex-col sm:flex-row gap-2 pt-4 max-md:flex-col-reverse">
                           <Button
                             type="button"
                             onClick={prev}
@@ -739,8 +778,11 @@ const OnboardingForm: React.FC = () => {
                             control={profileDetailsForm.control}
                             name="username"
                             render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Username</FormLabel>
+                              <FormItem className="col-span-full">
+                                <FormLabel>
+                                  Username{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormPrefixInput
                                     prefix="@"
@@ -774,7 +816,7 @@ const OnboardingForm: React.FC = () => {
                         </motion.div>
 
                         {/* Navigation Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                        <div className="flex flex-col sm:flex-row gap-2 pt-4 max-md:flex-col-reverse">
                           <Button
                             type="button"
                             onClick={prev}
@@ -791,7 +833,7 @@ const OnboardingForm: React.FC = () => {
                             className="w-full sm:w-auto"
                           >
                             {isLoading ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               "Complete Setup"
                             )}
