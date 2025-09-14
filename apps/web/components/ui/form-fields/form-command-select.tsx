@@ -74,8 +74,17 @@ const FormCommandSelect = forwardRef<HTMLButtonElement, FormCommandSelectProps>(
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start" avoidCollisions={false}>
-          <Command>
+        <PopoverContent
+          className="min-w-full w-auto p-0"
+          align="start"
+          side="bottom"
+          sideOffset={4}
+          style={{
+            width: "var(--radix-popover-trigger-width)",
+            maxWidth: "var(--radix-popover-trigger-width)",
+          }}
+        >
+          <Command className="min-w-full">
             <CommandInput placeholder="Search..." />
             <CommandList>
               <CommandEmpty>No option found.</CommandEmpty>

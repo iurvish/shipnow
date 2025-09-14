@@ -37,7 +37,7 @@ import { FormSelect } from "@/components/ui/form-fields/form-select";
 import { FormDatePicker } from "@/components/ui/form-fields/form-date-picker";
 import { FormCommandSelect } from "@/components/ui/form-fields/form-command-select";
 import { FormTwoSelect } from "@/components/ui/form-fields/form-two-select";
-import { FormSearchMultiSelect } from "@/components/ui/form-fields/form-search-multiselect";
+import FormSearchMultiSelect from "@/components/ui/form-fields/form-search-multiselect";
 import { FormPrefixInput } from "@/components/ui/form-fields/form-prefix-input";
 import { FormProfilePhoto } from "@/components/ui/form-fields";
 import { FormTextarea } from "@/components/ui/form-fields/form-textarea";
