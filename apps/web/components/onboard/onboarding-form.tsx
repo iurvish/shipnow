@@ -1,12 +1,20 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ZodProvider, fieldConfig } from "@autoform/zod";
-import { AutoForm } from "@/components/ui/autoform";
 import { SuccessAnimation } from "../shared/SuccessAnimation";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { getSkillsForFormOptions, validateSkills } from "@/lib/config/skills";
@@ -17,622 +25,273 @@ import {
   User,
   GraduationCap,
   Settings,
-  AtSign,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepIndicator } from "@/components/shared/StepIndicator";
-import CustomInput from "@/components/ui/autoform/custom/input";
-import CustomPrefixInput from "@/components/ui/autoform/custom/prefix-input";
-import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
-import CustomSearchMultiSelect from "@/components/ui/autoform/custom/search-multiselect";
-import CustomDatePicker from "@/components/ui/autoform/custom/date-picker";
-import SelectCommand from "@/components/ui/autoform/custom/select-command";
-import ProfilePhotoField from "@/components/ui/autoform/custom/profile-photo";
-import TwoSelectInput from "@/components/ui/autoform/custom/two-select-input";
-import PasswordInputField from "@/components/ui/autoform/custom/password-input";
-import { StringField } from "@/components/ui/autoform/components/StringField";
-import { SelectField } from "@/components/ui/autoform/components/SelectField";
 import { submitOnboardingForm } from "@/lib/actions/onboarding";
-// Step 1: Personal Details
+
+// Import our form field components
+import { FormInput } from "@/components/ui/form-fields/form-input";
+import { FormSelect } from "@/components/ui/form-fields/form-select";
+import { FormDatePicker } from "@/components/ui/form-fields/form-date-picker";
+import { FormCommandSelect } from "@/components/ui/form-fields/form-command-select";
+import { FormTwoSelect } from "@/components/ui/form-fields/form-two-select";
+import { FormSearchMultiSelect } from "@/components/ui/form-fields/form-search-multiselect";
+import { FormPrefixInput } from "@/components/ui/form-fields/form-prefix-input";
+import { FormProfilePhoto } from "@/components/ui/form-fields";
+import { FormTextarea } from "@/components/ui/form-fields/form-textarea";
+import { createClient } from "@/lib/client";
+
+// Step 1: Personal Details Schema
 const personalDetailsSchema = z.object({
-  first_name: z
-    .string()
-    .min(2)
-    .superRefine(
-      fieldConfig({
-        label: "First Name",
-        inputProps: {
-          placeholder: "Enter your first name",
-        },
-      })
-    ),
-  last_name: z
-    .string()
-    .min(2)
-    .superRefine(
-      fieldConfig({
-        label: "Last Name",
-        inputProps: {
-          placeholder: "Enter your last name",
-        },
-      })
-    ),
-  date_of_birth: z
-    .string()
-    .optional()
-    .superRefine(
-      fieldConfig({
-        label: "Date of Birth",
-        fieldType: "date", // Use custom date picker
-        inputProps: {
-          placeholder: "Select your birth date",
-        },
-      })
-    ),
-
-  university: z
-    .string()
-    .min(2)
-    .superRefine(
-      fieldConfig({
-        label: "University",
-        fieldType: "select-command", // Use SelectCommand instead of input
-        inputProps: {
-          placeholder: "Search and select your university",
-          options: [{ value: "charusat", label: "Charusat University" }],
-        },
-      })
-    ),
-  institute_department: z
-    .object({
-      institute: z.string().min(1, "Please select an institute"),
-      department: z.string().min(1, "Please select a department"),
-    })
-    .superRefine(
-      fieldConfig({
-        label: "Institute & Department",
-        fieldType: "two-select-input",
-        inputProps: {
-          separateFields: true,
-          firstFieldName: "institute",
-          secondFieldName: "department",
-          firstSelectLabel: "Institute",
-          secondSelectLabel: "Department",
-          firstSelectPlaceholder: "Choose institute...",
-          secondSelectPlaceholder: "Choose department...",
-          firstSelectOptions: [
-            { label: "CSPIT (Computer Science)", value: "cspit" },
-            { label: "DEPSTAR (Engineering)", value: "depstar" },
-            { label: "Other Institute", value: "other" },
-          ],
-          getSecondOptions: async (institute: string) => {
-            // Simulate API delay
-            await new Promise((resolve) => setTimeout(resolve, 300));
-
-            switch (institute) {
-              case "cspit":
-                return [
-                  { label: "Computer Science & Engineering", value: "cse" },
-                  { label: "Information Technology", value: "it" },
-                  { label: "Computer Engineering", value: "ce" },
-                  { label: "Data Science", value: "ds" },
-                  { label: "Artificial Intelligence", value: "ai" },
-                  { label: "Cyber Security", value: "cs" },
-                ];
-              case "depstar":
-                return [
-                  { label: "Mechanical Engineering", value: "me" },
-                  { label: "Civil Engineering", value: "civil" },
-                  { label: "Electrical Engineering", value: "ee" },
-                  { label: "Electronics & Communication", value: "ec" },
-                  { label: "Chemical Engineering", value: "che" },
-                  { label: "Automobile Engineering", value: "auto" },
-                ];
-              case "other":
-                return [
-                  { label: "Computer Science", value: "cs" },
-                  { label: "Engineering", value: "eng" },
-                  { label: "Business", value: "business" },
-                  { label: "Arts", value: "arts" },
-                  { label: "Science", value: "science" },
-                  { label: "Other", value: "other" },
-                ];
-              default:
-                return [];
-            }
-          },
-        },
-      })
-    ),
-  degree_level: z
-    .enum(["Bachelor", "Master", "Self_taught", "Diploma", "Other"])
-    .superRefine(
-      fieldConfig({
-        label: "Degree Level",
-        inputProps: {
-          placeholder: "Select your degree level",
-        },
-      })
-    ),
+  first_name: z.string().min(2, "First name must be at least 2 characters"),
+  last_name: z.string().min(2, "Last name must be at least 2 characters"),
+  date_of_birth: z.string().optional(),
+  university: z.string().min(2, "Please select a university"),
+  institute: z.string().min(1, "Please select an institute"),
+  department: z.string().min(1, "Please select a department"),
+  degree_level: z.enum(
+    ["Bachelor", "Master", "Self_taught", "Diploma", "Other"],
+    {
+      required_error: "Please select a degree level",
+    }
+  ),
 });
 
-// Step 2: Technical Profile Schema
-const technicalProfileSchema = z.object({
-  skills: z
-    .array(z.string())
-    .min(1, "Select at least one skill")
-    .refine((skills) => validateSkills(skills), {
-      message: "Invalid skill selected",
-    })
-    .superRefine(
-      fieldConfig({
-        label: "Technical Skills",
-        fieldType: "search-multiselect",
-        inputProps: {
-          placeholder: "Search and select skills...",
-          className: "w-full",
-          options: getSkillsForFormOptions(),
-        },
-      })
-    ),
-  github: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val || val.trim() === "") return undefined;
-
-      // Clean the input: remove existing protocol and www prefix if present
-      let cleanVal = val.trim();
-      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
-      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
-
-      // Add https:// prefix
-      return `https://${cleanVal}`;
-    })
-    .refine(
-      (val) => {
-        if (!val) return true; // Optional field, so undefined/empty is valid
-        try {
-          new URL(val);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      {
-        message: "Please enter a valid URL (e.g., github.com/username)",
-      }
-    )
-    .superRefine(
-      fieldConfig({
-        label: "Github/Twitter Profile",
-        fieldType: "prefix-input", // Use prefix-input for URL fields
-        inputProps: {
-          prefix: "https://",
-          placeholder: "github.com/username",
-          className: "url-field-github",
-        },
-      })
-    ),
-  portfolio: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val || val.trim() === "") return undefined;
-
-      // Clean the input: remove existing protocol and www prefix if present
-      let cleanVal = val.trim();
-      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
-      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
-
-      // Add https:// prefix
-      return `https://${cleanVal}`;
-    })
-    .refine(
-      (val) => {
-        if (!val) return true; // Optional field, so undefined/empty is valid
-        try {
-          new URL(val);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      {
-        message: "Please enter a valid URL (e.g., portfolio.com)",
-      }
-    )
-    .superRefine(
-      fieldConfig({
-        label: "Portfolio Link",
-        fieldType: "prefix-input", // Use prefix-input for URL fields
-        inputProps: {
-          prefix: "https://",
-          placeholder: "portfolio.com",
-          className: "url-field-portfolio",
-        },
-      })
-    ),
-  linkedin: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val || val.trim() === "") return undefined;
-
-      // Clean the input: remove existing protocol and www prefix if present
-      let cleanVal = val.trim();
-      cleanVal = cleanVal.replace(/^https?:\/\//, ""); // Remove http:// or https://
-      cleanVal = cleanVal.replace(/^www\./, ""); // Remove www.
-
-      // Add https:// prefix
-      return `https://${cleanVal}`;
-    })
-    .refine(
-      (val) => {
-        if (!val) return true; // Optional field, so undefined/empty is valid
-        try {
-          new URL(val);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      {
-        message:
-          "Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)",
-      }
-    )
-    .superRefine(
-      fieldConfig({
-        label: "LinkedIn Profile",
-        fieldType: "prefix-input", // Use prefix-input for URL fields
-        inputProps: {
-          prefix: "https://",
-          placeholder: "linkedin.com/in/username",
-          className: "url-field-linkedin",
-        },
-      })
-    ),
+// Step 2: Technical Details Schema
+const technicalDetailsSchema = z.object({
+  skills: z.array(z.string()).min(1, "Please select at least one skill"),
+  github: z.string().optional(),
+  linkedin: z.string().optional(),
+  portfolio: z.string().optional(),
+  experience_level: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"], {
+    required_error: "Please select your experience level",
+  }),
+  availability: z.enum(["Full_time", "Part_time", "Contract", "Freelance"], {
+    required_error: "Please select your availability",
+  }),
 });
 
-// Step 3: Setup Profile Schema
-const setupProfileSchema = z.object({
-  profilePhoto: z
-    .string()
-    .url("Please provide a valid image URL")
-    .optional()
-    .or(z.literal(""))
-    .superRefine(
-      fieldConfig({
-        label: "Profile Photo",
-        fieldType: "profile-photo", // Use custom profile photo component
-        inputProps: {
-          accept: "image/*",
-          className: "profile-photo-field",
-        },
-      })
-    ),
-  username: z
-    .string()
-    .min(3)
-    .max(20)
-    .superRefine(
-      fieldConfig({
-        label: "Username",
-        fieldType: "prefix-input", // Use prefix-input for username with @
-        inputProps: {
-          prefix: "@",
-          placeholder: "username",
-        },
-      })
-    ),
-  bio: z
-    .string()
-    .min(10, { message: "Minimum 10 characters" })
-    .max(200, { message: "Maximum 200 characters" })
-    .optional()
-    .superRefine(
-      fieldConfig({
-        label: "Bio (Optional)",
-        fieldType: "textarea", // Add fieldType to specify textarea component
-        inputProps: {
-          placeholder: "Tell us about yourself...",
-          rows: 1,
-          cols: 10,
-          className: "col-span-full",
-        },
-      })
-    ),
+// Step 3: Profile Details Schema
+const profileDetailsSchema = z.object({
+  profilePhoto: z.any().optional(),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  bio: z.string().optional(),
 });
+
+// Combined Schema
+const onboardingSchema = z.object({
+  ...personalDetailsSchema.shape,
+  ...technicalDetailsSchema.shape,
+  ...profileDetailsSchema.shape,
+});
+
+type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
 const steps = [
-  {
-    id: "step-1",
-    name: "Personal Details",
-    title: "Personal Details",
-    icon: User,
-    schema: new ZodProvider(personalDetailsSchema),
-    fields: [
-      "first_name",
-      "last_name",
-      "date_of_birth",
-      "university",
-      "institute_department",
-      "degree_level",
-    ],
-  },
-  {
-    id: "step-2",
-    name: "Technical Profile",
-    title: "Technical Profile",
-    icon: GraduationCap,
-    schema: new ZodProvider(technicalProfileSchema),
-    fields: ["skills", "github", "portfolio", "linkedin"],
-  },
-  {
-    id: "step-3",
-    name: "Setup Profile",
-    title: "Setup Profile",
-    icon: Settings,
-    schema: new ZodProvider(setupProfileSchema),
-    fields: ["profilePhoto", "username", "bio"],
-  },
+  { id: 0, title: "Personal Details", icon: User },
+  { id: 1, title: "Technical Profile", icon: GraduationCap },
+  { id: 2, title: "Profile Setup", icon: Settings },
 ];
 
-const OnboardingForm = () => {
-  // Use Zustand store for step-based persistence
-  const { saveStepData, getStepData, getAllFormData } = useOnboardingStore();
-
+const OnboardingForm: React.FC = () => {
   const [step, setStep] = useState(0);
-  const [previousStep, setPreviousStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [formData, setFormData] = useState<Record<string, any>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const {
+    saveStepData,
+    getStepData,
+    getAllFormData,
+    clearAllData,
+    setCurrentStep,
+  } = useOnboardingStore();
 
-  // Handle hydration to prevent SSR/client mismatches
-  useEffect(() => {
-    setIsHydrated(true);
+  // Create separate forms for each step
+  const personalDetailsForm = useForm<z.infer<typeof personalDetailsSchema>>({
+    resolver: zodResolver(personalDetailsSchema),
+    defaultValues: {
+      first_name: getStepData(0).first_name || "",
+      last_name: getStepData(0).last_name || "",
+      date_of_birth: getStepData(0).date_of_birth || "",
+      university: getStepData(0).university || "",
+      institute: getStepData(0).institute || "",
+      department: getStepData(0).department || "",
+      degree_level: getStepData(0).degree_level || undefined,
+    },
+  });
 
-    // Load initial data from store after hydration
-    const allData = getAllFormData();
-    if (Object.keys(allData).length > 0) {
-      setFormData(allData);
+  // Combined institute/department state
+  const [instituteDepartment, setInstituteDepartment] = useState({
+    first: getStepData(0).institute || "",
+    second: getStepData(0).department || "",
+  });
+
+  // Institute and department options
+  const instituteOptions = [
+    { label: "CSPIT (Computer Science)", value: "cspit" },
+    { label: "DEPSTAR (Engineering)", value: "depstar" },
+    { label: "Other Institute", value: "other" },
+  ];
+
+  const getDepartmentOptions = (institute: string) => {
+    const departmentMap: Record<
+      string,
+      Array<{ label: string; value: string }>
+    > = {
+      cspit: [
+        { label: "Computer Science & Engineering", value: "cse" },
+        { label: "Information Technology", value: "it" },
+        { label: "Computer Engineering", value: "ce" },
+        { label: "Data Science", value: "ds" },
+        { label: "Artificial Intelligence", value: "ai" },
+        { label: "Cyber Security", value: "cs" },
+      ],
+      depstar: [
+        { label: "Mechanical Engineering", value: "me" },
+        { label: "Civil Engineering", value: "civil" },
+        { label: "Electrical Engineering", value: "ee" },
+        { label: "Chemical Engineering", value: "che" },
+      ],
+      other: [{ label: "Other Department", value: "other" }],
+    };
+    return departmentMap[institute] || [];
+  };
+
+  // Update form when combined field changes
+  const handleInstituteDepartmentChange = (value: {
+    first: string;
+    second: string;
+  }) => {
+    setInstituteDepartment(value);
+    personalDetailsForm.setValue("institute", value.first);
+    personalDetailsForm.setValue("department", value.second);
+  };
+
+  const technicalDetailsForm = useForm<z.infer<typeof technicalDetailsSchema>>({
+    resolver: zodResolver(technicalDetailsSchema),
+    defaultValues: {
+      skills: getStepData(1).skills || [],
+      github: getStepData(1).github || "",
+      linkedin: getStepData(1).linkedin || "",
+      portfolio: getStepData(1).portfolio || "",
+      experience_level: getStepData(1).experience_level || undefined,
+      availability: getStepData(1).availability || undefined,
+    },
+  });
+
+  const profileDetailsForm = useForm<z.infer<typeof profileDetailsSchema>>({
+    resolver: zodResolver(profileDetailsSchema),
+    defaultValues: {
+      profilePhoto: getStepData(2).profilePhoto || null,
+      username: getStepData(2).username || "",
+      bio: getStepData(2).bio || "",
+    },
+  });
+
+  const currentForm = useMemo(() => {
+    switch (step) {
+      case 0:
+        return personalDetailsForm;
+      case 1:
+        return technicalDetailsForm;
+      case 2:
+        return profileDetailsForm;
+      default:
+        return personalDetailsForm;
     }
-  }, [getAllFormData]);
+  }, [step, personalDetailsForm, technicalDetailsForm, profileDetailsForm]);
 
-  const getStepStatus = (stepIndex: number) => {
-    if (stepIndex < step) return "done";
-    if (stepIndex === step) return "ongoing";
-    return "pending";
-  };
-
-  // Get current step's data from Zustand store for defaultValues (after hydration)
-  const getCurrentStepData = () => {
-    // Only use store data after hydration to prevent SSR/client mismatches
-    const storeData = isHydrated ? getStepData(step) : {};
-    const currentStepData = steps[step];
-
-    if (!currentStepData) return storeData || {};
-
-    const currentFields = currentStepData.fields;
-    const stepData: Record<string, any> = { ...storeData }; // Start with store data
-
-    // Merge with formData for backward compatibility
-    currentFields.forEach((field) => {
-      // Prefer store data, fallback to formData
-      if (storeData[field] !== undefined) {
-        stepData[field] = storeData[field];
-      } else if (formData[field] !== undefined) {
-        let value = formData[field];
-
-        // Handle type conversions for specific fields
-        if (field === "date_of_birth" && typeof value === "string") {
-          stepData[field] = value;
-        } else if (field === "skills" && Array.isArray(value)) {
-          stepData[field] = value;
-        } else if (
-          field === "institute_department" &&
-          typeof value === "object"
-        ) {
-          stepData[field] = value;
-          console.log("Setting institute_department defaultValue:", value);
-        } else {
-          stepData[field] = value;
-        }
-      }
-    });
-
-    console.log(`Step ${step + 1} current data:`, stepData);
-    console.log(`Store data (hydrated: ${isHydrated}):`, storeData);
-    console.log(`Full formData for debugging:`, formData);
-    return stepData;
-  };
-
-  // Get current step form data with proper dependency
-  const currentStepFormData = useMemo(() => {
-    return getCurrentStepData();
-  }, [step, formData, getStepData, isHydrated]);
-
-  // Get a stable key for the form that forces re-render when data changes
-  const formKey = useMemo(() => {
-    const dataString = JSON.stringify(currentStepFormData);
-    return `form-step-${step}-${dataString}`;
-  }, [step, currentStepFormData]);
-
-  const handleStepSubmit = (data: any) => {
-    console.log("🚀 handleStepSubmit called!");
-    console.log(`Step ${step + 1} data:`, data);
-    console.log("Type of data:", typeof data);
-    console.log("Data keys:", Object.keys(data || {}));
-
-    // Save step data to Zustand store
-    saveStepData(step, data);
-
-    // Merge current step data with existing form data (for backward compatibility)
-    const updatedFormData = { ...formData, ...data };
-    setFormData(updatedFormData);
-
-    console.log("Updated form data:", updatedFormData);
-    console.log("Saved to store - Step:", step, "Data:", data);
-
-    if (step < steps.length - 1) {
-      // Show success toast for step completion
-      const currentStepName = steps[step]?.name || "Step";
-      const nextStepName = steps[step + 1]?.name || "Next step";
-
-      toast.success(`${currentStepName} completed! ✅`, {
-        description: `Moving to ${nextStepName}...`,
-        duration: 2000,
-      });
-
-      setPreviousStep(step);
-      setStep(step + 1);
+  // Helper functions for step management
+  const getStepStatus = (stepIndex: number): "done" | "ongoing" | "pending" => {
+    if (stepIndex < step) {
+      return "done";
+    } else if (stepIndex === step) {
+      return "ongoing";
     } else {
-      // Final submission
-      console.log("Complete form data:", updatedFormData);
-      handleFinalSubmit(updatedFormData);
+      return "pending";
     }
   };
 
-  const handleFinalSubmit = async (completeData: any) => {
-    setIsSubmitting(true);
-    try {
-      console.log("Submitting complete onboarding data:", completeData);
-
-      const result = await submitOnboardingForm(completeData);
-
-      if (result.success) {
-        toast.success("Onboarding completed successfully! 🎉", {
-          description: "Redirecting you to your dashboard...",
-          duration: 3000,
-        });
-        setShowSuccess(true);
-
-        // Redirect to chat after 3 seconds
-        setTimeout(() => {
-          window.location.href = "/chat";
-        }, 2500);
-      } else {
-        throw new Error(result.error || "Failed to submit onboarding data");
-      }
-    } catch (error) {
-      console.error("Error submitting onboarding data:", error);
-
-      // Show error toast instead of alert
-      toast.error("Failed to complete onboarding", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred. Please try again.",
-        duration: 5000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const getCurrentStepData = () => {
+    return {
+      title: steps[step]?.title || "",
+      id: steps[step]?.id || 0,
+    };
   };
+
+  const currentStepData = getCurrentStepData();
 
   const next = async () => {
-    console.log("🔄 Next button clicked!");
-    // Trigger form submission for current step
-    const currentForm = document.querySelector("form");
-    console.log("Found form:", currentForm);
-    if (currentForm) {
-      console.log("Calling requestSubmit...");
-      currentForm.requestSubmit();
-    } else {
-      console.error("No form found!");
+    const form = currentForm;
+    const isValid = await form.trigger();
+
+    if (isValid) {
+      const stepData = form.getValues();
+      saveStepData(step, stepData);
+
+      if (step < steps.length - 1) {
+        setStep(step + 1);
+        setCurrentStep(step + 1);
+      }
     }
   };
 
-  // const formRef = useRef<HTMLFormElement>(null);
-  // const currentFormValues = useRef<Record<string, any>>({});
-
-  // Add a state to track current step's form values in real-time
   const prev = () => {
     if (step > 0) {
-      // Force save current form state by gathering data from DOM elements
-      const currentForm = document.querySelector("form");
-      if (currentForm) {
-        const currentStepData: Record<string, any> = {};
-
-        // Get all form inputs and their current values
-        const inputs = currentForm.querySelectorAll("input, select, textarea");
-        inputs.forEach((input: any) => {
-          if (input.name && input.value !== "") {
-            if (input.type === "file") {
-              if (input.files && input.files.length > 0) {
-                currentStepData[input.name] = Array.from(input.files);
-              }
-            } else {
-              currentStepData[input.name] = input.value;
-            }
-          }
-        });
-
-        // Special handling for our custom components that might store data differently
-        // Check multiselect values from data attributes
-        const formDataAttr = currentForm.getAttribute("data-form-values");
-        if (formDataAttr) {
-          try {
-            const existingFormData = JSON.parse(formDataAttr);
-            // Merge any existing values that aren't empty
-            Object.keys(existingFormData).forEach((key) => {
-              const value = existingFormData[key];
-              if (
-                value &&
-                (typeof value === "string" || Array.isArray(value)) &&
-                value.length > 0 &&
-                !currentStepData[key]
-              ) {
-                currentStepData[key] = value;
-              }
-            });
-          } catch (e) {
-            // Ignore parse errors
-          }
-        }
-
-        // Save if we found any data
-        if (Object.keys(currentStepData).length > 0) {
-          console.log(
-            `Saving Step ${step + 1} data before going back:`,
-            currentStepData
-          );
-          setFormData((prev) => ({ ...prev, ...currentStepData }));
-        }
-      }
-
-      setPreviousStep(step);
       setStep(step - 1);
+      setCurrentStep(step - 1);
     }
   };
 
-  const currentStepData = steps[step];
+  const onSubmit = async () => {
+    setIsLoading(true);
 
-  if (!currentStepData) {
-    return null; // Handle edge case
-  }
+    try {
+      // Get all form data from store
+      const allData = getAllFormData();
+
+      // Validate the complete form
+      const validatedData = onboardingSchema.parse(allData);
+
+      // Submit the form
+      await submitOnboardingForm(validatedData);
+
+      setShowSuccess(true);
+      clearAllData();
+
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 2000);
+    } catch (error) {
+      console.error("Onboarding submission error:", error);
+      toast.error("Failed to submit onboarding form. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (data: any) => {
+    if (step === steps.length - 1) {
+      // Last step - save data and submit all
+      saveStepData(step, data);
+      await onSubmit();
+    } else {
+      // Continue to next step
+      saveStepData(step, data);
+      if (step < steps.length - 1) {
+        setStep(step + 1);
+        setCurrentStep(step + 1);
+      }
+    }
+  };
+
+  const progressPercentage = ((step + 1) / steps.length) * 100;
 
   if (showSuccess) {
     return (
-      <div className="mx-auto flex items-center min-h-screen justify-center w-full px-4 md:px-8">
-        <div className="rounded-lg flex items-center justify-center w-full">
-          <SuccessAnimation />
-        </div>
-      </div>
-    );
-  }
-
-  // Prevent hydration mismatches by ensuring client has loaded
-  if (!isHydrated) {
-    return (
-      <div className="mx-auto flex min-h-screen items-center justify-center max-w-6xl px-4 md:px-8">
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading...</span>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <SuccessAnimation />
       </div>
     );
   }
@@ -664,7 +323,7 @@ const OnboardingForm = () => {
                 >
                   <StepIndicator status={getStepStatus(i)} />
                   <div className="text-sm font-medium">
-                    <p className="align-middle">{s.name}</p>
+                    <p className="align-middle">{s.title}</p>
                   </div>
                 </div>
               ))}
@@ -672,11 +331,11 @@ const OnboardingForm = () => {
           </div>
 
           {/* Main content */}
-          <div className="">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b p-4 md:p-6 pb-4 gap-4">
-              <h2 className="text-lg font-medium">{currentStepData.name}</h2>
+          <div className="p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-4 mb-6 gap-4">
+              <h2 className="text-lg font-medium">{currentStepData.title}</h2>
               <div className="flex items-center gap-4">
-                <span className="text-sm">
+                <span className="text-sm text-muted-foreground">
                   {step + 1}/{steps.length} completed
                 </span>
                 <Progress
@@ -686,120 +345,430 @@ const OnboardingForm = () => {
               </div>
             </div>
 
-            <div className="w-full p-4 md:p-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={step}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="space-y-6 pt-6"
-                >
-                  <AutoForm
-                    key={formKey} // Force complete re-render when step or data changes
-                    schema={currentStepData.schema}
-                    defaultValues={currentStepFormData} // Get data for current step
-                    formComponents={{
-                      // Use built-in components and custom where needed
-                      string: StringField,
-                      select: SelectField,
-                      textarea: StringField, // Use StringField for textareas
-                      input: CustomInput, // Register for fieldType: "input"
-                      number: CustomInput, // Use custom input for numbers
-                      multiselect: CustomMultiSelect, // Register for fieldType: "multiselect"
-                      "search-multiselect": CustomSearchMultiSelect, // Register for fieldType: "search-multiselect"
-                      date: CustomDatePicker, // Register for fieldType: "date"
-                      "select-command": SelectCommand, // Register for fieldType: "select-command"
-                      "profile-photo": ProfilePhotoField, // Register for fieldType: "profile-photo"
-                      "two-select-input": TwoSelectInput, // Register for fieldType: "two-select-input"
-                      "prefix-input": CustomPrefixInput, // Register for fieldType: "prefix-input"
-                    }}
-                    formProps={{
-                      className:
-                        step === 0
-                          ? "grid grid-cols-1 md:grid-cols-2 gap-6"
-                          : step === 1
-                            ? "technical-profile-form space-y-6"
-                            : step === 2
-                              ? "setup-profile-form space-y-6"
-                              : "grid grid-cols-1 gap-6",
-                    }}
-                    onSubmit={handleStepSubmit}
-                    withSubmit={false} // We'll handle submission with custom buttons
-                  >
-                    <style jsx global>{`
-                      /* Step 2: Technical Profile - URL Fields Side by Side */
-                      @media (min-width: 768px) {
-                        .technical-profile-form {
-                          position: relative;
-                        }
+            {/* Form Content */}
+            <AnimatePresence mode="wait">
+              <div className="space-y-6">
+                {step === 0 && (
+                  <Form {...personalDetailsForm}>
+                    <form
+                      onSubmit={personalDetailsForm.handleSubmit(
+                        handleFormSubmit
+                      )}
+                      className="space-y-6"
+                    >
+                      <motion.div
+                        key={step}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        <FormField
+                          control={personalDetailsForm.control}
+                          name="first_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <FormInput
+                                  placeholder="Enter your first name"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={personalDetailsForm.control}
+                          name="last_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <FormInput
+                                  placeholder="Enter your last name"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={personalDetailsForm.control}
+                          name="date_of_birth"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Date of Birth</FormLabel>
+                              <FormControl>
+                                <FormDatePicker
+                                  placeholder="Select your birth date"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={personalDetailsForm.control}
+                          name="university"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>University</FormLabel>
+                              <FormControl>
+                                <FormCommandSelect
+                                  placeholder="Search and select your university"
+                                  options={[
+                                    {
+                                      value: "charusat",
+                                      label: "Charusat University",
+                                    },
+                                  ]}
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={personalDetailsForm.control}
+                          name="institute"
+                          render={({ field }) => (
+                            <FormItem className="col-span-full">
+                              <FormLabel>Institute & Department</FormLabel>
+                              <FormControl>
+                                <FormTwoSelect
+                                  firstSelectLabel="Institute"
+                                  secondSelectLabel="Department"
+                                  firstSelectPlaceholder="Choose institute..."
+                                  secondSelectPlaceholder="Choose department..."
+                                  firstSelectOptions={instituteOptions}
+                                  getSecondOptions={getDepartmentOptions}
+                                  value={instituteDepartment}
+                                  onChange={handleInstituteDepartmentChange}
+                                  layout="inline"
+                                  showCombinedLabel={false}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={personalDetailsForm.control}
+                          name="degree_level"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Degree Level</FormLabel>
+                              <FormControl>
+                                <FormSelect
+                                  placeholder="Select your degree level"
+                                  options={[
+                                    { label: "Bachelor", value: "Bachelor" },
+                                    { label: "Master", value: "Master" },
+                                    {
+                                      label: "Self-taught",
+                                      value: "Self_taught",
+                                    },
+                                    { label: "Diploma", value: "Diploma" },
+                                    { label: "Other", value: "Other" },
+                                  ]}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </motion.div>
 
-                        /* Target the last two form fields (GitHub and Portfolio) */
-                        .technical-profile-form > div:nth-last-child(3),
-                        .technical-profile-form > div:nth-last-child(2) {
-                          display: inline-block;
-                          width: calc(50% - 0.5rem);
-                          vertical-align: top;
-                        }
+                      {/* Navigation Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                        <div className="flex-1" />
+                        <Button
+                          type="submit"
+                          disabled={isLoading}
+                          className="w-full sm:w-auto"
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                )}
 
-                        .technical-profile-form > div:nth-last-child(3) {
-                          margin-right: 1rem;
-                        }
-                      }
+                {step === 1 && (
+                  <Form {...technicalDetailsForm}>
+                    <form
+                      onSubmit={technicalDetailsForm.handleSubmit(
+                        handleFormSubmit
+                      )}
+                      className="space-y-6"
+                    >
+                      <motion.div
+                        key={step}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        <FormField
+                          control={technicalDetailsForm.control}
+                          name="skills"
+                          render={({ field }) => (
+                            <FormItem className="col-span-full">
+                              <FormLabel>Technical Skills</FormLabel>
+                              <FormControl>
+                                <FormSearchMultiSelect
+                                  placeholder="Search and select skills..."
+                                  options={getSkillsForFormOptions()}
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={technicalDetailsForm.control}
+                          name="github"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Github Profile</FormLabel>
+                              <FormControl>
+                                <FormPrefixInput
+                                  prefix="https://"
+                                  placeholder="github.com/username"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  onBlur={field.onBlur}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={technicalDetailsForm.control}
+                          name="linkedin"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>LinkedIn Profile</FormLabel>
+                              <FormControl>
+                                <FormPrefixInput
+                                  prefix="https://"
+                                  placeholder="linkedin.com/in/username"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  onBlur={field.onBlur}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={technicalDetailsForm.control}
+                          name="portfolio"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Portfolio Website</FormLabel>
+                              <FormControl>
+                                <FormPrefixInput
+                                  prefix="https://"
+                                  placeholder="yourportfolio.com"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  onBlur={field.onBlur}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={technicalDetailsForm.control}
+                          name="experience_level"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Experience Level</FormLabel>
+                              <FormControl>
+                                <FormSelect
+                                  placeholder="Select your experience level"
+                                  options={[
+                                    { label: "Beginner", value: "Beginner" },
+                                    {
+                                      label: "Intermediate",
+                                      value: "Intermediate",
+                                    },
+                                    { label: "Advanced", value: "Advanced" },
+                                    { label: "Expert", value: "Expert" },
+                                  ]}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={technicalDetailsForm.control}
+                          name="availability"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Availability</FormLabel>
+                              <FormControl>
+                                <FormSelect
+                                  placeholder="Select your availability"
+                                  options={[
+                                    { label: "Full-time", value: "Full_time" },
+                                    { label: "Part-time", value: "Part_time" },
+                                    { label: "Contract", value: "Contract" },
+                                    { label: "Freelance", value: "Freelance" },
+                                  ]}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </motion.div>
 
-                      /* Mobile responsive */
-                      @media (max-width: 767px) {
-                        .technical-profile-form > div {
-                          width: 100% !important;
-                          margin-right: 0 !important;
-                          display: block !important;
-                        }
-                      }
-                    `}</style>
-                    <div className="flex flex-col sm:flex-row gap-2 pt-4 col-span-full">
-                      {step > 0 && (
+                      {/* Navigation Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2 pt-4">
                         <Button
                           type="button"
                           onClick={prev}
                           variant="outline"
                           className="w-full sm:w-auto"
                         >
-                          <ChevronLeft className="mr-2 h-4 w-4" />
+                          <ChevronLeft className="w-4 h-4 mr-1" />
                           Back
                         </Button>
-                      )}
-                      {step < steps.length - 1 && (
-                        <Button
-                          type="button"
-                          onClick={next}
-                          className="ml-auto w-full sm:w-auto"
-                        >
-                          Next Step
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      )}
-                      {step === steps.length - 1 && (
+                        <div className="flex-1" />
                         <Button
                           type="submit"
-                          className="ml-auto w-full sm:w-auto"
-                          disabled={isSubmitting}
+                          disabled={isLoading}
+                          className="w-full sm:w-auto"
                         >
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Completing...
-                            </>
+                          Next
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                )}
+
+                {step === 2 && (
+                  <Form {...profileDetailsForm}>
+                    <form
+                      onSubmit={profileDetailsForm.handleSubmit(
+                        handleFormSubmit
+                      )}
+                      className="space-y-6"
+                    >
+                      <motion.div
+                        key={step}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        <FormField
+                          control={profileDetailsForm.control}
+                          name="profilePhoto"
+                          render={({ field }) => (
+                            <FormItem className="col-span-full">
+                              <FormLabel>Profile Photo</FormLabel>
+                              <FormControl>
+                                <FormProfilePhoto
+                                  accept="image/*"
+                                  className="profile-photo-field"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profileDetailsForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Username</FormLabel>
+                              <FormControl>
+                                <FormPrefixInput
+                                  prefix="@"
+                                  placeholder="username"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  onBlur={field.onBlur}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profileDetailsForm.control}
+                          name="bio"
+                          render={({ field }) => (
+                            <FormItem className="col-span-full">
+                              <FormLabel>Bio (Optional)</FormLabel>
+                              <FormControl>
+                                <FormTextarea
+                                  placeholder="Tell us about yourself..."
+                                  rows={3}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </motion.div>
+
+                      {/* Navigation Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                        <Button
+                          type="button"
+                          onClick={prev}
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                        >
+                          <ChevronLeft className="w-4 h-4 mr-1" />
+                          Back
+                        </Button>
+                        <div className="flex-1" />
+                        <Button
+                          type="submit"
+                          disabled={isLoading}
+                          className="w-full sm:w-auto"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           ) : (
-                            "Complete"
+                            "Complete Setup"
                           )}
                         </Button>
-                      )}
-                    </div>
-                  </AutoForm>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                      </div>
+                    </form>
+                  </Form>
+                )}
+              </div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
