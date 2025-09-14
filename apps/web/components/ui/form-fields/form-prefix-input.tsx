@@ -15,25 +15,41 @@ interface FormPrefixInputProps {
 }
 
 const FormPrefixInput = forwardRef<HTMLInputElement, FormPrefixInputProps>(
-  ({ prefix = "https://", placeholder, className, disabled, value, onChange, onBlur, ...props }, ref) => {
+  (
+    {
+      prefix = "https://",
+      placeholder,
+      className,
+      disabled,
+      value,
+      onChange,
+      onBlur,
+      ...props
+    },
+    ref
+  ) => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let inputValue = e.target.value;
-      
+
       // Clean up the value by removing the prefix if user types it
       if (inputValue.startsWith(prefix)) {
         inputValue = inputValue.substring(prefix.length);
       }
-      
+
       if (onChange) {
         onChange(inputValue);
       }
     };
 
     return (
-      <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground z-10 pointer-events-none">
+      <div className="flex rounded-md shadow-xs">
+        <span
+          className={cn(
+            "border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-md border px-3 text-sm "
+          )}
+        >
           {prefix}
-        </div>
+        </span>
         <Input
           ref={ref}
           type="text"
@@ -42,8 +58,8 @@ const FormPrefixInput = forwardRef<HTMLInputElement, FormPrefixInputProps>(
           onChange={handleInputChange}
           onBlur={onBlur}
           disabled={disabled}
-          className={cn("pl-[calc(3rem+0.5rem)]", className)}
-          style={{ paddingLeft: `${prefix.length * 0.6 + 0.75}rem` }}
+          className={cn("-ms-px rounded-s-none shadow-none", className)}
+          // style={{ paddingLeft: `${prefix.length * 0.6 + 0.75}rem` }}
           {...props}
         />
       </div>

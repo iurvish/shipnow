@@ -61,16 +61,10 @@ const personalDetailsSchema = z.object({
 
 // Step 2: Technical Details Schema
 const technicalDetailsSchema = z.object({
-  skills: z.array(z.string()).min(1, "Please select at least one skill"),
+  skills: z.array(z.string()).min(3, "Please select at least three skill"),
   github: z.string().optional(),
   linkedin: z.string().optional(),
   portfolio: z.string().optional(),
-  experience_level: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"], {
-    required_error: "Please select your experience level",
-  }),
-  availability: z.enum(["Full_time", "Part_time", "Contract", "Freelance"], {
-    required_error: "Please select your availability",
-  }),
 });
 
 // Step 3: Profile Details Schema
@@ -175,8 +169,6 @@ const OnboardingForm: React.FC = () => {
       github: getStepData(1).github || "",
       linkedin: getStepData(1).linkedin || "",
       portfolio: getStepData(1).portfolio || "",
-      experience_level: getStepData(1).experience_level || undefined,
-      availability: getStepData(1).availability || undefined,
     },
   });
 
@@ -440,7 +432,7 @@ const OnboardingForm: React.FC = () => {
                           control={personalDetailsForm.control}
                           name="institute"
                           render={({ field }) => (
-                            <FormItem className="col-span-full">
+                            <FormItem className="">
                               <FormLabel>Institute & Department</FormLabel>
                               <FormControl>
                                 <FormTwoSelect
@@ -451,12 +443,24 @@ const OnboardingForm: React.FC = () => {
                                   firstSelectOptions={instituteOptions}
                                   getSecondOptions={getDepartmentOptions}
                                   value={instituteDepartment}
-                                  onChange={handleInstituteDepartmentChange}
+                                  onChange={(value) => {
+                                    handleInstituteDepartmentChange(value);
+                                    // Trigger validation for both fields
+                                    personalDetailsForm.trigger([
+                                      "institute",
+                                      "department",
+                                    ]);
+                                  }}
                                   layout="inline"
                                   showCombinedLabel={false}
                                 />
                               </FormControl>
-                              <FormMessage />
+                              <FormMessage>
+                                {personalDetailsForm.formState.errors.institute
+                                  ?.message ||
+                                  personalDetailsForm.formState.errors
+                                    .department?.message}
+                              </FormMessage>
                             </FormItem>
                           )}
                         />
@@ -589,53 +593,6 @@ const OnboardingForm: React.FC = () => {
                                   value={field.value}
                                   onChange={field.onChange}
                                   onBlur={field.onBlur}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={technicalDetailsForm.control}
-                          name="experience_level"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Experience Level</FormLabel>
-                              <FormControl>
-                                <FormSelect
-                                  placeholder="Select your experience level"
-                                  options={[
-                                    { label: "Beginner", value: "Beginner" },
-                                    {
-                                      label: "Intermediate",
-                                      value: "Intermediate",
-                                    },
-                                    { label: "Advanced", value: "Advanced" },
-                                    { label: "Expert", value: "Expert" },
-                                  ]}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={technicalDetailsForm.control}
-                          name="availability"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Availability</FormLabel>
-                              <FormControl>
-                                <FormSelect
-                                  placeholder="Select your availability"
-                                  options={[
-                                    { label: "Full-time", value: "Full_time" },
-                                    { label: "Part-time", value: "Part_time" },
-                                    { label: "Contract", value: "Contract" },
-                                    { label: "Freelance", value: "Freelance" },
-                                  ]}
-                                  {...field}
                                 />
                               </FormControl>
                               <FormMessage />

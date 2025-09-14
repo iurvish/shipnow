@@ -379,7 +379,7 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                   >
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Upload className="w-8 h-8" />
-                      <span className="text-xs text-center leading-tight px-2">
+                      <span className="text-xs text-center text-wrap leading-tight px-2">
                         {placeholder}
                       </span>
                     </div>

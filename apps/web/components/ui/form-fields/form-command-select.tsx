@@ -66,11 +66,13 @@ const FormCommandSelect = forwardRef<HTMLButtonElement, FormCommandSelectProps>(
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("w-full justify-between", className)}
+            className={cn("w-full justify-between h-10 px-3 py-2", className)}
             disabled={disabled}
             {...props}
           >
-            {selectedOption ? selectedOption.label : placeholder}
+            <span className="truncate text-left flex-1 min-w-0">
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -96,10 +98,12 @@ const FormCommandSelect = forwardRef<HTMLButtonElement, FormCommandSelectProps>(
                     onSelect={handleSelect}
                     className="flex items-center justify-between"
                   >
-                    <span>{option.label}</span>
+                    <span className="truncate flex-1 min-w-0 text-left">
+                      {option.label}
+                    </span>
                     <Check
                       className={cn(
-                        "ml-2 h-4 w-4",
+                        "ml-2 h-4 w-4 shrink-0",
                         value === option.value ? "opacity-100" : "opacity-0"
                       )}
                     />

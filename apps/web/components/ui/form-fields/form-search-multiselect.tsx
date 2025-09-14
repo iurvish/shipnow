@@ -93,7 +93,7 @@ const FormSearchMultiSelect = forwardRef<
           <div
             ref={ref}
             className={cn(
-              "flex min-h-10 w-full flex-wrap items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background cursor-pointer",
+              "flex min-h-10 w-full flex-wrap items-center justify-between rounded-md border border-input bg-background px-2 py-1.5 text-sm ring-offset-background cursor-pointer",
               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
               disabled && "cursor-not-allowed opacity-50",
               className
@@ -117,7 +117,7 @@ const FormSearchMultiSelect = forwardRef<
                         handleRemove(item);
                       }}
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </Badge>
