@@ -22,6 +22,8 @@ interface ChatPageContentProps {
   handleAIResponse: (response: ChatResponse) => void;
   userLoading: boolean;
   sessionUser: any;
+  initialMessage: string | null;
+  initialMessageProcessed: boolean;
 }
 
 function ChatPageContent({
@@ -33,6 +35,8 @@ function ChatPageContent({
   handleAIResponse,
   userLoading,
   sessionUser,
+  initialMessage,
+  initialMessageProcessed,
 }: ChatPageContentProps) {
   const { setMessages: setArtifactMessages } = useSimpleArtifact();
 
@@ -41,8 +45,8 @@ function ChatPageContent({
     setArtifactMessages(messages);
   }, [messages, setArtifactMessages]);
 
-  // Show loading state while user is being fetched
-  if (userLoading) {
+  // Show loading state while user is being fetched (only if no initial message)
+  if (userLoading && !initialMessage) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
@@ -53,8 +57,8 @@ function ChatPageContent({
     );
   }
 
-  // Show error state if user is not authenticated
-  if (!sessionUser) {
+  // Show error state if user is not authenticated (only if no initial message and not loading)
+  if (!sessionUser && !userLoading && !initialMessage) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
@@ -95,6 +99,9 @@ function ChatPageContent({
             onLoadingChange={setIsLoading}
             disabled={isLoading}
             placeholder="Search people you're looking for..."
+            initialMessage={
+              !initialMessageProcessed ? initialMessage || undefined : undefined
+            }
           />
         </div>
       </div>
@@ -116,15 +123,14 @@ const Page = ({ params }: { params: Promise<{ slug: string }> }) => {
   const [initialMessageProcessed, setInitialMessageProcessed] = useState(false);
   const { user: sessionUser, loading: userLoading } = useSessionUser();
 
-  // Process initial message when page loads
+  // Process initial message when page loads - just add to UI, let AIInputSearch handle API
   useEffect(() => {
-    const processInitialMessage = async () => {
-      if (!sessionUser || userLoading || initialMessageProcessed || !initialMessage) {
+    const processInitialMessage = () => {
+      if (initialMessageProcessed || !initialMessage || userLoading) {
         return;
       }
 
       setInitialMessageProcessed(true);
-      setIsLoading(true);
 
       // Add user message to UI immediately
       const userMessage: ChatMessage = {
@@ -135,41 +141,18 @@ const Page = ({ params }: { params: Promise<{ slug: string }> }) => {
       };
       setMessages([userMessage]);
 
-      // Import and call AI response
-      try {
-        const { generatePeopleSuggestions } = await import("@/lib/actions/chat-actions");
-        const response = await generatePeopleSuggestions(initialMessage, sessionUser.id);
-        handleAIResponse(response);
-      } catch (error) {
-        console.error("Error generating AI response:", error);
-        // Add error message
-        const errorMessage: ChatMessage = {
-          id: `error-${Date.now()}`,
-          content: "Sorry, I encountered an error while processing your request. Please try again.",
-          role: "assistant",
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
-        
-        // Clean up URL
-        if (typeof window !== "undefined") {
-          const url = new URL(window.location.href);
-          url.searchParams.delete("initialMessage");
-          window.history.replaceState({}, "", url.toString());
-        }
+      // Clean up URL
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("initialMessage");
+        window.history.replaceState({}, "", url.toString());
       }
     };
 
     processInitialMessage();
-  }, [sessionUser, userLoading, initialMessage, initialMessageProcessed]);
+  }, [userLoading, initialMessage, initialMessageProcessed]);
 
-  const handleUserMessage = async (content: string) => {
-    if (!sessionUser) return;
-
-    setIsLoading(true);
-    
+  const handleUserMessage = (content: string) => {
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       content,
@@ -178,23 +161,6 @@ const Page = ({ params }: { params: Promise<{ slug: string }> }) => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
-
-    try {
-      const { generatePeopleSuggestions } = await import("@/lib/actions/chat-actions");
-      const response = await generatePeopleSuggestions(content, sessionUser.id);
-      handleAIResponse(response);
-    } catch (error) {
-      console.error("Error generating AI response:", error);
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        content: "Sorry, I encountered an error while processing your request. Please try again.",
-        role: "assistant",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleAIResponse = (response: ChatResponse) => {
@@ -229,6 +195,8 @@ const Page = ({ params }: { params: Promise<{ slug: string }> }) => {
         handleAIResponse={handleAIResponse}
         userLoading={userLoading}
         sessionUser={sessionUser}
+        initialMessage={initialMessage}
+        initialMessageProcessed={initialMessageProcessed}
       />
     </SimpleArtifactProvider>
   );

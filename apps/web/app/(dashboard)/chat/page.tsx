@@ -28,7 +28,7 @@ export default function ChatPage() {
 
         <div className="">
           <AIInputSearch
-            onUserMessage={handleSubmit}
+            onSearch={handleSubmit}
             placeholder="Search people you're looking for..."
           />
         </div>

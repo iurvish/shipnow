@@ -18,9 +18,11 @@ import { useSessionUser } from "@/hooks/use-session-user";
 interface AIInputSearchProps {
   onResponse?: (response: ChatResponse) => void;
   onUserMessage?: (message: string) => void;
+  onSearch?: (message: string) => void; // New prop for search without API call
   onLoadingChange?: (isLoading: boolean) => void;
   disabled?: boolean;
   placeholder?: string;
+  initialMessage?: string; // Add prop for initial message processing
 }
 
 const buttonVariants = {
@@ -49,19 +51,69 @@ const buttonVariants = {
 export default function AIInputSearch({
   onResponse,
   onUserMessage,
+  onSearch, // New prop
   onLoadingChange,
   disabled = false,
   placeholder = "Search people you're looking for...",
+  initialMessage, // Add initial message prop
 }: AIInputSearchProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<string>("");
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isMultiLine, setIsMultiLine] = useState(false);
+  const [initialProcessed, setInitialProcessed] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Get current user session
   const { user: sessionUser, loading: userLoading } = useSessionUser();
+
+  // Process initial message if provided
+  useEffect(() => {
+    const processInitialMessage = async () => {
+      if (!initialMessage || initialProcessed || userLoading) {
+        return;
+      }
+
+      // Wait for user session if not available yet
+      if (!sessionUser?.id) {
+        return;
+      }
+
+      setInitialProcessed(true);
+      setIsLoading(true);
+      onLoadingChange?.(true);
+      setShowSuggestions(false);
+
+      try {
+        const response = await generatePeopleSuggestions(
+          initialMessage,
+          sessionUser.id
+        );
+        onResponse?.(response);
+      } catch (error) {
+        console.error("Error processing initial message:", error);
+        onResponse?.({
+          query_type: "general_question",
+          reasoning: "Error occurred",
+          message:
+            "Sorry, something went wrong while processing your request. Please try again.",
+        });
+      } finally {
+        setIsLoading(false);
+        onLoadingChange?.(false);
+      }
+    };
+
+    processInitialMessage();
+  }, [
+    initialMessage,
+    initialProcessed,
+    sessionUser?.id,
+    userLoading,
+    onResponse,
+    onLoadingChange,
+  ]);
 
   // Predefined suggestions
   const suggestions = [
@@ -78,14 +130,20 @@ export default function AIInputSearch({
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    if (
-      !input.trim() ||
-      isLoading ||
-      disabled ||
-      userLoading ||
-      !sessionUser?.id
-    )
+    if (!input.trim() || isLoading || disabled) return;
+
+    const userMessage = input.trim();
+    setInput("");
+
+    // If onSearch is provided, just pass the message without API call
+    if (onSearch) {
+      onSearch(userMessage);
+      setShowSuggestions(false);
       return;
+    }
+
+    // Otherwise, handle the full API flow
+    if (userLoading || !sessionUser?.id) return;
 
     // Check if user is available
     if (!sessionUser?.id) {
@@ -98,8 +156,6 @@ export default function AIInputSearch({
       return;
     }
 
-    const userMessage = input.trim();
-    setInput("");
     setIsLoading(true);
     onLoadingChange?.(true); // Notify parent about loading state
     setCurrentStep("");
