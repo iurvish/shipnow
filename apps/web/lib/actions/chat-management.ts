@@ -30,14 +30,15 @@ export async function generateChatTitle(firstMessage: string): Promise<string> {
 
 export async function createChatWithFirstMessage(
   userId: string,
-  firstMessage: string
+  firstMessage: string,
+  existingSlug?: string
 ): Promise<{ chat: any | null; success: boolean; error?: string }> {
   try {
     const supabase = await createClient();
 
     // Generate title using AI
     const title = await generateChatTitle(firstMessage);
-    const slug = nanoid(12);
+    const slug = existingSlug || nanoid(12);
 
     // Create the chat
     const { data: chat, error: chatError } = await supabase

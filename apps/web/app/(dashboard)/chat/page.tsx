@@ -17,7 +17,6 @@ export default function ChatPage() {
 
   const handleSubmit = (input: string) => {
     const slug = Math.random().toString(36).substring(7);
-    // addNewChat(slug, input);
     router.push(`/chat/${slug}?initialMessage=${encodeURIComponent(input)}`);
   };
 

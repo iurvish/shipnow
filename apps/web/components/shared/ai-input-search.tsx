@@ -9,6 +9,10 @@ import {
   generatePeopleSuggestions,
   ChatResponse,
 } from "@/lib/actions/chat-actions";
+import {
+  createChatWithFirstMessage,
+  saveChatMessage,
+} from "@/lib/actions/chat-management";
 import { ToolStatusIndicator } from "./tool-status-indicator";
 import { AISuggestion, AISuggestions } from "@/components/ai/suggestions";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,6 +27,8 @@ interface AIInputSearchProps {
   disabled?: boolean;
   placeholder?: string;
   initialMessage?: string; // Add prop for initial message processing
+  chatId?: string; // Add prop for existing chat ID
+  slug?: string; // Add prop for chat slug
 }
 
 const buttonVariants = {
@@ -56,6 +62,8 @@ export default function AIInputSearch({
   disabled = false,
   placeholder = "Search people you're looking for...",
   initialMessage, // Add initial message prop
+  chatId: existingChatId, // Rename to avoid conflict
+  slug, // Add slug prop
 }: AIInputSearchProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +71,7 @@ export default function AIInputSearch({
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isMultiLine, setIsMultiLine] = useState(false);
   const [initialProcessed, setInitialProcessed] = useState(false);
+  const [chatId, setChatId] = useState<string | null>(existingChatId || null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Get current user session
@@ -86,11 +95,41 @@ export default function AIInputSearch({
       setShowSuggestions(false);
 
       try {
+        let currentChatId = chatId;
+
+        // Only create new chat if we don't have one
+        if (!currentChatId) {
+          const { chat, success } = await createChatWithFirstMessage(
+            sessionUser.id,
+            initialMessage,
+            slug
+          );
+
+          if (success && chat) {
+            setChatId(chat.id);
+            currentChatId = chat.id;
+          }
+        } else {
+          // Save user message to existing chat
+          await saveChatMessage(currentChatId, "user", initialMessage);
+        }
+
         const response = await generatePeopleSuggestions(
           initialMessage,
           sessionUser.id
         );
+
         onResponse?.(response);
+
+        // Save AI response message
+        if (currentChatId) {
+          await saveChatMessage(
+            currentChatId,
+            "assistant",
+            response.message || "Here are the people I found:",
+            response
+          );
+        }
       } catch (error) {
         console.error("Error processing initial message:", error);
         onResponse?.({
@@ -175,7 +214,19 @@ export default function AIInputSearch({
         userMessage,
         sessionUser.id
       );
+
       onResponse?.(response);
+
+      // Save both user and AI messages if we have a chatId
+      if (chatId) {
+        await saveChatMessage(chatId, "user", userMessage);
+        await saveChatMessage(
+          chatId,
+          "assistant",
+          response.message || "Here are the people I found:",
+          response
+        );
+      }
     } catch (error) {
       console.error("Error generating suggestions:", error);
       // Handle error state

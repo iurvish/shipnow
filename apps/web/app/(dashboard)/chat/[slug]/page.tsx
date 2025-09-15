@@ -6,6 +6,7 @@ import { useSessionUser } from "@/hooks/use-session-user";
 import ChatMessages, { ChatMessage } from "@/components/shared/chat-messages";
 import AIInputSearch from "@/components/shared/ai-input-search";
 import { ChatResponse } from "@/lib/actions/chat-actions";
+import { getChatBySlug, getChatMessages } from "@/lib/actions/chat-management";
 
 import {
   SimpleArtifactProvider,
@@ -24,6 +25,9 @@ interface ChatPageContentProps {
   sessionUser: any;
   initialMessage: string | null;
   initialMessageProcessed: boolean;
+  chatLoading: boolean;
+  chat: any;
+  slug: string;
 }
 
 function ChatPageContent({
@@ -37,6 +41,9 @@ function ChatPageContent({
   sessionUser,
   initialMessage,
   initialMessageProcessed,
+  chatLoading,
+  chat,
+  slug,
 }: ChatPageContentProps) {
   const { setMessages: setArtifactMessages } = useSimpleArtifact();
 
@@ -45,13 +52,15 @@ function ChatPageContent({
     setArtifactMessages(messages);
   }, [messages, setArtifactMessages]);
 
-  // Show loading state while user is being fetched (only if no initial message)
-  if (userLoading && !initialMessage) {
+  // Show loading state while user is being fetched or chat is loading (but not if we have initialMessage)
+  if (((userLoading && !initialMessage) || chatLoading) && !initialMessage) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your profile...</p>
+          <p className="text-muted-foreground">
+            {chatLoading ? "Loading chat..." : "Loading your profile..."}
+          </p>
         </div>
       </div>
     );
@@ -102,6 +111,8 @@ function ChatPageContent({
             initialMessage={
               !initialMessageProcessed ? initialMessage || undefined : undefined
             }
+            chatId={chat?.id}
+            slug={slug}
           />
         </div>
       </div>
@@ -121,12 +132,61 @@ const Page = ({ params }: { params: Promise<{ slug: string }> }) => {
   const [chat, setChat] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [initialMessageProcessed, setInitialMessageProcessed] = useState(false);
+  const [chatLoading, setChatLoading] = useState(true);
   const { user: sessionUser, loading: userLoading } = useSessionUser();
 
-  // Process initial message when page loads - just add to UI, let AIInputSearch handle API
+  // Load existing chat data when component mounts (only if no initialMessage)
+  useEffect(() => {
+    const loadChatData = async () => {
+      if (!slug || userLoading || initialMessage) return;
+
+      setChatLoading(true);
+
+      try {
+        // Try to get existing chat by slug
+        const { chat: existingChat, success } = await getChatBySlug(slug);
+
+        if (success && existingChat) {
+          setChat(existingChat);
+
+          // Load chat messages
+          const { messages: chatMessages, success: messagesSuccess } =
+            await getChatMessages(existingChat.id);
+
+          if (messagesSuccess && chatMessages) {
+            // Convert database messages to ChatMessage format
+            const formattedMessages: ChatMessage[] = chatMessages.map(
+              (msg: any) => ({
+                id: msg.id,
+                content: msg.content,
+                role: msg.role,
+                chatResponse: msg.metadata,
+                timestamp: new Date(msg.created_at),
+              })
+            );
+            setMessages(formattedMessages);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading chat:", error);
+      } finally {
+        setChatLoading(false);
+      }
+    };
+
+    loadChatData();
+  }, [slug, userLoading, initialMessage]);
+
+  // Process initial message when page loads - only if no existing chat
   useEffect(() => {
     const processInitialMessage = () => {
-      if (initialMessageProcessed || !initialMessage || userLoading) {
+      if (
+        initialMessageProcessed ||
+        !initialMessage ||
+        userLoading ||
+        chatLoading ||
+        chat
+      ) {
         return;
       }
 
@@ -150,7 +210,7 @@ const Page = ({ params }: { params: Promise<{ slug: string }> }) => {
     };
 
     processInitialMessage();
-  }, [userLoading, initialMessage, initialMessageProcessed]);
+  }, [userLoading, initialMessage, initialMessageProcessed, chatLoading, chat]);
 
   const handleUserMessage = (content: string) => {
     const userMessage: ChatMessage = {
@@ -197,6 +257,9 @@ const Page = ({ params }: { params: Promise<{ slug: string }> }) => {
         sessionUser={sessionUser}
         initialMessage={initialMessage}
         initialMessageProcessed={initialMessageProcessed}
+        chatLoading={chatLoading}
+        chat={chat}
+        slug={slug}
       />
     </SimpleArtifactProvider>
   );
