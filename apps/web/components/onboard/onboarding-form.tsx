@@ -46,6 +46,7 @@ import FormSearchMultiSelect from "@/components/ui/form-fields/form-search-multi
 import { FormPrefixInput } from "@/components/ui/form-fields/form-prefix-input";
 import { FormProfilePhoto } from "@/components/ui/form-fields";
 import { FormTextarea } from "@/components/ui/form-fields/form-textarea";
+import { FormUsernameInput } from "@/components/ui/form-fields/form-username-input";
 import { createClient } from "@/lib/client";
 
 // Step 1: Personal Details Schema
@@ -110,7 +111,30 @@ const technicalDetailsSchema = z.object({
 // Step 3: Profile Details Schema
 const profileDetailsSchema = z.object({
   profilePhoto: z.any().optional(),
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(
+      /^[a-zA-Z0-9._]+$/,
+      "Username can only contain letters, numbers, dots, and underscores"
+    )
+    .refine(
+      (username) =>
+        !username.startsWith(".") &&
+        !username.startsWith("_") &&
+        !username.endsWith(".") &&
+        !username.endsWith("_"),
+      { message: "Username cannot start or end with dots or underscores" }
+    )
+    .refine(
+      (username) =>
+        !username.includes("..") &&
+        !username.includes("__") &&
+        !username.includes("._") &&
+        !username.includes("_."),
+      { message: "Username cannot have consecutive dots or underscores" }
+    ),
   bio: z.string().optional(),
 });
 
@@ -331,19 +355,32 @@ const OnboardingForm: React.FC = () => {
     try {
       // Get all form data from store
       const allData = getAllFormData();
+      console.log("Form data to submit:", allData);
 
       // Validate the complete form
       const validatedData = onboardingSchema.parse(allData);
+      console.log("Validated data:", validatedData);
 
       // Submit the form
-      await submitOnboardingForm(validatedData);
+      console.log("Submitting to server...");
+      const result = await submitOnboardingForm(validatedData);
+      console.log("Server response:", result);
 
-      setShowSuccess(true);
-      clearAllData();
+      if (result.success) {
+        console.log("Success! Showing success animation and redirecting...");
+        setShowSuccess(true);
+        clearAllData();
 
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 2000);
+        setTimeout(() => {
+          window.location.href = "/chat";
+        }, 2000);
+      } else {
+        // Handle server-side errors
+        console.error("Server error:", result.error);
+        toast.error(
+          result.error || "Failed to submit onboarding form. Please try again."
+        );
+      }
     } catch (error) {
       console.error("Onboarding submission error:", error);
       toast.error("Failed to submit onboarding form. Please try again.");
@@ -784,8 +821,7 @@ const OnboardingForm: React.FC = () => {
                                   <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <FormControl>
-                                  <FormPrefixInput
-                                    prefix="@"
+                                  <FormUsernameInput
                                     placeholder="username"
                                     value={field.value}
                                     onChange={field.onChange}
