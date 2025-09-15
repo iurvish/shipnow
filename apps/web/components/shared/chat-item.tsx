@@ -4,6 +4,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { User, Bot } from "lucide-react";
 import { ChatResponseComponent } from "./chat-response";
 import { ChatResponse } from "@/lib/actions/chat-actions";
+import { UserAvatar } from "./user-avatar";
+import { AILogo } from "./ai-logo";
+import { useSessionUser } from "@/hooks/use-session-user";
 
 interface ChatItemProps {
   content: string;
@@ -21,6 +24,7 @@ const ChatItem: React.FC<ChatItemProps> = ({
   chatResponse,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const { user } = useSessionUser();
 
   const toggleExpand = () => {
     setExpanded(!expanded);
@@ -38,24 +42,26 @@ const ChatItem: React.FC<ChatItemProps> = ({
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div
-          className={`w-8 h-8 flex items-center justify-center ${
-            role === "assistant"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
-          }`}
-          style={{
-            clipPath:
-              "polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))",
-            borderRadius: "0px",
-          }}
-        >
-          {role === "assistant" ? (
-            <Bot className="h-4 w-4" />
-          ) : (
-            <User className="h-4 w-4" />
-          )}
-        </div>
+        {role === "assistant" ? (
+          <div
+            className="w-8 h-8 flex items-center justify-center bg-primary text-primary-foreground"
+            style={{
+              clipPath:
+                "polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))",
+              borderRadius: "0px",
+            }}
+          >
+            <AILogo className="h-4 w-4" />
+          </div>
+        ) : (
+          <UserAvatar
+            firstName={user?.first_name}
+            lastName={user?.last_name}
+            profilePicture={user?.profile_picture}
+            size="md"
+            className="w-8 h-8"
+          />
+        )}
       </div>
 
       {/* Content */}

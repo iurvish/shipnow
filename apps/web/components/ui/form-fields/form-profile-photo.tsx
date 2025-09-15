@@ -36,7 +36,7 @@ import {
   uploadProfilePhoto,
   updateProfilePhoto,
   deleteProfilePhoto,
-} from "@/lib/profile-photo-storage";
+} from "@/lib/actions/profile-photo-storage";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 interface FormProfilePhotoProps {

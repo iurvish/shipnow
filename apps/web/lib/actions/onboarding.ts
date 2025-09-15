@@ -243,6 +243,26 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
     }
     console.log("User record updated successfully");
 
+    // Update auth.users metadata with names and onboarding status
+    console.log("Updating auth.users metadata...");
+    const { error: authUserError } = await supabase.auth.updateUser({
+      data: {
+        first_name: validatedData.first_name,
+        last_name: validatedData.last_name,
+        full_name: `${validatedData.first_name} ${validatedData.last_name}`,
+        username: validatedData.username,
+        onboarded: true
+      }
+    });
+
+    if (authUserError) {
+      console.error("Auth user update error:", authUserError);
+      // Don't fail the entire process if auth metadata update fails
+      console.warn("Failed to update auth.users metadata, but continuing with onboarding");
+    } else {
+      console.log("Auth user metadata updated successfully");
+    }
+
     // Insert or update personal details (no first_name/last_name here anymore)
     console.log("Updating personal details...");
     const { error: personalError } = await supabase

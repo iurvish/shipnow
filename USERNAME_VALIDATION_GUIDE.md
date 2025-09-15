@@ -5,14 +5,13 @@
 Before testing the onboarding form, please run this SQL command in your Supabase SQL editor:
 
 ```sql
-ALTER TABLE public.technical_profiles
+ALTER TABLE public.technical_profiles 
 ADD COLUMN linkedin character varying(255) NULL;
 ```
 
 ## Features Implemented
 
 ### 1. Real-time Username Validation
-
 - **Format validation**: Only allows letters, numbers, dots, and underscores (like Instagram)
 - **Length validation**: 3-20 characters
 - **Position rules**: Cannot start or end with dots or underscores
@@ -20,18 +19,16 @@ ADD COLUMN linkedin character varying(255) NULL;
 - **Uniqueness check**: Real-time checking against existing usernames with 500ms debounce
 
 ### 2. Visual Indicators
-
 - **Loading indicator**: Shows spinner while checking availability
 - **Success indicator**: Green check mark when username is available
 - **Error indicator**: Red X when username is unavailable or invalid
-- **Border colors**:
+- **Border colors**: 
   - Green border for available usernames
   - Red border for unavailable/invalid usernames
   - Blue border while checking
 - **Validation messages**: Clear feedback about availability or format issues
 
 ### 3. User Experience
-
 - **Debounced checking**: Waits 500ms after user stops typing to avoid excessive API calls
 - **Immediate format feedback**: Client-side validation for instant feedback
 - **@ prefix**: Automatically shows @ symbol to indicate username format
