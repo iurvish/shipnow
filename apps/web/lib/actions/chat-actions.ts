@@ -6,6 +6,7 @@ import { createClient } from "@/lib/server";
 import { getAuraDBDriver } from "@/lib/auradb-client";
 import { google } from "@ai-sdk/google";
 import { SKILLS } from "@/lib/config/skills";
+import { chatRateLimiter, withRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 // Schema for the search_people tool parameters
 const SearchPeopleToolSchema = z.object({
@@ -291,12 +292,16 @@ export async function generatePeopleSuggestions(
       throw new Error('Message and userId are required');
     }
 
-    console.log('🚀 Starting AI-powered graph search for user:', userId);
-    console.log('📝 Query:', message);
+    // Apply rate limiting specifically for chat actions
+    return await withRateLimit(
+      userId,
+      async () => {
+        console.log('🚀 Starting AI-powered graph search for user:', userId);
+        console.log('📝 Query:', message);
 
-    // Step 1: Retrieve current user context from Supabase
-    const userContext = await getCurrentUserContext(userId);
-    console.log('👤 User context:', userContext);
+        // Step 1: Retrieve current user context from Supabase
+        const userContext = await getCurrentUserContext(userId);
+        console.log('👤 User context:', userContext);
 
     // Step 2: LLM Intent Recognition & Entity Extraction  
     const availableSkills = SKILLS.slice(0, 20).map(s => s.value).join(', ');
@@ -408,8 +413,8 @@ export async function generatePeopleSuggestions(
         console.log('🔗 Connections:', connections);
         
         // Step 6: Fetch detailed profiles from Supabase
-        const detailedProfiles = await (foundUserIds);
-        console.log('👥 Detailed profiles counfetchDetailedProfilest:', detailedProfiles.length);
+        const detailedProfiles = await fetchDetailedProfiles(foundUserIds);
+        console.log('👥 Detailed profiles count:', detailedProfiles.length);
         
         return {
           query_type: 'people_search',
@@ -431,9 +436,21 @@ export async function generatePeopleSuggestions(
         message: intent.response || "I'm here to help you find people and connections. Try asking me to find someone with specific skills or from your university!"
       };
     }
+      }, // End of withRateLimit wrapper
+      chatRateLimiter
+    );
     
   } catch (error) {
     console.error('❌ Chat action error:', error);
+    
+    // Handle rate limit errors specifically
+    if (error instanceof RateLimitError) {
+      return {
+        query_type: 'general_question',
+        reasoning: 'Rate limit exceeded',
+        message: `You've made too many requests. Please wait ${Math.ceil((error.reset - Date.now()) / 1000)} seconds before trying again.`
+      };
+    }
     
     return {
       query_type: 'general_question',

@@ -50,6 +50,13 @@ export const useOnboardingStore = create<OnboardingFormState>()(
       
       clearAllData: () => {
         set({ steps: {}, currentStep: 0 });
+        
+        // Also clear from localStorage to ensure complete cleanup
+        try {
+          localStorage.removeItem('shipnow-onboarding-storage');
+        } catch (error) {
+          console.warn('Failed to clear onboarding localStorage:', error);
+        }
       },
       
       setCurrentStep: (step: number) => {
@@ -96,6 +103,13 @@ export const useFormStore = create<FormState>()(
       
       clearForm: () => {
         set({ formData: {} });
+        
+        // Also clear from localStorage to ensure complete cleanup
+        try {
+          localStorage.removeItem('shipnow-form-storage-legacy');
+        } catch (error) {
+          console.warn('Failed to clear legacy form localStorage:', error);
+        }
       },
       
       clearField: (fieldName: string) => {

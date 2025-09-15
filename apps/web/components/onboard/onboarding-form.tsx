@@ -24,6 +24,7 @@ import {
   validateSkills,
 } from "@/lib/config/skills";
 import { useOnboardingStore } from "@/stores/form-store";
+import { useFormStore } from "@/stores/form-store";
 import {
   ChevronLeft,
   ChevronRight,
@@ -164,6 +165,7 @@ const OnboardingForm: React.FC = () => {
     clearAllData,
     setCurrentStep,
   } = useOnboardingStore();
+  const { clearForm: clearLegacyForm } = useFormStore();
 
   // Transform skills data for FormSearchMultiSelect with categories
   const getSkillsWithCategories = () => {
@@ -369,7 +371,18 @@ const OnboardingForm: React.FC = () => {
       if (result.success) {
         console.log("Success! Showing success animation and redirecting...");
         setShowSuccess(true);
+
+        // Clear all onboarding data from stores and localStorage
         clearAllData();
+        clearLegacyForm();
+
+        // Double-check localStorage cleanup (belt and suspenders approach)
+        try {
+          localStorage.removeItem("shipnow-onboarding-storage");
+          localStorage.removeItem("shipnow-form-storage-legacy");
+        } catch (error) {
+          console.warn("Failed to clear localStorage:", error);
+        }
 
         setTimeout(() => {
           window.location.href = "/chat";
