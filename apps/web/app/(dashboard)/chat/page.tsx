@@ -10,178 +10,29 @@ import {
 import { SimpleArtifactPanel } from "@/components/panels/user-detail-panel";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 import { useSessionUser } from "@/hooks/use-session-user";
+import { useRouter } from "next/navigation";
 
-interface ChatPageContentProps {
-  messages: ChatMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-  isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  handleUserMessage: (content: string) => void;
-  handleAIResponse: (response: ChatResponse) => void;
-  userLoading: boolean;
-  sessionUser: any;
-}
+export default function ChatPage() {
+  const router = useRouter();
 
-function ChatPageContent({
-  messages,
-  setMessages,
-  isLoading,
-  setIsLoading,
-  handleUserMessage,
-  handleAIResponse,
-  userLoading,
-  sessionUser,
-}: ChatPageContentProps) {
-  const { setMessages: setArtifactMessages } = useSimpleArtifact();
-
-  // Update artifact context with messages whenever they change
-  useEffect(() => {
-    setArtifactMessages(messages);
-  }, [messages, setArtifactMessages]);
-
-  // Show loading state while user is being fetched
-  if (userLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state if user is not authenticated
-  if (!sessionUser) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">
-            Please log in to search for people
-          </p>
-          <button
-            onClick={() => (window.location.href = "/auth/login")}
-            className="bg-foreground text-background px-4 py-2 rounded"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleSubmit = (input: string) => {
+    const slug = Math.random().toString(36).substring(7);
+    // addNewChat(slug, input);
+    router.push(`/chat/${slug}?initialMessage=${encodeURIComponent(input)}`);
+  };
 
   return (
-    <div className="flex h-full relative">
-      {/* Main Chat Content */}
-      <div className="hide-scrollbar w-full flex flex-col justify-between h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-3.75rem)] min-h-0 bg-transparent">
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto pb-24 bg-transparent">
-          <div className="max-w-6xl mx-auto">
-            {messages.length === 0 && !isLoading ? (
-              /* Welcome Message */
-              <div className="flex justify-center pt-20">
-                <div
-                  className="bg-muted/30 p-8 max-w-md text-center"
-                  style={{ borderRadius: "0px" }}
-                >
-                  <h3 className="font-semibold mb-3 text-lg">
-                    Welcome to People Finder
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Tell me about the kind of people you're looking for and I'll
-                    search our database to find the perfect matches!
-                  </p>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p>
-                      <strong>Try asking:</strong>
-                    </p>
-                    <p>"Find me React developers"</p>
-                    <p>"I need experienced UX designers"</p>
-                    <p>"Suggest some data scientists"</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Chat Messages without regenerate */
-              <ChatMessages
-                messages={messages}
-                isLoading={isLoading}
-                loadingMessage="Searching for people..."
-              />
-            )}
-          </div>
-        </div>
+    <div className="">
+      <div className=" w-full flex  lg:w-[88%] xl:w-[80%] mx-auto flex-col justify-end bg-background">
+        {/* <p className="text-slate-200 text-2xl">{email}</p> */}
 
-        {/* Sticky Input Area */}
-        <div className="lg:w-[88%] xl:w-[80%] md:w-full w-full mx-auto bg-transparent">
+        <div className="">
           <AIInputSearch
-            onResponse={handleAIResponse}
-            onUserMessage={handleUserMessage}
-            onLoadingChange={setIsLoading}
-            disabled={isLoading}
+            onUserMessage={handleSubmit}
             placeholder="Search people you're looking for..."
           />
         </div>
       </div>
-
-      {/* Simple Artifact Panel */}
-      <SimpleArtifactPanel />
     </div>
-  );
-}
-
-export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Get current user session
-  const { user: sessionUser, loading: userLoading } = useSessionUser();
-
-  const handleUserMessage = (content: string) => {
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      content,
-      role: "user",
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    // Loading state is now handled by AIInputSearch component via onLoadingChange
-  };
-
-  const handleAIResponse = (response: ChatResponse) => {
-    // Loading state is now handled by AIInputSearch component via onLoadingChange
-
-    const aiMessage: ChatMessage = {
-      id: `ai-${Date.now()}`,
-      content:
-        response.message ||
-        (response.query_type === "people_search"
-          ? "Here are the people I found:"
-          : ""),
-      role: "assistant",
-      chatResponse: response,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, aiMessage]);
-  };
-
-  return (
-    <SimpleArtifactProvider
-      sendMessage={handleUserMessage}
-      onAIResponse={handleAIResponse}
-    >
-      <ChatPageContent
-        messages={messages}
-        setMessages={setMessages}
-        isLoading={isLoading}
-        setIsLoading={setIsLoading}
-        handleUserMessage={handleUserMessage}
-        handleAIResponse={handleAIResponse}
-        userLoading={userLoading}
-        sessionUser={sessionUser}
-      />
-    </SimpleArtifactProvider>
   );
 }
