@@ -20,7 +20,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Loader } from "lucide-react";
 import { Project, ProjectInput } from "@/lib/types";
 import { updateProject, getProject } from "@/lib/actions/projects";
 
@@ -121,7 +121,7 @@ export default function EditProjectPage({
     return (
       <div className="container mx-auto py-10">
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader className="h-8 w-8 animate-spin" />
         </div>
       </div>
     );
