@@ -144,33 +144,18 @@ export default function HeroSection() {
                 }}
               >
                 {/* Container is now responsive and clips overflow */}
-                <div className="relative mt-12 overflow-hidden px-2 sm:mt-16 md:mt-20">
-                  <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 relative mx-auto max-w-6xl overflow-hidden rounded-2xl border border-white/10 p-4 shadow-lg shadow-zinc-950/15 ring-1">
+                <div className="relative mt-12 overflow-hidden px-2 sm:mt-16 md:mt-20 flex w-full items-center justify-center max-sm:px-3 mb-12">
+                  <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 relative mx-auto max-w-6xl overflow-hidden rounded-2xl border border-white/10 p-4 shadow-lg shadow-zinc-950/15 ring-1 flex  ">
                     <Image
-                      className="aspect-video w-full rounded-2xl md:aspect-[15/8]"
-                      src="/mail2.png"
+                      className=" rounded-2xl aspect-auto flex "
+                      src="/hero.png"
                       alt="app screen"
-                      width="2700"
-                      height="1440"
+                      width={2100}
+                      height={1700}
                     />
                   </div>
                 </div>
               </AnimatedGroup>
-            </div>
-          </div>
-        </section>
-
-        <section id="features" className="pb-16 pt-16 md:pb-32">
-          <div className="group relative m-auto max-w-5xl px-6">
-            <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
-              <Link
-                href="/customers"
-                className="block text-sm duration-150 hover:opacity-75"
-              >
-                <span> Meet Our Customers</span>
-
-                <ChevronRight className="ml-1 inline-block size-3" />
-              </Link>
             </div>
           </div>
         </section>
