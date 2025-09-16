@@ -4352,6 +4352,11 @@ undici-types@~7.8.0:
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.8.0.tgz#de00b85b710c54122e44fbfd911f8d70174cd294"
   integrity sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==
 
+unicornstudio-react@^1.4.29-1:
+  version "1.4.29-1"
+  resolved "https://registry.yarnpkg.com/unicornstudio-react/-/unicornstudio-react-1.4.29-1.tgz#01d7254eb26a8feba9ff514c62ba26032e4da13d"
+  integrity sha512-dDAxwPWJ+iktoi9z264eSc+HrxpR+7bNw2glzGEu7iVBcxYCd65pbDCp3CtyDSPem+JsIUaGLJpy27OUweIVJw==
+
 uri-js@^4.2.2:
   version "4.4.1"
   resolved "https://registry.yarnpkg.com/uri-js/-/uri-js-4.4.1.tgz#9b1a52595225859e55f669d928f88c6c57f2a77e"

@@ -97,8 +97,8 @@ export default function ChatPageContent() {
       </div>
 
       {/* Suggestion Cards */}
-      <div className="w-full max-w-4xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="w-full max-w-4xl flex justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-fit">
           {suggestions.map((suggestion, index) => {
             const IconComponent = suggestion.icon;
             return (

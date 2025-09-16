@@ -28,7 +28,7 @@ import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
 import ChatMessages, { ChatMessage } from "../shared/chat-messages";
-import AIInputSearch from "../shared/ai-input-search-simple";
+import AIInputSearch from "@/components/shared/ai-input-search-simple";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
 export function SimpleArtifactPanel() {
