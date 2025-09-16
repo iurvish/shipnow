@@ -13,7 +13,6 @@ import {
   createChatWithFirstMessage,
   saveChatMessage,
 } from "@/lib/actions/chat-management";
-import { ToolStatusIndicator } from "./tool-status-indicator";
 import { AISuggestion, AISuggestions } from "@/components/ai/suggestions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -289,18 +288,6 @@ export default function AIInputSearch({
 
   return (
     <div className="w-full py-2 pb-4 bg-transparent">
-      {/* Tool Status Indicator */}
-      {/* {isLoading && toolStatuses.length > 0 && (
-        <>
-        </>
-        // <div className="mb-4">
-        //   <ToolStatusIndicator
-        //     statuses={toolStatuses}
-        //     currentStep={currentStep}
-        //   />
-        // </div>
-      )} */}
-
       <div className="w-full px-4 max-sm:px-4 bg-transparent">
         {/* AI Suggestions - positioned above input */}
         <AISuggestions className="mb-3" show={showSuggestions && !isLoading}>

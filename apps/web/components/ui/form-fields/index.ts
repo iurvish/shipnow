@@ -8,6 +8,7 @@ export { FormPrefixInput } from "./form-prefix-input";
 export { FormUsernameInput } from "./form-username-input";
 export { FormCommandSelect } from "./form-command-select";
 export { FormTwoSelect } from "./form-two-select";
+export { FormMultiSelect } from "./form-multiselect";
 export { default as FormSearchMultiSelect } from "./form-search-multiselect";
 
 // Complex form field components that may need updating
