@@ -17,8 +17,14 @@ import {
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { getSkillsForFormOptions, validateSkills } from "@/lib/config/skills";
+import {
+  SKILLS,
+  SkillCategory,
+  getSkillsByCategory,
+  validateSkills,
+} from "@/lib/config/skills";
 import { useOnboardingStore } from "@/stores/form-store";
+import { useFormStore } from "@/stores/form-store";
 import {
   ChevronLeft,
   ChevronRight,
@@ -41,6 +47,7 @@ import FormSearchMultiSelect from "@/components/ui/form-fields/form-search-multi
 import { FormPrefixInput } from "@/components/ui/form-fields/form-prefix-input";
 import { FormProfilePhoto } from "@/components/ui/form-fields";
 import { FormTextarea } from "@/components/ui/form-fields/form-textarea";
+import { FormUsernameInput } from "@/components/ui/form-fields/form-username-input";
 import { createClient } from "@/lib/client";
 
 // Step 1: Personal Details Schema
@@ -64,10 +71,11 @@ const technicalDetailsSchema = z.object({
   skills: z.array(z.string()).min(3, "Please select at least three skill"),
   github: z
     .string()
-    .min(1, "GitHub profile is required")
+    .optional()
+    .or(z.literal(""))
     .refine(
       (value) => {
-        if (!value) return false;
+        if (!value || value === "") return true; // Allow empty values
         const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
         return (
           cleanUrl.includes("github.com/") &&
@@ -87,9 +95,9 @@ const technicalDetailsSchema = z.object({
         if (!value) return false;
         const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
         return (
-          (cleanUrl.includes("linkedin.com/in/") ||
+          (cleanUrl.includes("linkedin.com/") ||
             cleanUrl.includes("linkedin.com/pub/")) &&
-          (cleanUrl.length > "linkedin.com/in/".length ||
+          (cleanUrl.length > "linkedin.com/".length ||
             cleanUrl.length > "linkedin.com/pub/".length)
         );
       },
@@ -104,7 +112,30 @@ const technicalDetailsSchema = z.object({
 // Step 3: Profile Details Schema
 const profileDetailsSchema = z.object({
   profilePhoto: z.any().optional(),
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(
+      /^[a-zA-Z0-9._]+$/,
+      "Username can only contain letters, numbers, dots, and underscores"
+    )
+    .refine(
+      (username) =>
+        !username.startsWith(".") &&
+        !username.startsWith("_") &&
+        !username.endsWith(".") &&
+        !username.endsWith("_"),
+      { message: "Username cannot start or end with dots or underscores" }
+    )
+    .refine(
+      (username) =>
+        !username.includes("..") &&
+        !username.includes("__") &&
+        !username.includes("._") &&
+        !username.includes("_."),
+      { message: "Username cannot have consecutive dots or underscores" }
+    ),
   bio: z.string().optional(),
 });
 
@@ -134,6 +165,16 @@ const OnboardingForm: React.FC = () => {
     clearAllData,
     setCurrentStep,
   } = useOnboardingStore();
+  const { clearForm: clearLegacyForm } = useFormStore();
+
+  // Transform skills data for FormSearchMultiSelect with categories
+  const getSkillsWithCategories = () => {
+    return SKILLS.map((skill) => ({
+      value: skill.value,
+      label: skill.label,
+      category: skill.category,
+    }));
+  };
 
   // Create separate forms for each step
   const personalDetailsForm = useForm<z.infer<typeof personalDetailsSchema>>({
@@ -316,19 +357,43 @@ const OnboardingForm: React.FC = () => {
     try {
       // Get all form data from store
       const allData = getAllFormData();
+      console.log("Form data to submit:", allData);
 
       // Validate the complete form
       const validatedData = onboardingSchema.parse(allData);
+      console.log("Validated data:", validatedData);
 
       // Submit the form
-      await submitOnboardingForm(validatedData);
+      console.log("Submitting to server...");
+      const result = await submitOnboardingForm(validatedData);
+      console.log("Server response:", result);
 
-      setShowSuccess(true);
-      clearAllData();
+      if (result.success) {
+        console.log("Success! Showing success animation and redirecting...");
+        setShowSuccess(true);
 
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 2000);
+        // Clear all onboarding data from stores and localStorage
+        clearAllData();
+        clearLegacyForm();
+
+        // Double-check localStorage cleanup (belt and suspenders approach)
+        try {
+          localStorage.removeItem("shipnow-onboarding-storage");
+          localStorage.removeItem("shipnow-form-storage-legacy");
+        } catch (error) {
+          console.warn("Failed to clear localStorage:", error);
+        }
+
+        setTimeout(() => {
+          window.location.href = "/chat";
+        }, 2000);
+      } else {
+        // Handle server-side errors
+        console.error("Server error:", result.error);
+        toast.error(
+          result.error || "Failed to submit onboarding form. Please try again."
+        );
+      }
     } catch (error) {
       console.error("Onboarding submission error:", error);
       toast.error("Failed to submit onboarding form. Please try again.");
@@ -436,7 +501,10 @@ const OnboardingForm: React.FC = () => {
                             name="first_name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>First Name</FormLabel>
+                                <FormLabel>
+                                  First Name{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormInput
                                     placeholder="Enter your first name"
@@ -452,7 +520,10 @@ const OnboardingForm: React.FC = () => {
                             name="last_name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Last Name</FormLabel>
+                                <FormLabel>
+                                  Last Name{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormInput
                                     placeholder="Enter your last name"
@@ -468,7 +539,10 @@ const OnboardingForm: React.FC = () => {
                             name="date_of_birth"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Date of Birth</FormLabel>
+                                <FormLabel>
+                                  Date of Birth{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormDatePicker
                                     placeholder="Select your birth date"
@@ -485,7 +559,10 @@ const OnboardingForm: React.FC = () => {
                             name="university"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>University</FormLabel>
+                                <FormLabel>
+                                  University{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormCommandSelect
                                     placeholder="Search and select your university"
@@ -508,7 +585,10 @@ const OnboardingForm: React.FC = () => {
                             name="institute"
                             render={({ field }) => (
                               <FormItem className="">
-                                <FormLabel>Institute & Department</FormLabel>
+                                <FormLabel>
+                                  Institute & Department{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormTwoSelect
                                     firstSelectLabel="Institute"
@@ -544,7 +624,10 @@ const OnboardingForm: React.FC = () => {
                             name="degree_level"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Degree Level</FormLabel>
+                                <FormLabel>
+                                  Degree Level{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormSelect
                                     placeholder="Select your degree level"
@@ -604,11 +687,14 @@ const OnboardingForm: React.FC = () => {
                             name="skills"
                             render={({ field }) => (
                               <FormItem className="col-span-full">
-                                <FormLabel>Technical Skills</FormLabel>
+                                <FormLabel>
+                                  Technical Skills{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormSearchMultiSelect
                                     placeholder="Search and select skills..."
-                                    options={getSkillsForFormOptions()}
+                                    options={getSkillsWithCategories()}
                                     value={field.value}
                                     onChange={field.onChange}
                                   />
@@ -622,7 +708,10 @@ const OnboardingForm: React.FC = () => {
                             name="linkedin"
                             render={({ field }) => (
                               <FormItem className="col-span-full">
-                                <FormLabel>LinkedIn Profile *</FormLabel>
+                                <FormLabel>
+                                  LinkedIn Profile{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormPrefixInput
                                     prefix="https://"
@@ -641,7 +730,7 @@ const OnboardingForm: React.FC = () => {
                             name="github"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>GitHub Profile *</FormLabel>
+                                <FormLabel>GitHub Profile</FormLabel>
                                 <FormControl>
                                   <FormPrefixInput
                                     prefix="https://"
@@ -678,7 +767,7 @@ const OnboardingForm: React.FC = () => {
                         </motion.div>
 
                         {/* Navigation Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-2 pt-4 ; max-md:flex-col-reverse">
+                        <div className="flex flex-col sm:flex-row gap-2 pt-4 max-md:flex-col-reverse">
                           <Button
                             type="button"
                             onClick={prev}
@@ -739,11 +828,13 @@ const OnboardingForm: React.FC = () => {
                             control={profileDetailsForm.control}
                             name="username"
                             render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Username</FormLabel>
+                              <FormItem className="col-span-full">
+                                <FormLabel>
+                                  Username{" "}
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
-                                  <FormPrefixInput
-                                    prefix="@"
+                                  <FormUsernameInput
                                     placeholder="username"
                                     value={field.value}
                                     onChange={field.onChange}
@@ -774,7 +865,7 @@ const OnboardingForm: React.FC = () => {
                         </motion.div>
 
                         {/* Navigation Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                        <div className="flex flex-col sm:flex-row gap-2 pt-4 max-md:flex-col-reverse">
                           <Button
                             type="button"
                             onClick={prev}
@@ -791,7 +882,7 @@ const OnboardingForm: React.FC = () => {
                             className="w-full sm:w-auto"
                           >
                             {isLoading ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               "Complete Setup"
                             )}

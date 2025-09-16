@@ -31,11 +31,15 @@ interface SimpleArtifactContextType {
   isVisible: boolean;
   artifactData: ArtifactData | null;
   messages: ChatMessage[];
+  isLoading?: boolean;
   openArtifact: (data: ArtifactData) => void;
   closeArtifact: () => void;
   setMessages: (messages: ChatMessage[]) => void;
   sendMessage?: (content: string) => void;
   onAIResponse?: (response: ChatResponse) => void;
+  setLoading?: (loading: boolean) => void;
+  setSendMessage?: (fn: (content: string) => void) => void;
+  setOnAIResponse?: (fn: (response: ChatResponse) => void) => void;
 }
 
 const SimpleArtifactContext = createContext<
@@ -44,13 +48,18 @@ const SimpleArtifactContext = createContext<
 
 export const SimpleArtifactProvider: React.FC<{
   children: ReactNode;
-  sendMessage?: (content: string) => void;
-  onAIResponse?: (response: ChatResponse) => void;
-}> = ({ children, sendMessage, onAIResponse }) => {
+}> = ({ children }) => {
   // Simple artifact provider for user details
   const [isVisible, setIsVisible] = useState(false);
   const [artifactData, setArtifactData] = useState<ArtifactData | null>(null);
   const [messages, setMessagesState] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [sendMessage, setSendMessage] = useState<
+    ((content: string) => void) | undefined
+  >();
+  const [onAIResponse, setOnAIResponse] = useState<
+    ((response: ChatResponse) => void) | undefined
+  >();
 
   const openArtifact = (data: ArtifactData) => {
     setArtifactData(data);
@@ -67,17 +76,33 @@ export const SimpleArtifactProvider: React.FC<{
     setMessagesState(newMessages);
   };
 
+  const setLoading = (loading: boolean) => {
+    setIsLoading(loading);
+  };
+
+  const setSendMessageFn = (fn: (content: string) => void) => {
+    setSendMessage(() => fn);
+  };
+
+  const setOnAIResponseFn = (fn: (response: ChatResponse) => void) => {
+    setOnAIResponse(() => fn);
+  };
+
   return (
     <SimpleArtifactContext.Provider
       value={{
         isVisible,
         artifactData,
         messages,
+        isLoading,
         openArtifact,
         closeArtifact,
         setMessages,
         sendMessage,
         onAIResponse,
+        setLoading,
+        setSendMessage: setSendMessageFn,
+        setOnAIResponse: setOnAIResponseFn,
       }}
     >
       {children}

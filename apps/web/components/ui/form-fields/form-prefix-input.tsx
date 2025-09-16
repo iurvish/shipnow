@@ -50,7 +50,10 @@ const FormPrefixInput = forwardRef<HTMLInputElement, FormPrefixInputProps>(
 
       // Handle URL prefixes (https://, http://)
       if (prefixToRemove.includes("://")) {
-        return inputValue.replace(/^https?:\/\//, "");
+        // Remove common URL prefixes including www
+        let cleaned = inputValue.replace(/^https?:\/\//, "");
+        cleaned = cleaned.replace(/^www\./, "");
+        return cleaned;
       }
 
       // Handle @ symbol prefix

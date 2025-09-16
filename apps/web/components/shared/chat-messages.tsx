@@ -26,9 +26,9 @@ export default function ChatMessages({
 }: ChatMessagesProps) {
   return (
     <div className="space-y-0">
-      {messages.map((message) => (
+      {messages.map((message, idx) => (
         <ChatItem
-          key={message.id}
+          key={message.id ? `${message.id}` : `msg-${idx}`}
           content={message.content}
           role={message.role}
           chatResponse={message.chatResponse}

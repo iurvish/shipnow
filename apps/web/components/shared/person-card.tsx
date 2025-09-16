@@ -102,7 +102,7 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
               Bio
             </div>
             <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
-              {person.bio ? truncateText(person.bio, 120) : "No bio available"}
+              {person.bio ? truncateText(person.bio, 120) : "Bio not added"}
             </div>
           </div>
 
@@ -124,7 +124,7 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
                 ))
               ) : (
                 <div className="text-zinc-400 text-sm font-normal font-mono">
-                  No skills listed
+                  Skills not added
                 </div>
               )}
             </div>
@@ -150,7 +150,7 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
                     education
                   </div>
                   <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                    {university ? truncateText(university, 9) : "Not specified"}
+                    {university ? truncateText(university, 9) : "Not added"}
                   </div>
                 </div>
               </div>
@@ -166,7 +166,7 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
                     linkedin
                   </div>
                   <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                    {linkedin ? truncateText(linkedin, 9) : "Not specified"}
+                    {linkedin ? truncateText(linkedin, 9) : "Not added"}
                   </div>
                 </div>
               </div>

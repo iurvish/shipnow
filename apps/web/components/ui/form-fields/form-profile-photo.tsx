@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Upload, Edit3, X, Check } from "lucide-react";
+import { Upload, Edit3, X, Check, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +31,13 @@ import {
   CropperDescription,
   CropperImage,
 } from "@/components/ui/cropper";
+import { toast } from "sonner";
+import {
+  uploadProfilePhoto,
+  updateProfilePhoto,
+  deleteProfilePhoto,
+} from "@/lib/actions/profile-photo-storage";
+import { getCurrentUser } from "@/lib/auth-utils";
 
 interface FormProfilePhotoProps {
   name: string;
@@ -73,6 +80,8 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
     height: number;
   } | null>(null);
   const [isCropperReady, setIsCropperReady] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -183,7 +192,16 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
 
   const handleCrop = useCallback(async () => {
     if (tempImage) {
+      setIsUploading(true);
+
       try {
+        // Get current user
+        const user = await getCurrentUser();
+        if (!user) {
+          toast.error("Authentication required to upload profile photo");
+          return;
+        }
+
         let croppedDataUrl;
 
         if (cropperState) {
@@ -198,17 +216,55 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
           croppedDataUrl = await createCroppedImage(tempImage);
         }
 
-        setCroppedImage(croppedDataUrl);
-        setValue(name, croppedDataUrl);
-        setIsDialogOpen(false);
-        setTempImage(null);
-        setCropperState(null);
-        setIsCropperReady(false);
+        // Upload to Supabase Storage
+        console.log("Uploading profile photo to Supabase...");
+        const currentImageUrl = currentValue; // This is the current Supabase URL if any
+
+        let uploadResult;
+        if (currentImageUrl && currentImageUrl.includes("supabase")) {
+          // Update existing photo
+          uploadResult = await updateProfilePhoto(
+            croppedDataUrl,
+            user.id,
+            currentImageUrl
+          );
+        } else {
+          // Upload new photo
+          uploadResult = await uploadProfilePhoto(croppedDataUrl, user.id);
+        }
+
+        if (uploadResult.success && uploadResult.url) {
+          console.log("Profile photo uploaded successfully:", uploadResult.url);
+
+          // Update form with Supabase Storage URL
+          setCroppedImage(uploadResult.url);
+          setValue(name, uploadResult.url);
+
+          toast.success("Profile photo uploaded successfully!");
+
+          setIsDialogOpen(false);
+          setTempImage(null);
+          setCropperState(null);
+          setIsCropperReady(false);
+        } else {
+          console.error("Upload failed:", uploadResult.error);
+          toast.error(uploadResult.error || "Failed to upload profile photo");
+        }
       } catch (error) {
-        console.error("Error cropping image:", error);
+        console.error("Error cropping/uploading image:", error);
+        toast.error("Error processing profile photo");
+      } finally {
+        setIsUploading(false);
       }
     }
-  }, [tempImage, cropperState, name, setValue, createCroppedImage]);
+  }, [
+    tempImage,
+    cropperState,
+    name,
+    setValue,
+    createCroppedImage,
+    currentValue,
+  ]);
 
   const handleEdit = useCallback(() => {
     if (originalImage) {
@@ -240,7 +296,35 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
     }
   }, []);
 
-  const handleRemoveImage = useCallback(() => {
+  const handleRemoveImage = useCallback(async () => {
+    const currentImageUrl = currentValue;
+
+    // Only delete from storage if it's a Supabase URL
+    if (currentImageUrl && currentImageUrl.includes("supabase")) {
+      setIsDeleting(true);
+
+      try {
+        console.log("Deleting profile photo from Supabase...");
+        const deleteResult = await deleteProfilePhoto(currentImageUrl);
+
+        if (deleteResult.success) {
+          console.log("Profile photo deleted successfully");
+          toast.success("Profile photo removed successfully!");
+        } else {
+          console.error("Delete failed:", deleteResult.error);
+          toast.error(deleteResult.error || "Failed to delete profile photo");
+          return; // Don't proceed with UI update if delete failed
+        }
+      } catch (error) {
+        console.error("Error deleting image:", error);
+        toast.error("Error removing profile photo");
+        return; // Don't proceed with UI update if delete failed
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+
+    // Update UI state
     setCroppedImage(null);
     setOriginalImage(null);
     setSavedCropState(null);
@@ -248,7 +332,12 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  }, [name, setValue]);
+
+    // Show success message for local images too
+    if (!currentImageUrl || !currentImageUrl.includes("supabase")) {
+      toast.success("Profile photo removed!");
+    }
+  }, [name, setValue, currentValue]);
 
   const triggerFileInput = useCallback((e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -321,11 +410,11 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                       {/* Overlay buttons container */}
                       <div
                         className={cn(
-                          "absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center",
+                          "absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center",
                           cropShape === "round" ? "rounded-full" : "rounded-lg"
                         )}
                       >
-                        <div className="flex gap-2">
+                        <div className="flex gap-3 items-center justify-center">
                           {/* Edit button */}
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -334,13 +423,20 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                                 variant="secondary"
                                 size="sm"
                                 onClick={handleEdit}
-                                className="w-8 h-8 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900"
+                                disabled={isUploading || isDeleting}
+                                className="w-10 h-10 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900 shadow-lg disabled:opacity-50"
                               >
-                                <Edit3 className="w-4 h-4" />
+                                {isUploading ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Edit3 className="w-4 h-4" />
+                                )}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Edit image</p>
+                              <p>
+                                {isUploading ? "Uploading..." : "Edit image"}
+                              </p>
                             </TooltipContent>
                           </Tooltip>
 
@@ -352,13 +448,20 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                                 variant="secondary"
                                 size="sm"
                                 onClick={handleRemoveImage}
-                                className="w-8 h-8 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900"
+                                disabled={isUploading || isDeleting}
+                                className="w-10 h-10 p-0 rounded-full bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900 shadow-lg disabled:opacity-50"
                               >
-                                <X className="w-4 h-4" />
+                                {isDeleting ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <X className="w-4 h-4" />
+                                )}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Remove image</p>
+                              <p>
+                                {isDeleting ? "Removing..." : "Remove image"}
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -372,16 +475,28 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                     type="button"
                     variant="outline"
                     onClick={(e) => triggerFileInput(e)}
+                    disabled={isUploading || isDeleting}
                     className={cn(
-                      "w-32 h-32 border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors p-0",
+                      "w-32 h-32 border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors p-0 disabled:opacity-50",
                       cropShape === "round" ? "rounded-full" : "rounded-lg"
                     )}
                   >
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Upload className="w-8 h-8" />
-                      <span className="text-xs text-center text-wrap leading-tight px-2">
-                        {placeholder}
-                      </span>
+                      {isUploading || isDeleting ? (
+                        <>
+                          <Loader2 className="w-8 h-8 animate-spin" />
+                          <span className="text-xs text-center text-wrap leading-tight px-2">
+                            {isUploading ? "Uploading..." : "Processing..."}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8" />
+                          <span className="text-xs text-center text-wrap leading-tight px-2">
+                            {placeholder}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </Button>
                 </div>
@@ -432,16 +547,26 @@ const FormProfilePhoto: React.FC<FormProfilePhotoProps> = ({
                       type="button"
                       variant="outline"
                       onClick={handleCancel}
+                      disabled={isUploading}
                     >
                       Cancel
                     </Button>
                     <Button
                       type="button"
                       onClick={handleCrop}
-                      disabled={!isCropperReady}
+                      disabled={!isCropperReady || isUploading}
                     >
-                      <Check className="w-4 h-4 mr-2" />
-                      Apply Crop
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          Apply Crop
+                        </>
+                      )}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

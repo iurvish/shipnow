@@ -117,8 +117,22 @@ const onboardingSchema = z.object({
     ),
   
   // Setup Profile
-  profilePhoto: z.string().url().optional().or(z.literal("")),
-  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be at most 20 characters"),
+  profilePhoto: z.string().url().optional().or(z.literal("")).or(z.null()),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(/^[a-zA-Z0-9._]+$/, "Username can only contain letters, numbers, dots, and underscores")
+    .refine(
+      (username) => !username.startsWith('.') && !username.startsWith('_') && 
+                   !username.endsWith('.') && !username.endsWith('_'),
+      { message: "Username cannot start or end with dots or underscores" }
+    )
+    .refine(
+      (username) => !username.includes('..') && !username.includes('__') && 
+                   !username.includes('._') && !username.includes('_.'),
+      { message: "Username cannot have consecutive dots or underscores" }
+    ),
   bio: z.string().min(10, "Bio must be at least 10 characters").max(200, "Bio must be at most 200 characters").optional(),
 });
 
@@ -129,11 +143,13 @@ export type OnboardingFormData = z.infer<typeof onboardingSchema>;
 interface ActionResult {
   success: boolean;
   error?: string;
-  data?: any;
+  data?: any; 
 }
 
 export async function submitOnboardingForm(formData: OnboardingFormData): Promise<ActionResult> {
   try {
+    console.log("Server action: submitOnboardingForm called with data:", formData);
+    
     // Create Supabase client
     const supabase = await createClient();
 
@@ -141,16 +157,20 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
+      console.error("Authentication error:", authError);
       return {
         success: false,
         error: "User not authenticated"
       };
     }
 
+    console.log("User authenticated:", user.id);
+
     // Validate the form data
     const validationResult = onboardingSchema.safeParse(formData);
     
     if (!validationResult.success) {
+      console.error("Validation error:", validationResult.error);
       return {
         success: false,
         error: "Invalid form data: " + validationResult.error.issues.map(issue => issue.message).join(", ")
@@ -158,6 +178,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
     }
 
     const validatedData = validationResult.data;
+    console.log("Data validated successfully:", validatedData);
 
     // Start a transaction by using the database client
     const { data: existingUser, error: userCheckError } = await supabase
@@ -198,6 +219,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
     }
 
     // Update or insert user record (including bio from setup profile step)
+    console.log("Updating user record...");
     const { error: userError } = await supabase
       .from('users')
       .upsert({
@@ -213,13 +235,36 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
       });
 
     if (userError) {
+      console.error("User update error:", userError);
       return {
         success: false,
         error: "Error updating user: " + userError.message
       };
     }
+    console.log("User record updated successfully");
+
+    // Update auth.users metadata with names and onboarding status
+    console.log("Updating auth.users metadata...");
+    const { error: authUserError } = await supabase.auth.updateUser({
+      data: {
+        first_name: validatedData.first_name,
+        last_name: validatedData.last_name,
+        full_name: `${validatedData.first_name} ${validatedData.last_name}`,
+        username: validatedData.username,
+        onboarded: true
+      }
+    });
+
+    if (authUserError) {
+      console.error("Auth user update error:", authUserError);
+      // Don't fail the entire process if auth metadata update fails
+      console.warn("Failed to update auth.users metadata, but continuing with onboarding");
+    } else {
+      console.log("Auth user metadata updated successfully");
+    }
 
     // Insert or update personal details (no first_name/last_name here anymore)
+    console.log("Updating personal details...");
     const { error: personalError } = await supabase
       .from('personal_details')
       .upsert({
@@ -233,13 +278,16 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
       });
 
     if (personalError) {
+      console.error("Personal details error:", personalError);
       return {
         success: false,
         error: "Error saving personal details: " + personalError.message
       };
     }
+    console.log("Personal details updated successfully");
 
     // Insert or update technical profile (bio removed, it's now in users table)
+    console.log("Updating technical profile...");
     const { error: technicalError } = await supabase
       .from('technical_profiles')
       .upsert({
@@ -252,11 +300,13 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
       });
 
     if (technicalError) {
+      console.error("Technical profile error:", technicalError);
       return {
         success: false,
         error: "Error saving technical profile: " + technicalError.message
       };
     }
+    console.log("Technical profile updated successfully");
 
     // Revalidate relevant paths
     revalidatePath('/onboarding');
@@ -310,6 +360,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
       // This allows the app to continue working even if the graph database is down
     }
 
+    console.log("Onboarding completed successfully! Returning success response");
     return {
       success: true,
       data: {
@@ -320,6 +371,7 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
 
   } catch (error) {
     console.error('Onboarding submission error:', error);
+    console.log("Returning error response:", error instanceof Error ? error.message : "An unexpected error occurred");
     return {
       success: false,
       error: error instanceof Error ? error.message : "An unexpected error occurred"
@@ -346,6 +398,32 @@ export async function checkUsernameAvailability(username: string): Promise<Actio
       return {
         success: false,
         error: "Username must be between 3 and 20 characters"
+      };
+    }
+
+    // Check for invalid characters (only alphanumeric, dots, and underscores like Instagram)
+    const usernameRegex = /^[a-zA-Z0-9._]+$/;
+    if (!usernameRegex.test(username)) {
+      return {
+        success: false,
+        error: "Username can only contain letters, numbers, dots, and underscores"
+      };
+    }
+
+    // Check if username starts or ends with dot or underscore
+    if (username.startsWith('.') || username.startsWith('_') || 
+        username.endsWith('.') || username.endsWith('_')) {
+      return {
+        success: false,
+        error: "Username cannot start or end with dots or underscores"
+      };
+    }
+
+    // Check for consecutive dots or underscores
+    if (username.includes('..') || username.includes('__') || username.includes('._') || username.includes('_.')) {
+      return {
+        success: false,
+        error: "Username cannot have consecutive dots or underscores"
       };
     }
 

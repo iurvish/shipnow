@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import CustomMultiSelect from "@/components/ui/autoform/custom/multiselect";
-import ProjectMultiSelect from "@/components/project-multiselect";
+import { FormMultiSelect } from "@/components/ui/form-fields";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -228,52 +227,37 @@ export default function AddProjectPage() {
                 </CardContent>
               </Card>
 
-              {/* Technologies */}
               <Card>
                 <CardHeader>
                   <CardTitle>Technologies Used</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <FormField
-                    control={form.control}
+                  <FormMultiSelect
                     name="tags"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Technologies Used</FormLabel>
-                        <FormControl>
-                          <ProjectMultiSelect
-                            value={field.value || []}
-                            onChange={field.onChange}
-                            options={[
-                              { value: "React", label: "React" },
-                              { value: "Next.js", label: "Next.js" },
-                              { value: "TypeScript", label: "TypeScript" },
-                              { value: "JavaScript", label: "JavaScript" },
-                              { value: "Node.js", label: "Node.js" },
-                              { value: "Python", label: "Python" },
-                              { value: "Tailwind CSS", label: "Tailwind CSS" },
-                              { value: "Prisma", label: "Prisma" },
-                              { value: "Supabase", label: "Supabase" },
-                              { value: "PostgreSQL", label: "PostgreSQL" },
-                              { value: "MySQL", label: "MySQL" },
-                              { value: "MongoDB", label: "MongoDB" },
-                              { value: "Redis", label: "Redis" },
-                              { value: "Docker", label: "Docker" },
-                              { value: "Kubernetes", label: "Kubernetes" },
-                              { value: "AWS", label: "AWS" },
-                              { value: "Azure", label: "Azure" },
-                              { value: "Google Cloud", label: "Google Cloud" },
-                              { value: "Vercel", label: "Vercel" },
-                              { value: "Netlify", label: "Netlify" },
-                            ]}
-                            placeholder="Select technologies..."
-                            id="tags"
-                            fieldKey="tags"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Technologies Used"
+                    placeholder="Select technologies..."
+                    options={[
+                      { value: "React", label: "React" },
+                      { value: "Next.js", label: "Next.js" },
+                      { value: "TypeScript", label: "TypeScript" },
+                      { value: "JavaScript", label: "JavaScript" },
+                      { value: "Node.js", label: "Node.js" },
+                      { value: "Python", label: "Python" },
+                      { value: "Tailwind CSS", label: "Tailwind CSS" },
+                      { value: "Prisma", label: "Prisma" },
+                      { value: "Supabase", label: "Supabase" },
+                      { value: "PostgreSQL", label: "PostgreSQL" },
+                      { value: "MySQL", label: "MySQL" },
+                      { value: "MongoDB", label: "MongoDB" },
+                      { value: "Redis", label: "Redis" },
+                      { value: "Docker", label: "Docker" },
+                      { value: "Kubernetes", label: "Kubernetes" },
+                      { value: "AWS", label: "AWS" },
+                      { value: "Azure", label: "Azure" },
+                      { value: "Google Cloud", label: "Google Cloud" },
+                      { value: "Vercel", label: "Vercel" },
+                      { value: "Netlify", label: "Netlify" },
+                    ]}
                   />
                 </CardContent>
               </Card>
@@ -284,85 +268,71 @@ export default function AddProjectPage() {
                   <CardTitle>Project Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <FormField
-                    control={form.control}
+                  <FormMultiSelect
                     name="key_features"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Key Features</FormLabel>
-                        <FormControl>
-                          <ProjectMultiSelect
-                            value={field.value || []}
-                            onChange={field.onChange}
-                            options={[
-                              {
-                                value: "User Authentication",
-                                label: "User Authentication",
-                              },
-                              {
-                                value: "Real-time Updates",
-                                label: "Real-time Updates",
-                              },
-                              {
-                                value: "Responsive Design",
-                                label: "Responsive Design",
-                              },
-                              { value: "REST API", label: "REST API" },
-                              { value: "GraphQL API", label: "GraphQL API" },
-                              {
-                                value: "Database Integration",
-                                label: "Database Integration",
-                              },
-                              {
-                                value: "Payment Processing",
-                                label: "Payment Processing",
-                              },
-                              {
-                                value: "Search Functionality",
-                                label: "Search Functionality",
-                              },
-                              {
-                                value: "Analytics Dashboard",
-                                label: "Analytics Dashboard",
-                              },
-                              {
-                                value: "Push Notifications",
-                                label: "Push Notifications",
-                              },
-                              { value: "Chat System", label: "Chat System" },
-                              { value: "File Upload", label: "File Upload" },
-                              { value: "Admin Panel", label: "Admin Panel" },
-                              {
-                                value: "SEO Optimized",
-                                label: "SEO Optimized",
-                              },
-                              {
-                                value: "Progressive Web App",
-                                label: "Progressive Web App",
-                              },
-                              {
-                                value: "Multi-language Support",
-                                label: "Multi-language Support",
-                              },
-                              { value: "Dark Mode", label: "Dark Mode" },
-                              {
-                                value: "Offline Support",
-                                label: "Offline Support",
-                              },
-                              {
-                                value: "Email Integration",
-                                label: "Email Integration",
-                              },
-                              { value: "Social Login", label: "Social Login" },
-                            ]}
-                            placeholder="Select key features..."
-                            id="key_features"
-                            fieldKey="key_features"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Key Features"
+                    placeholder="Select key features..."
+                    options={[
+                      {
+                        value: "User Authentication",
+                        label: "User Authentication",
+                      },
+                      {
+                        value: "Real-time Updates",
+                        label: "Real-time Updates",
+                      },
+                      {
+                        value: "Responsive Design",
+                        label: "Responsive Design",
+                      },
+                      { value: "REST API", label: "REST API" },
+                      { value: "GraphQL API", label: "GraphQL API" },
+                      {
+                        value: "Database Integration",
+                        label: "Database Integration",
+                      },
+                      {
+                        value: "Payment Processing",
+                        label: "Payment Processing",
+                      },
+                      {
+                        value: "Search Functionality",
+                        label: "Search Functionality",
+                      },
+                      {
+                        value: "Analytics Dashboard",
+                        label: "Analytics Dashboard",
+                      },
+                      {
+                        value: "Push Notifications",
+                        label: "Push Notifications",
+                      },
+                      { value: "Chat System", label: "Chat System" },
+                      { value: "File Upload", label: "File Upload" },
+                      { value: "Admin Panel", label: "Admin Panel" },
+                      {
+                        value: "SEO Optimized",
+                        label: "SEO Optimized",
+                      },
+                      {
+                        value: "Progressive Web App",
+                        label: "Progressive Web App",
+                      },
+                      {
+                        value: "Multi-language Support",
+                        label: "Multi-language Support",
+                      },
+                      { value: "Dark Mode", label: "Dark Mode" },
+                      {
+                        value: "Offline Support",
+                        label: "Offline Support",
+                      },
+                      {
+                        value: "Email Integration",
+                        label: "Email Integration",
+                      },
+                      { value: "Social Login", label: "Social Login" },
+                    ]}
                   />
 
                   <FormField

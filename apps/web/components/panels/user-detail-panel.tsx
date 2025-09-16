@@ -3,7 +3,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 import { useWindowSize } from "usehooks-ts";
-import { useState } from "react";
 import {
   X,
   MessageCircle,
@@ -29,7 +28,7 @@ import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
 import ChatMessages, { ChatMessage } from "../shared/chat-messages";
-import AIInputSearch from "../shared/ai-input-search";
+import AIInputSearch from "@/components/shared/ai-input-search-simple";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
 export function SimpleArtifactPanel() {
@@ -40,99 +39,30 @@ export function SimpleArtifactPanel() {
     messages,
     sendMessage,
     onAIResponse,
+    isLoading,
   } = useSimpleArtifact();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const isMobile = windowWidth ? windowWidth < 768 : false;
 
-  // Chat input state
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-
-    // Send message through the main chat system
-    if (sendMessage) {
-      sendMessage(input);
-    }
-    setInput("");
-  };
-
   const handleUserMessage = (content: string) => {
-    // Loading state is now handled by AIInputSearch component via onLoadingChange
+    // Pass the message to the main chat system through sendMessage
     if (sendMessage) {
       sendMessage(content);
     }
   };
 
   const handleAIResponse = (response: ChatResponse) => {
-    // Use the main chat page's AI response handler
+    // This shouldn't be needed since we're using the main chat system
     console.log("Artifact panel handleAIResponse called with:", response);
     if (onAIResponse) {
       onAIResponse(response);
-    }
-    setIsLoading(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
   if (!artifactData) return null;
 
-  // Fallback data for missing database values
-  const fallbackData = {
-    first_name: "Alex",
-    last_name: "Johnson",
-    email: "alex.johnson@example.com",
-    bio: "Passionate full-stack developer with expertise in modern web technologies. I love building scalable applications and contributing to open-source projects.",
-    date_of_birth: "1995-03-15",
-    profile_picture: null,
-    personal_details: {
-      university: "Stanford University",
-      department: "Computer Science",
-      degree_level: "bachelor",
-      phone: "+1 (555) 123-4567",
-    },
-    technical_profile: {
-      primary_skills: [
-        "JavaScript",
-        "TypeScript",
-        "React",
-        "Node.js",
-        "Python",
-        "PostgreSQL",
-      ],
-      experience_level: "intermediate",
-      interests: ["Machine Learning", "Web3", "Open Source", "UI/UX Design"],
-      preferred_roles: [
-        "Full Stack Developer",
-        "Frontend Engineer",
-        "Software Engineer",
-      ],
-      github_url: "https://github.com/alexjohnson",
-      linkedin_url: "https://linkedin.com/in/alexjohnson",
-      portfolio_url: "https://alexjohnson.dev",
-      tools_proficiency: ["VS Code", "Docker", "AWS", "Figma", "Git"],
-    },
-  };
-
-  // Merge user data with fallbacks
-  const userData = {
-    ...fallbackData,
-    ...artifactData.data,
-    personal_details: {
-      ...fallbackData.personal_details,
-      ...artifactData.data.personal_details,
-    },
-    technical_profile: {
-      ...fallbackData.technical_profile,
-      ...artifactData.data.technical_profile,
-    },
-  };
+  // Use only real database data - no fallbacks
+  const userData = artifactData.data;
 
   const formatDate = (dateString: string) => {
     try {
@@ -146,26 +76,11 @@ export function SimpleArtifactPanel() {
     }
   };
 
-  const getExperienceColor = (level: string) => {
-    switch (level) {
-      case "beginner":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "intermediate":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "advanced":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "expert":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="flex flex-row h-dvh w-dvw fixed top-0 left-0 z-50 bg-transparent"
+          className="flex flex-row h-dvh w-dvw fixed inset-0 z-[999] bg-black/20"
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { delay: 0.4 } }}
@@ -243,7 +158,7 @@ export function SimpleArtifactPanel() {
                     <div className="max-w-6xl mx-auto">
                       <ChatMessages
                         messages={messages}
-                        isLoading={isLoading}
+                        isLoading={isLoading || false}
                         loadingMessage="Searching for people..."
                       />
                     </div>
@@ -252,10 +167,8 @@ export function SimpleArtifactPanel() {
                   {/* Sticky Input Area */}
                   <div className="md:w-full w-full mx-auto bg-transparent">
                     <AIInputSearch
-                      onResponse={handleAIResponse}
-                      onUserMessage={handleUserMessage}
-                      onLoadingChange={setIsLoading}
-                      disabled={isLoading}
+                      onSearch={handleUserMessage}
+                      disabled={isLoading || false}
                     />
                   </div>
                 </div>
@@ -303,16 +216,14 @@ export function SimpleArtifactPanel() {
                 </div>
 
                 {/* Bio Section */}
-                {userData.bio && (
-                  <div className="self-stretch border-b border-neutral-600 flex flex-col justify-start items-start gap-2 pb-3.5">
-                    <div className="justify-start text-white text-lg font-medium font-mono uppercase">
-                      Bio
-                    </div>
-                    <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
-                      {userData.bio}
-                    </div>
+                <div className="self-stretch border-b border-neutral-600 flex flex-col justify-start items-start gap-2 pb-3.5">
+                  <div className="justify-start text-white text-lg font-medium font-mono uppercase">
+                    Bio
                   </div>
-                )}
+                  <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
+                    {userData.bio || "Bio not added"}
+                  </div>
+                </div>
 
                 {/* Essentials Section */}
                 <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
@@ -336,7 +247,7 @@ export function SimpleArtifactPanel() {
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
                             {userData.personal_details?.university ||
-                              "Stanford University"}
+                              "University not added"}
                           </div>
                         </div>
                       </div>
@@ -354,9 +265,9 @@ export function SimpleArtifactPanel() {
                             GITHUB
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                            {userData.technical_profile?.github_url
-                              ? `@${userData.technical_profile.github_url.split("/").pop()}`
-                              : "@charlicodes"}
+                            {userData.technical_profile?.github
+                              ? `@${userData.technical_profile.github.split("/").pop()}`
+                              : "Not added"}
                           </div>
                         </div>
                       </div>
@@ -374,9 +285,9 @@ export function SimpleArtifactPanel() {
                             linkedin
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                            {userData.technical_profile?.linkedin_url
-                              ? `@${userData.technical_profile.linkedin_url.split("/").pop()}`
-                              : "@charile16"}
+                            {userData.technical_profile?.linkedin
+                              ? `@${userData.technical_profile.linkedin.split("/").pop()}`
+                              : "Not added"}
                           </div>
                         </div>
                       </div>
@@ -394,12 +305,12 @@ export function SimpleArtifactPanel() {
                             portfolio
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                            {userData.technical_profile?.portfolio_url
-                              ? userData.technical_profile.portfolio_url.replace(
+                            {userData.technical_profile?.portfolio
+                              ? userData.technical_profile.portfolio.replace(
                                   "https://",
                                   ""
                                 )
-                              : "charliebrown.com"}
+                              : "Not added"}
                           </div>
                         </div>
                       </div>
@@ -413,17 +324,24 @@ export function SimpleArtifactPanel() {
                     SKILLS
                   </div>
                   <div className="flex justify-start items-start gap-2 flex-wrap">
-                    {userData.technical_profile.primary_skills.map(
-                      (skill: string, index: number) => (
-                        <div
-                          key={index}
-                          className="p-2 bg-zinc-100 flex justify-start items-center"
-                        >
-                          <div className="justify-start text-neutral-500 text-sm font-medium font-mono uppercase">
-                            {skill}
+                    {userData.technical_profile?.skills &&
+                    userData.technical_profile.skills.length > 0 ? (
+                      userData.technical_profile.skills.map(
+                        (skill: string, index: number) => (
+                          <div
+                            key={index}
+                            className="p-2 bg-zinc-100 flex justify-start items-center"
+                          >
+                            <div className="justify-start text-neutral-500 text-sm font-medium font-mono uppercase">
+                              {skill}
+                            </div>
                           </div>
-                        </div>
+                        )
                       )
+                    ) : (
+                      <div className="text-zinc-400 text-sm font-normal font-mono">
+                        Skills not added
+                      </div>
                     )}
                   </div>
                 </div>
