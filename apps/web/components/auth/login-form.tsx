@@ -100,7 +100,7 @@ export function LoginForm({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/chat`,
+          redirectTo: `${window.location.origin}/oauth/callback?next=/chat`,
         },
       });
       if (error) throw error;
