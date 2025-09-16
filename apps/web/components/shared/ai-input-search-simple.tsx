@@ -98,7 +98,6 @@ export default function AIInputSearch({
         setIsMultiLine(false);
         return 50;
       }
-
       textareaRef.current.style.height = "30px"; // Set to our desired minimum
       const newHeight = Math.max(
         30,

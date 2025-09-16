@@ -22,6 +22,7 @@ import {
   useSimpleArtifact,
 } from "@/hooks/use-user-detail-panel";
 import { useChatHistoryStore } from "@/stores/chat-history-store";
+import { Loader } from "lucide-react";
 
 interface ShowChatsProps {
   slug: string;
@@ -41,7 +42,6 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     setSendMessage,
     setOnAIResponse,
   } = useSimpleArtifact();
-  const { addNewChat } = useChatHistoryStore();
 
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get("initialMessage");
@@ -197,9 +197,6 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
           if (success && newChat) {
             setChat(newChat);
             currentChatId = newChat.id;
-
-            // Add the new chat to the history store
-            addNewChat(slug, userInput);
           }
         } else {
           // Save user message to existing chat
@@ -299,11 +296,8 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
   if (!initialMessage && (userLoading || chatLoading)) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
-            {chatLoading ? "Loading chat..." : "Loading your profile..."}
-          </p>
+        <div className="mx-auto mb-4">
+          <Loader className="h-8 w-8 text-primary" />
         </div>
       </div>
     );
