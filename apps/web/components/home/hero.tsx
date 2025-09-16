@@ -46,25 +46,25 @@ export default function HeroSection() {
           {/* All content is in a wrapper div placed in the same grid cell */}
           <div className="relative [grid-area:1/1] z-10">
             <div className="pt-24 md:pt-36">
-              <div className="mx-auto max-w-7xl px-6">
+              <div className="mx-auto max-w-7xl px-6 max-sm:px-2">
                 <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
                   <AnimatedGroup variants={transitionVariants}>
                     <Link
                       href="#link"
-                      className="hover:bg-background/50 dark:hover:border-t-border bg-muted/50 group mx-auto flex w-fit items-center gap-2 rounded-full border border-white/10 p-1 pl-4 shadow-md shadow-zinc-950/5 backdrop-blur-md transition-colors duration-300 dark:shadow-zinc-950"
+                      className="hover:bg-background/50 dark:hover:border-t-border bg-muted/50 group mx-auto flex w-fit items-center gap-2 rounded-full border border-white/10 p-1 pl-3 pr-2 shadow-md shadow-zinc-950/5 backdrop-blur-md transition-colors duration-300 dark:shadow-zinc-950 text-xs md:text-sm py-1 md:py-1.5"
                     >
-                      <span className="text-foreground text-sm">
-                        Our AI-Powered Network Is Now In
-                      </span>
-                      <span className="bg-blue-400/20 text-blue-300 ring-1 ring-blue-400/30 text-xs rounded-full px-2 py-0.5">
+                      <span className="bg-blue-400/20 text-blue-300 ring-1 ring-blue-400/30 text-[10px] md:text-xs rounded-full px-1.5 md:px-2 py-0.5">
                         Beta
                       </span>
-                      <div className="bg-background/50 group-hover:bg-muted/50 size-6 overflow-hidden rounded-full duration-500">
-                        <div className="flex w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
-                          <span className="flex size-6">
+                      <span className="text-foreground text-xs md:text-sm">
+                        Search AI-Powered Network
+                      </span>
+                      <div className="bg-background/50 group-hover:bg-muted/50 size-5 md:size-6 overflow-hidden rounded-full duration-500">
+                        <div className="flex w-8 md:w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
+                          <span className="flex size-5 md:size-6">
                             <ArrowRight className="m-auto size-3" />
                           </span>
-                          <span className="flex size-6">
+                          <span className="flex size-5 md:size-6">
                             <ArrowRight className="m-auto size-3" />
                           </span>
                         </div>
@@ -76,7 +76,7 @@ export default function HeroSection() {
                     preset="fade-in-blur"
                     speedSegment={0.3}
                     as="h1"
-                    className="mx-auto mt-8 max-w-5xl text-balance text-4xl font-semibold md:text-6xl lg:text-7xl"
+                    className="mx-auto mt-8 max-w-5xl text-balance text-4xl font-semibold md:text-6xl lg:text-7xl   tracking-tighter"
                   >
                     Build Your Professional Network with AI
                   </TextEffect>
@@ -86,7 +86,7 @@ export default function HeroSection() {
                     speedSegment={0.3}
                     delay={0.5}
                     as="p"
-                    className="mx-auto mt-8 max-w-3xl text-balance text-lg"
+                    className="mx-auto mt-8 max-w-3xl  tracking-tighter text-lg max-sm:max-w-full max-sm:text-base text-wrap"
                   >
                     Connect with like-minded professionals, discover hidden
                     opportunities, and grow your career with our intelligent
@@ -171,82 +171,6 @@ export default function HeroSection() {
 
                 <ChevronRight className="ml-1 inline-block size-3" />
               </Link>
-            </div>
-            <div className="group-hover:blur-xs mx-auto mt-12 grid max-w-2xl grid-cols-2 gap-x-8 gap-y-8 transition-all duration-500 group-hover:opacity-50 sm:grid-cols-4 sm:gap-x-16 sm:gap-y-14">
-              <div className="flex">
-                <img
-                  className="mx-auto h-5 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/nvidia.svg"
-                  alt="Nvidia Logo"
-                  height="20"
-                  width="auto"
-                />
-              </div>
-
-              <div className="flex">
-                <img
-                  className="mx-auto h-4 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/column.svg"
-                  alt="Column Logo"
-                  height="16"
-                  width="auto"
-                />
-              </div>
-              <div className="flex">
-                <img
-                  className="mx-auto h-4 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/github.svg"
-                  alt="GitHub Logo"
-                  height="16"
-                  width="auto"
-                />
-              </div>
-              <div className="flex">
-                <img
-                  className="mx-auto h-5 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/nike.svg"
-                  alt="Nike Logo"
-                  height="20"
-                  width="auto"
-                />
-              </div>
-              <div className="flex">
-                <img
-                  className="mx-auto h-5 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/lemonsqueezy.svg"
-                  alt="Lemon Squeezy Logo"
-                  height="20"
-                  width="auto"
-                />
-              </div>
-              <div className="flex">
-                <img
-                  className="mx-auto h-4 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/laravel.svg"
-                  alt="Laravel Logo"
-                  height="16"
-                  width="auto"
-                />
-              </div>
-              <div className="flex">
-                <img
-                  className="mx-auto h-7 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/lilly.svg"
-                  alt="Lilly Logo"
-                  height="28"
-                  width="auto"
-                />
-              </div>
-
-              <div className="flex">
-                <img
-                  className="mx-auto h-6 w-fit dark:invert"
-                  src="https://html.tailus.io/blocks/customers/openai.svg"
-                  alt="OpenAI Logo"
-                  height="24"
-                  width="auto"
-                />
-              </div>
             </div>
           </div>
         </section>
