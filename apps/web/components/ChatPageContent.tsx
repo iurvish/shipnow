@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useSessionUser } from "@/hooks/use-session-user";
 import { useState } from "react";
 import AIInputSearch from "@/components/shared/ai-input-search-simple";
+import { Loader } from "lucide-react";
 
 export default function ChatPageContent() {
   const router = useRouter();
@@ -18,8 +19,9 @@ export default function ChatPageContent() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your profile...</p>
+          <div className="animate-spin  mx-auto mb-4">
+            <Loader className="h-8 w-8" />
+          </div>
         </div>
       </div>
     );

@@ -3,7 +3,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
 import { useWindowSize } from "usehooks-ts";
-import { useState } from "react";
 import {
   X,
   MessageCircle,
@@ -29,7 +28,7 @@ import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
 import ChatMessages, { ChatMessage } from "../shared/chat-messages";
-import AIInputSearch from "../shared/ai-input-search";
+import AIInputSearch from "../shared/ai-input-search-simple";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 
 export function SimpleArtifactPanel() {
@@ -40,44 +39,23 @@ export function SimpleArtifactPanel() {
     messages,
     sendMessage,
     onAIResponse,
+    isLoading,
   } = useSimpleArtifact();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const isMobile = windowWidth ? windowWidth < 768 : false;
 
-  // Chat input state
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-
-    // Send message through the main chat system
-    if (sendMessage) {
-      sendMessage(input);
-    }
-    setInput("");
-  };
-
   const handleUserMessage = (content: string) => {
-    // Loading state is now handled by AIInputSearch component via onLoadingChange
+    // Pass the message to the main chat system through sendMessage
     if (sendMessage) {
       sendMessage(content);
     }
   };
 
   const handleAIResponse = (response: ChatResponse) => {
-    // Use the main chat page's AI response handler
+    // This shouldn't be needed since we're using the main chat system
     console.log("Artifact panel handleAIResponse called with:", response);
     if (onAIResponse) {
       onAIResponse(response);
-    }
-    setIsLoading(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -180,7 +158,7 @@ export function SimpleArtifactPanel() {
                     <div className="max-w-6xl mx-auto">
                       <ChatMessages
                         messages={messages}
-                        isLoading={isLoading}
+                        isLoading={isLoading || false}
                         loadingMessage="Searching for people..."
                       />
                     </div>
@@ -189,10 +167,8 @@ export function SimpleArtifactPanel() {
                   {/* Sticky Input Area */}
                   <div className="md:w-full w-full mx-auto bg-transparent">
                     <AIInputSearch
-                      onResponse={handleAIResponse}
-                      onUserMessage={handleUserMessage}
-                      onLoadingChange={setIsLoading}
-                      disabled={isLoading}
+                      onSearch={handleUserMessage}
+                      disabled={isLoading || false}
                     />
                   </div>
                 </div>
