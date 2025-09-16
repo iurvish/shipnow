@@ -21,6 +21,7 @@ import {
   SimpleArtifactProvider,
   useSimpleArtifact,
 } from "@/hooks/use-user-detail-panel";
+import { useChatHistoryStore } from "@/stores/chat-history-store";
 
 interface ShowChatsProps {
   slug: string;
@@ -40,6 +41,7 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     setSendMessage,
     setOnAIResponse,
   } = useSimpleArtifact();
+  const { addNewChat } = useChatHistoryStore();
 
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get("initialMessage");
@@ -195,6 +197,9 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
           if (success && newChat) {
             setChat(newChat);
             currentChatId = newChat.id;
+
+            // Add the new chat to the history store
+            addNewChat(slug, userInput);
           }
         } else {
           // Save user message to existing chat
