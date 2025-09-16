@@ -65,22 +65,21 @@ export default function ChatPageContent() {
     );
   }
 
-  const userName =
-    [sessionUser?.first_name, sessionUser?.last_name]
-      .filter(Boolean)
-      .join(" ") || "there";
-
+  const userName = [sessionUser?.first_name];
   return (
     <div className="h-full flex flex-col items-center justify-center max-w-4xl mx-auto px-6 py-8 max-sm:px-2">
       {/* Logo and Brand */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/40 rounded-2xl flex items-center justify-center mb-4">
-            <MessageSquare className="w-8 h-8 text-primary" />
+          <div className="w-20 h-20  flex items-center justify-center mb-4">
+            <img src="/logo.svg" alt="" />
           </div>
         </div>
         <h1 className="text-4xl font-bold font-mono mb-2">
-          Hi there, <span className="text-primary">{userName}</span>
+          Hi there,{" "}
+          <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-700 bg-clip-text text-transparent font-bold">
+            {userName}
+          </span>
         </h1>
         <p className="text-xl text-muted-foreground font-mono">
           How can I help you today?

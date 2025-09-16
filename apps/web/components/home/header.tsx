@@ -7,9 +7,9 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { name: "Features", href: "#link" },
-  { name: "Solution", href: "#link" },
-  { name: "Pricing", href: "#link" },
+  // { name: "Features", href: "#link" },
+  // { name: "Solution", href: "#link" },
+  // { name: "Pricing", href: "#link" },
   { name: "About", href: "#link" },
 ];
 
@@ -44,7 +44,7 @@ export const HeroHeader = () => {
                 aria-label="home"
                 className="flex items-center space-x-2"
               >
-                <Logo />
+                <img src="/logomark.png" alt="logo" />
               </Link>
 
               <button
@@ -94,7 +94,7 @@ export const HeroHeader = () => {
                   size="sm"
                   className={cn(isScrolled && "lg:hidden")}
                 >
-                  <Link href="#">
+                  <Link href="/auth/login">
                     <span>Login</span>
                   </Link>
                 </Button>
@@ -103,7 +103,7 @@ export const HeroHeader = () => {
                   size="sm"
                   className={cn(isScrolled && "lg:hidden")}
                 >
-                  <Link href="#">
+                  <Link href="/auth/sign-up">
                     <span>Sign Up</span>
                   </Link>
                 </Button>
