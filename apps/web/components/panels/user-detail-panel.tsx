@@ -45,7 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Narrow client-side project shape for lightweight rendering
 type MinimalProject = Pick<
   Project,
-  "id" | "project_name" | "project_image" | "tags"
+  "id" | "project_name" | "project_image" | "tags" | "case_summary"
 >;
 
 export function SimpleArtifactPanel() {
@@ -83,6 +83,9 @@ export function SimpleArtifactPanel() {
   const [selectedProject, setSelectedProject] = useState<MinimalProject | null>(
     null
   );
+  const [selectedProjectFull, setSelectedProjectFull] =
+    useState<Project | null>(null);
+  const [drawerLoading, setDrawerLoading] = useState(false);
   useEffect(() => {
     let isMounted = true;
     const run = async () => {
@@ -96,7 +99,9 @@ export function SimpleArtifactPanel() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("projects")
-          .select("id, project_name, project_image, tags, created_at")
+          .select(
+            "id, project_name, project_image, tags, case_summary, created_at"
+          )
           .eq("user_id", targetUserId)
           .order("created_at", { ascending: false });
         if (error) {
@@ -116,6 +121,30 @@ export function SimpleArtifactPanel() {
       isMounted = false;
     };
   }, [artifactData?.data?.id]);
+
+  const openProjectDrawer = async (project: MinimalProject) => {
+    setSelectedProject(project);
+    setIsProjectDrawerOpen(true);
+    setDrawerLoading(true);
+    setSelectedProjectFull(null);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", project.id)
+        .single();
+      if (error) {
+        console.error("Failed to load project details:", error);
+      } else {
+        setSelectedProjectFull(data as Project);
+      }
+    } catch (e) {
+      console.error("Failed to fetch project details", e);
+    } finally {
+      setDrawerLoading(false);
+    }
+  };
 
   if (!artifactData) return null;
 
@@ -233,7 +262,7 @@ export function SimpleArtifactPanel() {
               </div>
 
               {/* Right Column - Profile Details - Full width on mobile, 2/5 on desktop */}
-              <ScrollArea className="w-full md:w-2/5 bg-neutral-800">
+              <ScrollArea className="w-full md:w-2/5 bg-neutral-800 h-dvh">
                 <div className="p-5 flex flex-col gap-3.5 relative">
                   {/* Close Button */}
                   <Button
@@ -494,10 +523,7 @@ export function SimpleArtifactPanel() {
                                 <button
                                   type="button"
                                   className="w-full aspect-[16/10] overflow-hidden text-left"
-                                  onClick={() => {
-                                    setSelectedProject(project);
-                                    setIsProjectDrawerOpen(true);
-                                  }}
+                                  onClick={() => openProjectDrawer(project)}
                                 >
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
@@ -510,17 +536,14 @@ export function SimpleArtifactPanel() {
                               <button
                                 type="button"
                                 className="text-white font-mono text-base leading-tight text-left hover:underline"
-                                onClick={() => {
-                                  setSelectedProject(project);
-                                  setIsProjectDrawerOpen(true);
-                                }}
+                                onClick={() => openProjectDrawer(project)}
                               >
                                 {project.project_name}
                               </button>
                               {Array.isArray(project.tags) &&
                                 project.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1">
-                                    {project.tags.slice(0, 4).map((tag) => (
+                                    {project.tags.slice(0, 6).map((tag) => (
                                       <span
                                         key={tag}
                                         className="text-[11px] font-mono uppercase text-zinc-400 border border-neutral-700 px-1.5 py-0.5"
@@ -530,6 +553,20 @@ export function SimpleArtifactPanel() {
                                     ))}
                                   </div>
                                 )}
+                              {!hasImage && project.case_summary ? (
+                                <p
+                                  className="text-zinc-400 text-sm font-mono"
+                                  style={{
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical" as any,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  {project.case_summary}
+                                </p>
+                              ) : null}
                             </div>
                           );
                         })}
@@ -545,31 +582,91 @@ export function SimpleArtifactPanel() {
                     <DrawerContent>
                       <DrawerHeader>
                         <DrawerTitle>
-                          {selectedProject?.project_name}
+                          {selectedProjectFull?.project_name ||
+                            selectedProject?.project_name}
                         </DrawerTitle>
                       </DrawerHeader>
                       <div className="p-4 flex flex-col gap-3">
-                        {selectedProject?.project_image ? (
+                        {drawerLoading ? (
+                          <>
+                            <Skeleton className="w-full aspect-[16/10]" />
+                            <div className="flex gap-1">
+                              {Array.from({ length: 4 }).map((_, i) => (
+                                <Skeleton key={i} className="h-5 w-16" />
+                              ))}
+                            </div>
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-4 w-2/3" />
+                          </>
+                        ) : null}
+                        {!drawerLoading &&
+                        (selectedProjectFull?.project_image ||
+                          selectedProject?.project_image) ? (
                           <div className="w-full aspect-[16/10] overflow-hidden">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={selectedProject.project_image}
-                              alt={selectedProject.project_name}
+                              src={
+                                (selectedProjectFull?.project_image ||
+                                  selectedProject?.project_image) as string
+                              }
+                              alt={
+                                selectedProjectFull?.project_name ||
+                                selectedProject?.project_name ||
+                                "Project"
+                              }
                               className="w-full h-full object-cover"
                             />
                           </div>
                         ) : null}
-                        {selectedProject?.tags &&
-                        selectedProject.tags.length > 0 ? (
+                        {!drawerLoading &&
+                        (selectedProjectFull?.tags?.length ||
+                          selectedProject?.tags?.length) ? (
                           <div className="flex flex-wrap gap-1">
-                            {selectedProject.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="text-[11px] font-mono uppercase text-zinc-400 border border-neutral-700 px-1.5 py-0.5"
+                            {(
+                              selectedProjectFull?.tags ||
+                              selectedProject?.tags ||
+                              []
+                            )
+                              .slice(0, 6)
+                              .map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="text-[11px] font-mono uppercase text-zinc-400 border border-neutral-700 px-1.5 py-0.5"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                          </div>
+                        ) : null}
+                        {!drawerLoading && selectedProjectFull?.case_summary ? (
+                          <p className="text-zinc-300 text-sm font-mono leading-snug">
+                            {selectedProjectFull.case_summary}
+                          </p>
+                        ) : null}
+                        {!drawerLoading &&
+                        (selectedProjectFull?.live_site_url ||
+                          selectedProjectFull?.github_link) ? (
+                          <div className="flex gap-3 pt-1">
+                            {selectedProjectFull.live_site_url ? (
+                              <Link
+                                href={selectedProjectFull.live_site_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary underline text-sm font-mono"
                               >
-                                {tag}
-                              </span>
-                            ))}
+                                Live Site
+                              </Link>
+                            ) : null}
+                            {selectedProjectFull.github_link ? (
+                              <Link
+                                href={selectedProjectFull.github_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary underline text-sm font-mono"
+                              >
+                                GitHub
+                              </Link>
+                            ) : null}
                           </div>
                         ) : null}
                       </div>
