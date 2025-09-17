@@ -38,11 +38,42 @@ import { getFeaturebyCategory, PROJECT_FEATURES } from "@/lib/config/features";
 
 const formSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
-  case_summary: z.string().min(1, "Project description is required"),
+  case_summary: z.string().min(10, "Project description is required"),
   project_image: z.string().url().optional().or(z.literal("")).or(z.null()),
-  live_site_url: z.string().url().optional().or(z.literal("")),
-  github_link: z.string().url().optional().or(z.literal("")),
-  video_url: z.string().url().optional().or(z.literal("")),
+  live_site_url: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (value) => {
+        if (!value || value === "") return true; // Allow empty values
+        const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
+        // Accept any non-empty URL (could add more checks for domain if needed)
+        return cleanUrl.length > 0;
+      },
+      {
+        message: "Please provide a valid live site URL (e.g. myproject.com)",
+      }
+    ),
+  github_link: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (value) => {
+        if (!value || value === "") return true; // Allow empty values
+        const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
+        return (
+          cleanUrl.includes("github.com/") &&
+          cleanUrl.length > "github.com/".length
+        );
+      },
+      {
+        message:
+          "Please provide a valid GitHub profile URL (github.com/username)",
+      }
+    ),
+  video_url: z.string().optional().or(z.literal("")),
   tags: z.array(z.string()),
   key_features: z.array(z.string()),
   build_journey: z.string().optional(),

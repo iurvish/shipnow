@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormMultiSelect } from "@/components/ui/form-fields";
+import { FormMultiSelect, FormProfilePhoto } from "@/components/ui/form-fields";
 import {
   Form,
   FormControl,
@@ -207,11 +207,16 @@ export default function EditProjectPage({
                       <FormItem>
                         <FormLabel>Project Image URL</FormLabel>
                         <FormControl>
-                          <Input
-                            type="url"
-                            placeholder="https://example.com/image.png"
-                            {...field}
-                          />
+                          <FormControl>
+                            <FormProfilePhoto
+                              name={field.name}
+                              label={undefined}
+                              placeholder="Upload project image"
+                              aspectRatio={16 / 10}
+                              cropShape="rect"
+                              accept="image/*"
+                            />
+                          </FormControl>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
