@@ -9,6 +9,7 @@ import {
   FormMultiSelect,
   FormPrefixInput,
   FormSearchMultiSelect,
+  FormProfilePhoto,
 } from "@/components/ui/form-fields";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ import { getFeaturebyCategory, PROJECT_FEATURES } from "@/lib/config/features";
 const formSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
   case_summary: z.string().min(1, "Project description is required"),
-  project_image: z.string().url().optional().or(z.literal("")),
+  project_image: z.string().url().optional().or(z.literal("")).or(z.null()),
   live_site_url: z.string().url().optional().or(z.literal("")),
   github_link: z.string().url().optional().or(z.literal("")),
   video_url: z.string().url().optional().or(z.literal("")),
@@ -154,17 +155,19 @@ export default function AddProjectPage() {
                     name="project_image"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project Image URL</FormLabel>
+                        <FormLabel>Project Photo</FormLabel>
                         <FormControl>
-                          <Input
-                            type="url"
-                            placeholder="https://example.com/screenshot.png"
-                            {...field}
+                          <FormProfilePhoto
+                            name={field.name}
+                            label={undefined}
+                            placeholder="Upload project image"
+                            aspectRatio={16 / 10}
+                            cropShape="rect"
+                            accept="image/*"
                           />
                         </FormControl>
                         <FormDescription>
-                          Upload your screenshot to a service like Imgur or use
-                          a direct URL
+                          Upload and crop a 16:10 image. Preview appears above.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
