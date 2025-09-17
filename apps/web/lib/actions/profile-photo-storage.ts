@@ -94,10 +94,10 @@ export async function uploadProfilePhoto(
       }
     }
     
-    console.log('Uploading new profile photo:', filename);
-    console.log('User ID:', userId);
-    console.log('File size:', file.size, 'bytes');
-    console.log('File type:', file.type);
+    // console.log('Uploading new profile photo:', filename);
+    // console.log('User ID:', userId);
+    // console.log('File size:', file.size, 'bytes');
+    // console.log('File type:', file.type);
     
     // Upload new file
     const { data: uploadData, error: uploadError } = await supabase.storage
