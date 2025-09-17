@@ -99,7 +99,7 @@ const FormPrefixInput = forwardRef<HTMLInputElement, FormPrefixInputProps>(
       <div className="flex rounded-md shadow-xs">
         <span
           className={cn(
-            "border-input bg-background text-muted-foreground -z-10 inline-flex items-center rounded-s-md border px-3 text-sm"
+            "border-input select-none bg-background text-muted-foreground  inline-flex items-center rounded-s-md border px-3 text-sm"
           )}
         >
           {prefix}

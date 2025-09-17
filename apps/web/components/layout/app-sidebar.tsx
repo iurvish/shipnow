@@ -136,7 +136,9 @@ export function AppSidebar() {
                       </div>
                     </div>
                     <div className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity">
-                      <Plus className="h-3 w-3" />
+                      <Link href="/chat">
+                        <Plus className="h-4 w-4" />
+                      </Link>
                     </div>
                   </div>
                 </Link>

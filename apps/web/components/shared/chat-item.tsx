@@ -5,8 +5,8 @@ import { User, Bot } from "lucide-react";
 import { ChatResponseComponent } from "./chat-response";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 import { UserAvatar } from "./user-avatar";
-import { AILogo } from "./ai-logo";
 import { useSessionUser } from "@/hooks/use-session-user";
+import Image from "next/image";
 
 interface ChatItemProps {
   content: string;
@@ -51,7 +51,7 @@ const ChatItem: React.FC<ChatItemProps> = ({
               borderRadius: "0px",
             }}
           >
-            <AILogo className="h-4 w-4" />
+            <Image src="/logo.svg" width={5} height={5} alt="logo" />
           </div>
         ) : (
           <UserAvatar

@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Define protected routes
-  const protectedRoutes = ['/onboarding', '/chat', '/protected' ]
+  const protectedRoutes = ['', '/chat', '/protected', '/projects' ]
   const authRoutes = ['/auth/login', '/auth/sign-up', '/auth/forgot-password']
 
   if (!user) {
@@ -64,17 +64,17 @@ export async function updateSession(request: NextRequest) {
         // User is not onboarded
         if (pathname !== '/onboarding' && !authRoutes.some(route => pathname.startsWith(route))) {
           // Redirect to onboarding if not already there
-          const url = request.nextUrl.clone()
-          url.pathname = '/onboarding'
-          return NextResponse.redirect(url)
+          // const url = request.nextUrl.clone()
+          // url.pathname = '/onboarding'
+          // return NextResponse.redirect(url)
         }
       } else {
         // User is onboarded
         if (pathname === '/onboarding') {
           // Redirect onboarded users away from onboarding to chat
-          const url = request.nextUrl.clone()
-          url.pathname = '/chat'
-          return NextResponse.redirect(url)
+          // const url = request.nextUrl.clone()
+          // url.pathname = '/chat'
+          // return NextResponse.redirect(url)
         }
         
         // Redirect from root to chat for onboarded users

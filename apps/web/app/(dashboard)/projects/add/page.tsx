@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { FormMultiSelect } from "@/components/ui/form-fields";
+import {
+  FormMultiSelect,
+  FormPrefixInput,
+  FormSearchMultiSelect,
+} from "@/components/ui/form-fields";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +27,13 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { createProject } from "@/lib/actions/projects";
 import { ProjectInput } from "@/lib/types";
 import { toast } from "sonner";
+import {
+  SKILLS,
+  SkillCategory,
+  getSkillsByCategory,
+  validateSkills,
+} from "@/lib/config/skills";
+import { getFeaturebyCategory, PROJECT_FEATURES } from "@/lib/config/features";
 
 const formSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
@@ -43,6 +54,21 @@ export default function AddProjectPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const getSkillsWithCategories = () => {
+    return SKILLS.map((skill) => ({
+      value: skill.value,
+      label: skill.label,
+      category: skill.category,
+    }));
+  };
+
+  const getFeaturebyCategory = () => {
+    return PROJECT_FEATURES.map((features) => ({
+      value: features.value,
+      label: features.label,
+      category: features.category,
+    }));
+  };
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -178,10 +204,12 @@ export default function AddProjectPage() {
                       <FormItem>
                         <FormLabel>Live Site URL</FormLabel>
                         <FormControl>
-                          <Input
-                            type="url"
-                            placeholder="https://myproject.com"
-                            {...field}
+                          <FormPrefixInput
+                            placeholder="myproject.com"
+                            prefix="https://"
+                            value={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
                           />
                         </FormControl>
                         <FormMessage />
@@ -196,10 +224,12 @@ export default function AddProjectPage() {
                       <FormItem>
                         <FormLabel>GitHub Repository</FormLabel>
                         <FormControl>
-                          <Input
-                            type="url"
-                            placeholder="https://github.com/username/project"
-                            {...field}
+                          <FormPrefixInput
+                            prefix="https://"
+                            placeholder="github.com/username"
+                            value={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
                           />
                         </FormControl>
                         <FormMessage />
@@ -214,10 +244,12 @@ export default function AddProjectPage() {
                       <FormItem>
                         <FormLabel>Demo Video URL</FormLabel>
                         <FormControl>
-                          <Input
-                            type="url"
-                            placeholder="https://youtube.com/watch?v=..."
-                            {...field}
+                          <FormPrefixInput
+                            prefix="https://"
+                            placeholder="youtube.com/watch?v=..."
+                            value={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
                           />
                         </FormControl>
                         <FormMessage />
@@ -231,33 +263,28 @@ export default function AddProjectPage() {
                 <CardHeader>
                   <CardTitle>Technologies Used</CardTitle>
                 </CardHeader>
+
                 <CardContent className="space-y-6">
-                  <FormMultiSelect
+                  <FormField
+                    control={form.control}
                     name="tags"
-                    label="Technologies Used"
-                    placeholder="Select technologies..."
-                    options={[
-                      { value: "React", label: "React" },
-                      { value: "Next.js", label: "Next.js" },
-                      { value: "TypeScript", label: "TypeScript" },
-                      { value: "JavaScript", label: "JavaScript" },
-                      { value: "Node.js", label: "Node.js" },
-                      { value: "Python", label: "Python" },
-                      { value: "Tailwind CSS", label: "Tailwind CSS" },
-                      { value: "Prisma", label: "Prisma" },
-                      { value: "Supabase", label: "Supabase" },
-                      { value: "PostgreSQL", label: "PostgreSQL" },
-                      { value: "MySQL", label: "MySQL" },
-                      { value: "MongoDB", label: "MongoDB" },
-                      { value: "Redis", label: "Redis" },
-                      { value: "Docker", label: "Docker" },
-                      { value: "Kubernetes", label: "Kubernetes" },
-                      { value: "AWS", label: "AWS" },
-                      { value: "Azure", label: "Azure" },
-                      { value: "Google Cloud", label: "Google Cloud" },
-                      { value: "Vercel", label: "Vercel" },
-                      { value: "Netlify", label: "Netlify" },
-                    ]}
+                    render={({ field }) => (
+                      <FormItem className="col-span-full">
+                        <FormLabel>
+                          Technologies Used
+                          <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <FormSearchMultiSelect
+                            placeholder="Search and select technologies..."
+                            options={getSkillsWithCategories()}
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </CardContent>
               </Card>
@@ -268,71 +295,26 @@ export default function AddProjectPage() {
                   <CardTitle>Project Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <FormMultiSelect
+                  <FormField
+                    control={form.control}
                     name="key_features"
-                    label="Key Features"
-                    placeholder="Select key features..."
-                    options={[
-                      {
-                        value: "User Authentication",
-                        label: "User Authentication",
-                      },
-                      {
-                        value: "Real-time Updates",
-                        label: "Real-time Updates",
-                      },
-                      {
-                        value: "Responsive Design",
-                        label: "Responsive Design",
-                      },
-                      { value: "REST API", label: "REST API" },
-                      { value: "GraphQL API", label: "GraphQL API" },
-                      {
-                        value: "Database Integration",
-                        label: "Database Integration",
-                      },
-                      {
-                        value: "Payment Processing",
-                        label: "Payment Processing",
-                      },
-                      {
-                        value: "Search Functionality",
-                        label: "Search Functionality",
-                      },
-                      {
-                        value: "Analytics Dashboard",
-                        label: "Analytics Dashboard",
-                      },
-                      {
-                        value: "Push Notifications",
-                        label: "Push Notifications",
-                      },
-                      { value: "Chat System", label: "Chat System" },
-                      { value: "File Upload", label: "File Upload" },
-                      { value: "Admin Panel", label: "Admin Panel" },
-                      {
-                        value: "SEO Optimized",
-                        label: "SEO Optimized",
-                      },
-                      {
-                        value: "Progressive Web App",
-                        label: "Progressive Web App",
-                      },
-                      {
-                        value: "Multi-language Support",
-                        label: "Multi-language Support",
-                      },
-                      { value: "Dark Mode", label: "Dark Mode" },
-                      {
-                        value: "Offline Support",
-                        label: "Offline Support",
-                      },
-                      {
-                        value: "Email Integration",
-                        label: "Email Integration",
-                      },
-                      { value: "Social Login", label: "Social Login" },
-                    ]}
+                    render={({ field }) => (
+                      <FormItem className="col-span-full">
+                        <FormLabel>
+                          Key Features
+                          <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <FormSearchMultiSelect
+                            placeholder="Select key features..."
+                            options={getFeaturebyCategory()}
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
 
                   <FormField

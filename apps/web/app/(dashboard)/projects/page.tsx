@@ -69,9 +69,7 @@ export default function ProjectsPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() =>
-                router.push(`/dashboard/projects/edit/${project.id}`)
-              }
+              onClick={() => router.push(`/projects/edit/${project.id}`)}
             >
               <Edit className="h-4 w-4" />
             </Button>

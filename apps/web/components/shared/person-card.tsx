@@ -81,13 +81,13 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
             </div>
             <div className="py-2 inline-flex flex-col justify-start items-start gap-2">
               <div className="justify-start leading-none">
-                <span className="text-neutral-50 text-2xl font-bold font-mono leading-none">
+                <span className="text-neutral-50 text-2xl font-bold font-mono leading-none capitalize">
                   {person.first_name}
                 </span>
                 <span className="text-neutral-50 text-sm font-bold font-mono leading-none">
                   {" "}
                 </span>
-                <span className="text-neutral-50 text-2xl font-bold font-mono leading-none">
+                <span className="text-neutral-50 text-2xl font-bold font-mono leading-none capitalize">
                   {person.last_name}
                 </span>
               </div>
@@ -145,12 +145,12 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
                     strokeWidth={1.2}
                   />
                 </div>
-                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-0.5">
+                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-1">
                   <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
                     education
                   </div>
-                  <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                    {university ? truncateText(university, 9) : "Not added"}
+                  <div className="justify-start text-white text-sm font-normal font-mono leading-none capitalize">
+                    {university ? truncateText(university, 8) : "Not added"}
                   </div>
                 </div>
               </div>
@@ -161,12 +161,18 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
                     strokeWidth={1.2}
                   />
                 </div>
-                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-0.5">
+                <div className="self-stretch py-[3px] inline-flex flex-col justify-start items-start gap-1">
                   <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
                     linkedin
                   </div>
-                  <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                    {linkedin ? truncateText(linkedin, 9) : "Not added"}
+                  <div className="justify-start text-wite text-sm font-normal font-mono leading-none">
+                    {linkedin
+                      ? `@${truncateText(
+                          linkedin.replace(/\/$/, "").split("/").pop() ||
+                            linkedin,
+                          7
+                        )}`
+                      : "Not added"}
                   </div>
                 </div>
               </div>

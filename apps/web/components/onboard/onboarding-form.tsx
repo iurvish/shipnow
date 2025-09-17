@@ -52,41 +52,37 @@ import { createClient } from "@/lib/client";
 
 // Step 1: Personal Details Schema
 const personalDetailsSchema = z.object({
-  first_name: z.string().min(2, "First name must be at least 2 characters"),
-  last_name: z.string().min(2, "Last name must be at least 2 characters"),
-  date_of_birth: z.string().optional(),
+  first_name: z.string().min(3, "First name must be at least 3 characters"),
+  last_name: z.string().min(3, "Last name must be at least 3 characters"),
+  date_of_birth: z
+    .string()
+    .min(1, "Date of birth is required")
+    .refine(
+      (value) => {
+        const dob = new Date(value);
+        const today = new Date();
+        const age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+          return age - 1 >= 17;
+        }
+        return age >= 17;
+      },
+      {
+        message: "You must be at least 17 years old",
+      }
+    ),
   university: z.string().min(2, "Please select a university"),
   institute: z.string().min(1, "Please select an institute"),
   department: z.string().min(1, "Please select a department"),
-  degree_level: z.enum(
-    ["Bachelor", "Master", "Self_taught", "Diploma", "Other"],
-    {
-      required_error: "Please select a degree level",
-    }
-  ),
+  degree_level: z.enum(["Bachelor", "Master"], {
+    required_error: "Please select a degree level",
+  }),
 });
 
 // Step 2: Technical Details Schema
 const technicalDetailsSchema = z.object({
   skills: z.array(z.string()).min(3, "Please select at least three skill"),
-  github: z
-    .string()
-    .optional()
-    .or(z.literal(""))
-    .refine(
-      (value) => {
-        if (!value || value === "") return true; // Allow empty values
-        const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
-        return (
-          cleanUrl.includes("github.com/") &&
-          cleanUrl.length > "github.com/".length
-        );
-      },
-      {
-        message:
-          "Please provide a valid GitHub profile URL (github.com/username)",
-      }
-    ),
   linkedin: z
     .string()
     .min(1, "LinkedIn profile is required")
@@ -106,16 +102,37 @@ const technicalDetailsSchema = z.object({
           "Please provide a valid LinkedIn profile URL (linkedin.com/in/username)",
       }
     ),
+  github: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(
+      (value) => {
+        if (!value || value === "") return true; // Allow empty values
+        const cleanUrl = value.replace(/^https?:\/\//, "").toLowerCase();
+        return (
+          cleanUrl.includes("github.com/") &&
+          cleanUrl.length > "github.com/".length
+        );
+      },
+      {
+        message:
+          "Please provide a valid GitHub profile URL (github.com/username)",
+      }
+    ),
+
   portfolio: z.string().optional(),
 });
 
 // Step 3: Profile Details Schema
 const profileDetailsSchema = z.object({
-  profilePhoto: z.any().optional(),
+  profilePhoto: z
+    .any()
+    .refine((val) => !!val, { message: "Profile photo is required" }),
   username: z
     .string()
     .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must be at most 20 characters")
+    .max(16, "Username must be at most 16 characters")
     .regex(
       /^[a-zA-Z0-9._]+$/,
       "Username can only contain letters, numbers, dots, and underscores"
@@ -136,7 +153,11 @@ const profileDetailsSchema = z.object({
         !username.includes("_."),
       { message: "Username cannot have consecutive dots or underscores" }
     ),
-  bio: z.string().optional(),
+  bio: z
+    .string()
+    .min(10, "Bio must be at least 10 characters")
+    .max(200, "Bio must be at most 200 characters")
+    .optional(),
 });
 
 // Combined Schema
@@ -198,9 +219,8 @@ const OnboardingForm: React.FC = () => {
 
   // Institute and department options
   const instituteOptions = [
-    { label: "CSPIT (Computer Science)", value: "cspit" },
-    { label: "DEPSTAR (Engineering)", value: "depstar" },
-    { label: "Other Institute", value: "other" },
+    { label: "CSPIT ", value: "cspit" },
+    { label: "DEPSTAR ", value: "depstar" },
   ];
 
   const getDepartmentOptions = (institute: string) => {
@@ -212,17 +232,16 @@ const OnboardingForm: React.FC = () => {
         { label: "Computer Science & Engineering", value: "cse" },
         { label: "Information Technology", value: "it" },
         { label: "Computer Engineering", value: "ce" },
-        { label: "Data Science", value: "ds" },
         { label: "Artificial Intelligence", value: "ai" },
-        { label: "Cyber Security", value: "cs" },
-      ],
-      depstar: [
         { label: "Mechanical Engineering", value: "me" },
         { label: "Civil Engineering", value: "civil" },
         { label: "Electrical Engineering", value: "ee" },
-        { label: "Chemical Engineering", value: "che" },
       ],
-      other: [{ label: "Other Department", value: "other" }],
+      depstar: [
+        { label: "Computer Science & Engineering", value: "cse" },
+        { label: "Information Technology", value: "it" },
+        { label: "Computer Engineering", value: "ce" },
+      ],
     };
     return departmentMap[institute] || [];
   };
@@ -568,7 +587,7 @@ const OnboardingForm: React.FC = () => {
                                     placeholder="Search and select your university"
                                     options={[
                                       {
-                                        value: "charusat",
+                                        value: "Charusat University",
                                         label: "Charusat University",
                                       },
                                     ]}
@@ -634,12 +653,12 @@ const OnboardingForm: React.FC = () => {
                                     options={[
                                       { label: "Bachelor", value: "Bachelor" },
                                       { label: "Master", value: "Master" },
-                                      {
-                                        label: "Self-taught",
-                                        value: "Self_taught",
-                                      },
-                                      { label: "Diploma", value: "Diploma" },
-                                      { label: "Other", value: "Other" },
+                                      // {
+                                      //   label: "Self taught",
+                                      //   value: "Self_taught",
+                                      // },
+                                      // { label: "Diploma", value: "Diploma" },
+                                      // { label: "Other", value: "Other" },
                                     ]}
                                     {...field}
                                   />
@@ -812,7 +831,10 @@ const OnboardingForm: React.FC = () => {
                             name="profilePhoto"
                             render={({ field }) => (
                               <FormItem className="col-span-full">
-                                <FormLabel>Profile Photo</FormLabel>
+                                <FormLabel>
+                                  Profile Photo
+                                  <span className="text-destructive">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <FormProfilePhoto
                                     accept="image/*"

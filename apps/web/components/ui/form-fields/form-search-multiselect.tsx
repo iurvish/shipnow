@@ -93,7 +93,7 @@ const FormSearchMultiSelect = forwardRef<
           <div
             ref={ref}
             className={cn(
-              "flex min-h-10 w-full items-center justify-between rounded-md border border-input bg-background px-2 py-1.5 text-sm ring-offset-background cursor-pointer",
+              "flex min-h-10 w-full items-center justify-between rounded-md border border-input bg-input/30 px-2 py-1.5 text-sm ring-offset-background cursor-pointer",
               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
               disabled && "cursor-not-allowed opacity-50",
               className
@@ -106,7 +106,7 @@ const FormSearchMultiSelect = forwardRef<
                   <Badge
                     key={item.value}
                     variant="secondary"
-                    className="px-2 py-1 text-sm flex items-center gap-0.5 max-w-[10rem] whitespace-normal break-words"
+                    className="px-2 py-1 text-sm bg-background/80 flex items-center gap-0.5  whitespace-normal break-words"
                   >
                     {item.label}
                     {!disabled && (
@@ -157,14 +157,14 @@ const FormSearchMultiSelect = forwardRef<
                     <p className="text-xs font-medium text-muted-foreground uppercase mb-2">
                       {category}
                     </p>
-                    <div className="flex flex-wrap gap-3 py-1.5 max-w-full overflow-hidden">
+                    <div className="flex flex-wrap text-wrap  gap-3 py-1.5 w-full t overflow-hidden">
                       {categoryOptions.map((option) => (
                         <Badge
                           key={option.value}
                           variant="outline"
                           className={cn(
                             // allow wrapping and constrain width so badges don't force horizontal overflow
-                            "min-h-9 px-4 py-2 text-base cursor-pointer transition-all duration-200 whitespace-normal break-words max-w-[12rem]",
+                            "min-h-9 px-4 py-2 text-base cursor-pointer transition-all duration-200 whitespace-normal ",
                             "bg-muted hover:bg-accent text-foreground border-border",
                             "hover:border-ring hover:shadow-sm",
                             maxSelections && selected.length >= maxSelections
