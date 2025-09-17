@@ -101,7 +101,9 @@ export function AppSidebar() {
             <span className="text-base font-semibold">Chatbot</span>
           </div>
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-            <Plus className="h-4 w-4" />
+            <Link href="/chat">
+              <Plus className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </SidebarHeader>
@@ -136,9 +138,7 @@ export function AppSidebar() {
                       </div>
                     </div>
                     <div className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity">
-                      <Link href="/chat">
-                        <Plus className="h-4 w-4" />
-                      </Link>
+                      <Plus className="h-3 w-3" />
                     </div>
                   </div>
                 </Link>

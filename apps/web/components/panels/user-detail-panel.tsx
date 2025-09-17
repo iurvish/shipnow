@@ -31,6 +31,22 @@ import ChatMessages, { ChatMessage } from "../shared/chat-messages";
 import AIInputSearch from "@/components/shared/ai-input-search-simple";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/client";
+import type { Project } from "@/lib/types";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Narrow client-side project shape for lightweight rendering
+type MinimalProject = Pick<
+  Project,
+  "id" | "project_name" | "project_image" | "tags"
+>;
 
 export function SimpleArtifactPanel() {
   const {
@@ -59,6 +75,47 @@ export function SimpleArtifactPanel() {
       onAIResponse(response);
     }
   };
+
+  // Load user's projects (client-side) - must be before any early returns to keep hook order stable
+  const [projects, setProjects] = useState<MinimalProject[] | null>(null);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [isProjectDrawerOpen, setIsProjectDrawerOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<MinimalProject | null>(
+    null
+  );
+  useEffect(() => {
+    let isMounted = true;
+    const run = async () => {
+      const targetUserId = artifactData?.data?.id;
+      if (!targetUserId) {
+        if (isMounted) setProjects(null);
+        return;
+      }
+      try {
+        setProjectsLoading(true);
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("projects")
+          .select("id, project_name, project_image, tags, created_at")
+          .eq("user_id", targetUserId)
+          .order("created_at", { ascending: false });
+        if (error) {
+          console.error("Error loading projects:", error);
+        }
+        if (isMounted) {
+          setProjects((data as MinimalProject[]) || []);
+        }
+      } catch (e) {
+        console.error("Failed to load projects", e);
+      } finally {
+        if (isMounted) setProjectsLoading(false);
+      }
+    };
+    run();
+    return () => {
+      isMounted = false;
+    };
+  }, [artifactData?.data?.id]);
 
   if (!artifactData) return null;
 
@@ -176,224 +233,350 @@ export function SimpleArtifactPanel() {
               </div>
 
               {/* Right Column - Profile Details - Full width on mobile, 2/5 on desktop */}
-              <div className="w-full md:w-2/5 p-5 bg-neutral-800 flex flex-col gap-3.5 relative overflow-y-auto">
-                {/* Close Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={closeArtifact}
-                  className="absolute top-4 right-4 h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-white/10"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-
-                {/* Header with Avatar and Name */}
-                <div className="self-stretch flex justify-start items-center gap-3">
-                  <div
-                    className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center"
-                    style={{
-                      clipPath:
-                        "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
-                    }}
+              <ScrollArea className="w-full md:w-2/5 bg-neutral-800">
+                <div className="p-5 flex flex-col gap-3.5 relative">
+                  {/* Close Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={closeArtifact}
+                    className="absolute top-4 right-4 h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-white/10"
                   >
-                    <User className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="py-2 flex flex-col justify-start items-start gap-2">
-                    <div className="justify-start">
-                      <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
-                        {userData.first_name}
-                      </span>
-                      <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
-                        {" "}
-                      </span>
-                      <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
-                        {userData.last_name}
-                      </span>
+                    <X className="h-4 w-4" />
+                  </Button>
+
+                  {/* Header with Avatar and Name */}
+                  <div className="self-stretch flex justify-start items-center gap-3">
+                    <div
+                      className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center"
+                      style={{
+                        clipPath:
+                          "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
+                      }}
+                    >
+                      <User className="w-8 h-8 text-primary" />
                     </div>
-                    <div className="justify-start text-zinc-400 text-base font-normal font-mono leading-none">
-                      {userData.email}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bio Section */}
-                <div className="self-stretch border-b border-neutral-600 flex flex-col justify-start items-start gap-2 pb-3.5">
-                  <div className="justify-start text-white text-lg font-medium font-mono uppercase">
-                    Bio
-                  </div>
-                  <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
-                    {userData.bio || "Bio not added"}
-                  </div>
-                </div>
-
-                {/* Essentials Section */}
-                <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
-                  <div className="w-20 justify-start text-white text-lg font-medium font-mono uppercase">
-                    Essentials
-                  </div>
-                  <div className="self-stretch">
-                    {/* 2x2 Grid Layout */}
-                    <div className="grid grid-cols-2 border border-neutral-600">
-                      {/* Education - Top Left */}
-                      <div className="p-1.5 border-r border-b border-neutral-600 flex justify-start items-start gap-1">
-                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                          <GraduationCap
-                            className="w-6 h-6 text-zinc-400"
-                            strokeWidth={1.2}
-                          />
-                        </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-[2.5px]">
-                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
-                            education
-                          </div>
-                          <div className="justify-start text-white text-sm font-normal font-mono leading-none capitalize">
-                            {userData.personal_details?.university ||
-                              "University not added"}
-                          </div>
-                        </div>
+                    <div className="py-2 flex flex-col justify-start items-start gap-2">
+                      <div className="justify-start">
+                        <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                          {userData.first_name}
+                        </span>
+                        <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                          {" "}
+                        </span>
+                        <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                          {userData.last_name}
+                        </span>
                       </div>
-
-                      {/* GitHub - Top Right */}
-                      <div className="p-1.5 border-b border-neutral-600 flex justify-start items-start gap-1 ">
-                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-center ">
-                          <Github
-                            className="w-6 h-6 text-zinc-400"
-                            strokeWidth={1.2}
-                          />
-                        </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-[2.5px] ">
-                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono leading-none">
-                            GITHUB
-                          </div>
-                          <div className="justify-start text-white text-sm font-normal font-mono leading-none  ">
-                            {userData.technical_profile?.github ? (
-                              <Link
-                                href={userData.technical_profile.github}
-                                target="_blank"
-                                className="hover:underline "
-                                rel="noopener noreferrer"
-                              >
-                                @
-                                {userData.technical_profile.github
-                                  .replace(
-                                    /https?:\/\/(www\.)?github\.com\//,
-                                    ""
-                                  )
-                                  .replace(/\/$/, "")}
-                              </Link>
-                            ) : (
-                              "Not added"
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* LinkedIn - Bottom Left */}
-                      <div className="p-1.5 border-r border-neutral-600 flex justify-start items-start gap-1">
-                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                          <Linkedin
-                            className="w-6 h-6 text-zinc-400"
-                            strokeWidth={1.2}
-                          />
-                        </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
-                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none gap-[2.5px]">
-                            linkedin
-                          </div>
-                          <div className="justify-start text-white text-sm font-normal font-mono leading-none capitalize">
-                            {userData.technical_profile?.linkedin ? (
-                              <Link
-                                href={userData.technical_profile.linkedin}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:underline "
-                              >
-                                @
-                                {(() => {
-                                  const match =
-                                    userData.technical_profile.linkedin.match(
-                                      /linkedin\.com\/in\/([^\/?#]+)/i
-                                    );
-                                  return match
-                                    ? match[1]
-                                    : userData.technical_profile.linkedin
-                                        .replace(
-                                          /https?:\/\/(www\.)?linkedin\.com\//,
-                                          ""
-                                        )
-                                        .replace(/\/$/, "");
-                                })()}
-                              </Link>
-                            ) : (
-                              "Not added"
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Portfolio - Bottom Right */}
-                      <div className="p-1.5 flex justify-start items-start gap-1">
-                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
-                          <Globe
-                            className="w-6 h-6 text-zinc-400"
-                            strokeWidth={1.2}
-                          />
-                        </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
-                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none gap-[2.5px]">
-                            portfolio
-                          </div>
-                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                            {userData.technical_profile?.portfolio ? (
-                              <Link
-                                href={userData.technical_profile.portfolio}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:underline"
-                              >
-                                {userData.technical_profile.portfolio.replace(
-                                  /^https?:\/\//,
-                                  ""
-                                )}
-                              </Link>
-                            ) : (
-                              "Not added"
-                            )}
-                          </div>
-                        </div>
+                      <div className="justify-start text-zinc-400 text-base font-normal font-mono leading-none">
+                        {userData.email}
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Skills Section */}
-                <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
-                  <div className="w-20 justify-start text-white text-lg font-medium font-mono uppercase">
-                    SKILLS
+                  {/* Bio Section */}
+                  <div className="self-stretch border-b border-neutral-600 flex flex-col justify-start items-start gap-2 pb-3.5">
+                    <div className="justify-start text-white text-lg font-medium font-mono uppercase">
+                      Bio
+                    </div>
+                    <div className="self-stretch justify-start text-zinc-400 text-sm font-normal font-mono leading-snug">
+                      {userData.bio || "Bio not added"}
+                    </div>
                   </div>
-                  <div className="flex justify-start items-start gap-2 flex-wrap">
-                    {userData.technical_profile?.skills &&
-                    userData.technical_profile.skills.length > 0 ? (
-                      userData.technical_profile.skills.map(
-                        (skill: string, index: number) => (
-                          <div
-                            key={index}
-                            className="p-2 bg-zinc-100 flex justify-start items-center"
-                          >
-                            <div className="justify-start text-neutral-500 text-sm font-medium font-mono uppercase">
-                              {skill}
+
+                  {/* Essentials Section */}
+                  <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
+                    <div className="w-20 justify-start text-white text-lg font-medium font-mono uppercase">
+                      Essentials
+                    </div>
+                    <div className="self-stretch">
+                      {/* 2x2 Grid Layout */}
+                      <div className="grid grid-cols-2 border border-neutral-600">
+                        {/* Education - Top Left */}
+                        <div className="p-1.5 border-r border-b border-neutral-600 flex justify-start items-start gap-1">
+                          <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                            <GraduationCap
+                              className="w-6 h-6 text-zinc-400"
+                              strokeWidth={1.2}
+                            />
+                          </div>
+                          <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-[2.5px]">
+                            <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                              education
+                            </div>
+                            <div className="justify-start text-white text-sm font-normal font-mono leading-none capitalize">
+                              {userData.personal_details?.university ||
+                                "University not added"}
                             </div>
                           </div>
-                        )
-                      )
-                    ) : (
-                      <div className="text-zinc-400 text-sm font-normal font-mono">
-                        Skills not added
+                        </div>
+
+                        {/* GitHub - Top Right */}
+                        <div className="p-1.5 border-b border-neutral-600 flex justify-start items-start gap-1 ">
+                          <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-center ">
+                            <Github
+                              className="w-6 h-6 text-zinc-400"
+                              strokeWidth={1.2}
+                            />
+                          </div>
+                          <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-[2.5px] ">
+                            <div className="justify-start text-zinc-400 text-xs font-normal font-mono leading-none">
+                              GITHUB
+                            </div>
+                            <div className="justify-start text-white text-sm font-normal font-mono leading-none  ">
+                              {userData.technical_profile?.github ? (
+                                <Link
+                                  href={userData.technical_profile.github}
+                                  target="_blank"
+                                  className="hover:underline "
+                                  rel="noopener noreferrer"
+                                >
+                                  @
+                                  {userData.technical_profile.github
+                                    .replace(
+                                      /https?:\/\/(www\.)?github\.com\//,
+                                      ""
+                                    )
+                                    .replace(/\/$/, "")}
+                                </Link>
+                              ) : (
+                                "Not added"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* LinkedIn - Bottom Left */}
+                        <div className="p-1.5 border-r border-neutral-600 flex justify-start items-start gap-1">
+                          <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                            <Linkedin
+                              className="w-6 h-6 text-zinc-400"
+                              strokeWidth={1.2}
+                            />
+                          </div>
+                          <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                            <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none gap-[2.5px]">
+                              linkedin
+                            </div>
+                            <div className="justify-start text-white text-sm font-normal font-mono leading-none capitalize">
+                              {userData.technical_profile?.linkedin ? (
+                                <Link
+                                  href={userData.technical_profile.linkedin}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:underline "
+                                >
+                                  @
+                                  {(() => {
+                                    const match =
+                                      userData.technical_profile.linkedin.match(
+                                        /linkedin\.com\/in\/([^\/?#]+)/i
+                                      );
+                                    return match
+                                      ? match[1]
+                                      : userData.technical_profile.linkedin
+                                          .replace(
+                                            /https?:\/\/(www\.)?linkedin\.com\//,
+                                            ""
+                                          )
+                                          .replace(/\/$/, "");
+                                  })()}
+                                </Link>
+                              ) : (
+                                "Not added"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Portfolio - Bottom Right */}
+                        <div className="p-1.5 flex justify-start items-start gap-1">
+                          <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-start">
+                            <Globe
+                              className="w-6 h-6 text-zinc-400"
+                              strokeWidth={1.2}
+                            />
+                          </div>
+                          <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                            <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none gap-[2.5px]">
+                              portfolio
+                            </div>
+                            <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                              {userData.technical_profile?.portfolio ? (
+                                <Link
+                                  href={userData.technical_profile.portfolio}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:underline"
+                                >
+                                  {userData.technical_profile.portfolio.replace(
+                                    /^https?:\/\//,
+                                    ""
+                                  )}
+                                </Link>
+                              ) : (
+                                "Not added"
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
+
+                  {/* Skills Section */}
+                  <div className="self-stretch flex flex-col justify-start items-start gap-2 overflow-hidden">
+                    <div className="w-20 justify-start text-white text-lg font-medium font-mono uppercase">
+                      SKILLS
+                    </div>
+                    <div className="flex justify-start items-start gap-2 flex-wrap">
+                      {userData.technical_profile?.skills &&
+                      userData.technical_profile.skills.length > 0 ? (
+                        userData.technical_profile.skills.map(
+                          (skill: string, index: number) => (
+                            <div
+                              key={index}
+                              className="p-2 bg-zinc-100 flex justify-start items-center"
+                            >
+                              <div className="justify-start text-neutral-500 text-sm font-medium font-mono uppercase">
+                                {skill}
+                              </div>
+                            </div>
+                          )
+                        )
+                      ) : (
+                        <div className="text-zinc-400 text-sm font-normal font-mono">
+                          Skills not added
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Projects Section */}
+                  {projectsLoading && (!projects || projects.length === 0) ? (
+                    <div className="self-stretch">
+                      <div className="w-28 justify-start text-white text-lg font-medium font-mono uppercase mb-3">
+                        PROJECTS
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className="flex flex-col gap-2">
+                            <Skeleton className="w-full aspect-[16/10]" />
+                            <Skeleton className="h-4 w-2/3" />
+                            <div className="flex gap-1">
+                              <Skeleton className="h-5 w-14" />
+                              <Skeleton className="h-5 w-10" />
+                              <Skeleton className="h-5 w-16" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {projects && projects.length > 0 ? (
+                    <div className="self-stretch flex flex-col justify-start items-start gap-3 overflow-hidden mt-4">
+                      <div className="w-28 justify-start text-white text-lg font-medium font-mono uppercase">
+                        PROJECTS
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        {projects.map((project) => {
+                          const hasImage = Boolean(project.project_image);
+                          return (
+                            <div
+                              key={project.id}
+                              className={
+                                hasImage
+                                  ? "flex flex-col gap-2"
+                                  : "flex flex-col gap-2 border border-neutral-600 p-3"
+                              }
+                            >
+                              {hasImage && (
+                                <button
+                                  type="button"
+                                  className="w-full aspect-[16/10] overflow-hidden text-left"
+                                  onClick={() => {
+                                    setSelectedProject(project);
+                                    setIsProjectDrawerOpen(true);
+                                  }}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={project.project_image as string}
+                                    alt={project.project_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="text-white font-mono text-base leading-tight text-left hover:underline"
+                                onClick={() => {
+                                  setSelectedProject(project);
+                                  setIsProjectDrawerOpen(true);
+                                }}
+                              >
+                                {project.project_name}
+                              </button>
+                              {Array.isArray(project.tags) &&
+                                project.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {project.tags.slice(0, 4).map((tag) => (
+                                      <span
+                                        key={tag}
+                                        className="text-[11px] font-mono uppercase text-zinc-400 border border-neutral-700 px-1.5 py-0.5"
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Project Drawer */}
+                  <Drawer
+                    open={isProjectDrawerOpen}
+                    onOpenChange={setIsProjectDrawerOpen}
+                  >
+                    <DrawerContent>
+                      <DrawerHeader>
+                        <DrawerTitle>
+                          {selectedProject?.project_name}
+                        </DrawerTitle>
+                      </DrawerHeader>
+                      <div className="p-4 flex flex-col gap-3">
+                        {selectedProject?.project_image ? (
+                          <div className="w-full aspect-[16/10] overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={selectedProject.project_image}
+                              alt={selectedProject.project_name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : null}
+                        {selectedProject?.tags &&
+                        selectedProject.tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedProject.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[11px] font-mono uppercase text-zinc-400 border border-neutral-700 px-1.5 py-0.5"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </DrawerContent>
+                  </Drawer>
                 </div>
-              </div>
+              </ScrollArea>
             </div>
           </motion.div>
         </motion.div>
