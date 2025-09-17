@@ -579,97 +579,152 @@ export function SimpleArtifactPanel() {
                     open={isProjectDrawerOpen}
                     onOpenChange={setIsProjectDrawerOpen}
                   >
-                    <DrawerContent>
+                    <DrawerContent className="min-h-[90vh]">
                       <DrawerHeader>
                         <DrawerTitle>
                           {selectedProjectFull?.project_name ||
                             selectedProject?.project_name}
                         </DrawerTitle>
                       </DrawerHeader>
-                      <div className="p-4 flex flex-col gap-3">
-                        {drawerLoading ? (
-                          <>
-                            <Skeleton className="w-full aspect-[16/10]" />
-                            <div className="flex gap-1">
-                              {Array.from({ length: 4 }).map((_, i) => (
-                                <Skeleton key={i} className="h-5 w-16" />
-                              ))}
+                      <ScrollArea className="max-h-[75vh] overflow-y-auto">
+                        <div className="p-4 flex flex-col gap-4">
+                          {drawerLoading ? (
+                            <>
+                              <Skeleton className="w-full h-40 md:h-56" />
+                              <div className="flex gap-1">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                  <Skeleton key={i} className="h-5 w-16" />
+                                ))}
+                              </div>
+                              <Skeleton className="h-4 w-3/4" />
+                              <Skeleton className="h-4 w-2/3" />
+                            </>
+                          ) : null}
+                          {!drawerLoading &&
+                          (selectedProjectFull?.project_image ||
+                            selectedProject?.project_image) ? (
+                            <div className=" flex w-full items-center justify-center">
+                              {/* eslint-disable-next-lin e @next/next/no-img-element */}
+                              <img
+                                src={
+                                  (selectedProjectFull?.project_image ||
+                                    selectedProject?.project_image) as string
+                                }
+                                alt={
+                                  selectedProjectFull?.project_name ||
+                                  selectedProject?.project_name ||
+                                  "Project"
+                                }
+                                className="w-[70%] h-fit max-auto flex  md:h-fit max-md:w-full overflow-hidden object-cover"
+                              />
                             </div>
-                            <Skeleton className="h-4 w-3/4" />
-                            <Skeleton className="h-4 w-2/3" />
-                          </>
-                        ) : null}
-                        {!drawerLoading &&
-                        (selectedProjectFull?.project_image ||
-                          selectedProject?.project_image) ? (
-                          <div className="w-full aspect-[16/10] overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={
-                                (selectedProjectFull?.project_image ||
-                                  selectedProject?.project_image) as string
-                              }
-                              alt={
-                                selectedProjectFull?.project_name ||
-                                selectedProject?.project_name ||
-                                "Project"
-                              }
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : null}
-                        {!drawerLoading &&
-                        (selectedProjectFull?.tags?.length ||
-                          selectedProject?.tags?.length) ? (
-                          <div className="flex flex-wrap gap-1">
-                            {(
-                              selectedProjectFull?.tags ||
-                              selectedProject?.tags ||
-                              []
-                            )
-                              .slice(0, 6)
-                              .map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="text-[11px] font-mono uppercase text-zinc-400 border border-neutral-700 px-1.5 py-0.5"
+                          ) : null}
+                          {!drawerLoading &&
+                          (selectedProjectFull?.tags?.length ||
+                            selectedProject?.tags?.length) ? (
+                            <div className="flex flex-wrap gap-1">
+                              {(
+                                selectedProjectFull?.tags ||
+                                selectedProject?.tags ||
+                                []
+                              )
+                                .slice(0, 6)
+                                .map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="text-[11px] font-mono uppercase text-zinc-400 border border-neutral-700 px-1.5 py-0.5"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                            </div>
+                          ) : null}
+                          {!drawerLoading &&
+                          (selectedProjectFull?.live_site_url ||
+                            selectedProjectFull?.github_link) ? (
+                            <div className="flex gap-3 pt-1">
+                              {selectedProjectFull.live_site_url ? (
+                                <Link
+                                  href={selectedProjectFull.live_site_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary underline text-sm font-mono"
                                 >
-                                  {tag}
-                                </span>
-                              ))}
-                          </div>
-                        ) : null}
-                        {!drawerLoading && selectedProjectFull?.case_summary ? (
-                          <p className="text-zinc-300 text-sm font-mono leading-snug">
-                            {selectedProjectFull.case_summary}
-                          </p>
-                        ) : null}
-                        {!drawerLoading &&
-                        (selectedProjectFull?.live_site_url ||
-                          selectedProjectFull?.github_link) ? (
-                          <div className="flex gap-3 pt-1">
-                            {selectedProjectFull.live_site_url ? (
-                              <Link
-                                href={selectedProjectFull.live_site_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary underline text-sm font-mono"
-                              >
-                                Live Site
-                              </Link>
-                            ) : null}
-                            {selectedProjectFull.github_link ? (
-                              <Link
-                                href={selectedProjectFull.github_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary underline text-sm font-mono"
-                              >
-                                GitHub
-                              </Link>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
+                                  Live Site
+                                </Link>
+                              ) : null}
+                              {selectedProjectFull.github_link ? (
+                                <Link
+                                  href={selectedProjectFull.github_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary underline text-sm font-mono"
+                                >
+                                  GitHub
+                                </Link>
+                              ) : null}
+                            </div>
+                          ) : null}
+
+                          {/* Detailed Sections */}
+                          {!drawerLoading &&
+                          selectedProjectFull?.case_summary ? (
+                            <section className="pt-1">
+                              <h2 className="text-white font-semibold text-base font-mono mb-1">
+                                Case Summary
+                              </h2>
+                              <p className="text-zinc-300 text-sm font-mono leading-snug whitespace-pre-line">
+                                {selectedProjectFull.case_summary}
+                              </p>
+                            </section>
+                          ) : null}
+
+                          {!drawerLoading &&
+                          selectedProjectFull?.build_journey ? (
+                            <section className="pt-1">
+                              <h2 className="text-white font-semibold text-base font-mono mb-1">
+                                Build Journey
+                              </h2>
+                              <p className="text-zinc-300 text-sm font-mono leading-snug whitespace-pre-line">
+                                {selectedProjectFull.build_journey}
+                              </p>
+                            </section>
+                          ) : null}
+
+                          {!drawerLoading &&
+                          selectedProjectFull?.key_features &&
+                          selectedProjectFull.key_features.length > 0 ? (
+                            <section className="pt-1">
+                              <h2 className="text-white font-semibold text-base font-mono mb-1">
+                                Key Features
+                              </h2>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {selectedProjectFull.key_features.map(
+                                  (feat, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="text-zinc-300 text-sm font-mono leading-snug"
+                                    >
+                                      {feat}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </section>
+                          ) : null}
+
+                          {!drawerLoading && selectedProjectFull?.results ? (
+                            <section className="pt-1 pb-2">
+                              <h2 className="text-white font-semibold text-base font-mono mb-1">
+                                Results
+                              </h2>
+                              <p className="text-zinc-300 text-sm font-mono leading-snug whitespace-pre-line">
+                                {selectedProjectFull.results}
+                              </p>
+                            </section>
+                          ) : null}
+                        </div>
+                      </ScrollArea>
                     </DrawerContent>
                   </Drawer>
                 </div>
