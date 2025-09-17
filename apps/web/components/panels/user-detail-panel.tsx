@@ -30,6 +30,7 @@ import { Separator } from "../ui/separator";
 import ChatMessages, { ChatMessage } from "../shared/chat-messages";
 import AIInputSearch from "@/components/shared/ai-input-search-simple";
 import { ChatResponse } from "@/lib/actions/chat-actions";
+import Link from "next/link";
 
 export function SimpleArtifactPanel() {
   const {
@@ -241,11 +242,11 @@ export function SimpleArtifactPanel() {
                             strokeWidth={1.2}
                           />
                         </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-[2.5px]">
                           <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
                             education
                           </div>
-                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
+                          <div className="justify-start text-white text-sm font-normal font-mono leading-none capitalize">
                             {userData.personal_details?.university ||
                               "University not added"}
                           </div>
@@ -253,21 +254,36 @@ export function SimpleArtifactPanel() {
                       </div>
 
                       {/* GitHub - Top Right */}
-                      <div className="p-1.5 border-b border-neutral-600 flex justify-start items-start gap-1">
-                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-center">
+                      <div className="p-1.5 border-b border-neutral-600 flex justify-start items-start gap-1 ">
+                        <div className="p-[5px] bg-white/5 rounded-lg shadow-sm outline-[0.80px] outline-offset-[-0.80px] outline-white/20 flex justify-start items-center ">
                           <Github
                             className="w-6 h-6 text-zinc-400"
                             strokeWidth={1.2}
                           />
                         </div>
-                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
+                        <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-[2.5px] ">
                           <div className="justify-start text-zinc-400 text-xs font-normal font-mono leading-none">
                             GITHUB
                           </div>
-                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                            {userData.technical_profile?.github
-                              ? `@${userData.technical_profile.github.split("/").pop()}`
-                              : "Not added"}
+                          <div className="justify-start text-white text-sm font-normal font-mono leading-none  ">
+                            {userData.technical_profile?.github ? (
+                              <Link
+                                href={userData.technical_profile.github}
+                                target="_blank"
+                                className="hover:underline "
+                                rel="noopener noreferrer"
+                              >
+                                @
+                                {userData.technical_profile.github
+                                  .replace(
+                                    /https?:\/\/(www\.)?github\.com\//,
+                                    ""
+                                  )
+                                  .replace(/\/$/, "")}
+                              </Link>
+                            ) : (
+                              "Not added"
+                            )}
                           </div>
                         </div>
                       </div>
@@ -281,13 +297,36 @@ export function SimpleArtifactPanel() {
                           />
                         </div>
                         <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
-                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none gap-[2.5px]">
                             linkedin
                           </div>
-                          <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                            {userData.technical_profile?.linkedin
-                              ? `@${userData.technical_profile.linkedin.split("/").pop()}`
-                              : "Not added"}
+                          <div className="justify-start text-white text-sm font-normal font-mono leading-none capitalize">
+                            {userData.technical_profile?.linkedin ? (
+                              <Link
+                                href={userData.technical_profile.linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline "
+                              >
+                                @
+                                {(() => {
+                                  const match =
+                                    userData.technical_profile.linkedin.match(
+                                      /linkedin\.com\/in\/([^\/?#]+)/i
+                                    );
+                                  return match
+                                    ? match[1]
+                                    : userData.technical_profile.linkedin
+                                        .replace(
+                                          /https?:\/\/(www\.)?linkedin\.com\//,
+                                          ""
+                                        )
+                                        .replace(/\/$/, "");
+                                })()}
+                              </Link>
+                            ) : (
+                              "Not added"
+                            )}
                           </div>
                         </div>
                       </div>
@@ -301,16 +340,25 @@ export function SimpleArtifactPanel() {
                           />
                         </div>
                         <div className="self-stretch py-[3px] flex flex-col justify-start items-start gap-0.5">
-                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none">
+                          <div className="justify-start text-zinc-400 text-xs font-normal font-mono uppercase leading-none gap-[2.5px]">
                             portfolio
                           </div>
                           <div className="justify-start text-white text-sm font-normal font-mono leading-none">
-                            {userData.technical_profile?.portfolio
-                              ? userData.technical_profile.portfolio.replace(
-                                  "https://",
+                            {userData.technical_profile?.portfolio ? (
+                              <Link
+                                href={userData.technical_profile.portfolio}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                {userData.technical_profile.portfolio.replace(
+                                  /^https?:\/\//,
                                   ""
-                                )
-                              : "Not added"}
+                                )}
+                              </Link>
+                            ) : (
+                              "Not added"
+                            )}
                           </div>
                         </div>
                       </div>

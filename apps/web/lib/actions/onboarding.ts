@@ -14,18 +14,32 @@ import { validateSkills } from "@/lib/config/skills";
 // Define the complete onboarding schema
 const onboardingSchema = z.object({
   // Personal Details
-  first_name: z.string().min(2, "First name must be at least 2 characters"),
-  last_name: z.string().min(2, "Last name must be at least 2 characters"),
-  date_of_birth: z.string().optional(),
-  university: z.string().min(2, "University is required"),
+  first_name: z.string().min(3, "First name must be at least 3 characters"),
+  last_name: z.string().min(3, "Last name must be at least 3 characters"),
+date_of_birth: z
+  .string()
+  .min(1, "Date of birth is required")
+  .refine((value) => {
+    const dob = new Date(value);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      return age - 1 >= 17;
+    }
+    return age >= 17;
+  }, {
+    message: "You must be at least 17 years old",
+  }),
+    university: z.string().min(2, "University is required"),
   institute: z.string().min(1, "Institute is required"),
   department: z.string().min(1, "Department is required"),
-  degree_level: z.enum(["Bachelor", "Master", "Self_taught", "Diploma", "Other"]),
+  degree_level: z.enum(["Bachelor", "Master"]),
   
   // Technical Profile
   skills: z
     .array(z.string())
-    .min(1, "At least one skill is required")
+    .min(3, "At least three skill is required")
     .refine(
       (skills) => validateSkills(skills),
       { message: "Invalid skill selected" }
@@ -121,7 +135,7 @@ const onboardingSchema = z.object({
   username: z
     .string()
     .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must be at most 20 characters")
+    .max(16, "Username must be at most 16 characters")
     .regex(/^[a-zA-Z0-9._]+$/, "Username can only contain letters, numbers, dots, and underscores")
     .refine(
       (username) => !username.startsWith('.') && !username.startsWith('_') && 
