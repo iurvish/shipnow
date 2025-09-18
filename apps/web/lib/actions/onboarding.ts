@@ -257,15 +257,20 @@ export async function submitOnboardingForm(formData: OnboardingFormData): Promis
     }
     console.log("User record updated successfully");
 
-    // Update auth.users metadata with names and onboarding status
+    // Update auth.users metadata with names, avatar, and onboarding status
     console.log("Updating auth.users metadata...");
+    const { data: currentAuthUser } = await supabase.auth.getUser();
+    const existingAvatarUrl = currentAuthUser.user?.user_metadata?.avatar_url || null;
+    const newAvatarUrl = validatedData.profilePhoto || existingAvatarUrl || null;
+
     const { error: authUserError } = await supabase.auth.updateUser({
       data: {
         first_name: validatedData.first_name,
         last_name: validatedData.last_name,
         full_name: `${validatedData.first_name} ${validatedData.last_name}`,
         username: validatedData.username,
-        onboarded: true
+        onboarded: true,
+        avatar_url: newAvatarUrl,
       }
     });
 

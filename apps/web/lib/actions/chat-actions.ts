@@ -16,8 +16,8 @@ const SearchPeopleToolSchema = z.object({
   projectTags: z.array(z.string()).optional().describe("Project tags to match"),
   age_greater_than: z.number().optional().describe("Minimum age filter"),
   has_portfolio: z.boolean().optional().describe("Must have portfolio URL"),
-  projectName: z.string().optional().describe("Specific project name to search"),
-  projectFeature: z.string().optional().describe("Specific project feature to match"),
+  projectNames: z.array(z.string()).optional().describe("Project names to match any (partial contains)"),
+  projectFeatures: z.array(z.string()).optional().describe("Project features to match any (contains)"),
 });
 
 // Schema for person from database
@@ -172,19 +172,19 @@ function buildDynamicCypherQuery(currentUserId: string, params: SearchPeoplePara
     `);
   }
   
-  // Project name filtering
-  if (params.projectName) {
+  // Project names filtering (ANY name contains)
+  if (params.projectNames && params.projectNames.length > 0) {
     conditions.push(`
       MATCH (targetUser)-[:BUILT]->(project:Project)
-      WHERE project.name CONTAINS $projectName
+      WHERE ANY(name IN $projectNames WHERE project.name CONTAINS name)
     `);
   }
   
-  // Project feature filtering
-  if (params.projectFeature) {
+  // Project features filtering (ANY feature contains)
+  if (params.projectFeatures && params.projectFeatures.length > 0) {
     conditions.push(`
       MATCH (targetUser)-[:BUILT]->(project:Project)-[:HAS_FEATURE]->(feature:Feature)
-      WHERE feature.name CONTAINS $projectFeature
+      WHERE ANY(feat IN $projectFeatures WHERE feature.name CONTAINS feat)
     `);
   }
   
@@ -338,8 +338,8 @@ export async function generatePeopleSuggestions(
       - projectTags: Array of project technologies/frameworks
       - age_greater_than: Minimum age as number
       - has_portfolio: Boolean if must have portfolio
-      - projectName: String for specific project name
-      - projectFeature: String for specific project feature`,
+      - projectNames: Array of project names (match any, partial contains)
+      - projectFeatures: Array of project features (match any, contains)`,
       messages: [
         {
           role: "user", 
@@ -357,8 +357,8 @@ export async function generatePeopleSuggestions(
           projectTags: z.array(z.string()).optional(),
           age_greater_than: z.number().optional(),
           has_portfolio: z.boolean().optional(),
-          projectName: z.string().optional(),
-          projectFeature: z.string().optional(),
+          projectNames: z.array(z.string()).optional(),
+          projectFeatures: z.array(z.string()).optional(),
         }).optional()
       })
     });
@@ -396,8 +396,8 @@ export async function generatePeopleSuggestions(
           university: processedParams.university,
           department: processedParams.department,
           projectTags: processedParams.projectTags,
-          projectName: processedParams.projectName,
-          projectFeature: processedParams.projectFeature
+          projectNames: processedParams.projectNames,
+          projectFeatures: processedParams.projectFeatures
         });
         
         const foundUserIds = cypherResult.records.map(record => record.get('userId'));
