@@ -295,7 +295,7 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
   // Show loading state only when no initial message and user/chat is loading
   if (!initialMessage && (userLoading || chatLoading)) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
         <div className="mx-auto mb-4">
           <Loader className="h-8 w-8 text-primary" />
         </div>
@@ -306,7 +306,7 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
   // Show error state if user is not authenticated (only if no initial message and not loading)
   if (!sessionUser && !userLoading && !initialMessage) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-[calc(100vh-14rem)]  items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
             Please log in to search for people

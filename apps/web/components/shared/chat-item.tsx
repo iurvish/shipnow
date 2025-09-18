@@ -43,15 +43,8 @@ const ChatItem: React.FC<ChatItemProps> = ({
       {/* Avatar */}
       <div className="flex-shrink-0">
         {role === "assistant" ? (
-          <div
-            className="w-8 h-8 flex items-center justify-center bg-primary text-primary-foreground"
-            style={{
-              clipPath:
-                "polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))",
-              borderRadius: "0px",
-            }}
-          >
-            <Image src="/logo.svg" width={5} height={5} alt="logo" />
+          <div className="w-8 h-8 flex items-center justify-center ">
+            <Image src="/logo.svg" width={35} height={35} alt="logo" />
           </div>
         ) : (
           <UserAvatar
@@ -72,7 +65,7 @@ const ChatItem: React.FC<ChatItemProps> = ({
               <div className="w-5 h-6 mr-1.5 mt-1 ">
                 <Brain />
               </div>
-              <span className="mr-[0.3rem]">Generating</span>
+              <span className="mr-[0.3rem]">Searching</span>
               <MessageLoading />
             </div>
             <Skeleton className="w-full h-11" />
@@ -84,7 +77,7 @@ const ChatItem: React.FC<ChatItemProps> = ({
               className={`${isLongUserMessage ? "cursor-pointer" : ""}`}
               onClick={isLongUserMessage ? toggleExpand : undefined}
             >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+              <p className="text-sm leading-relaxed pt-1 whitespace-pre-wrap break-words">
                 {displayContent}
               </p>
               {isLongUserMessage && (

@@ -153,11 +153,7 @@ const profileDetailsSchema = z.object({
         !username.includes("_."),
       { message: "Username cannot have consecutive dots or underscores" }
     ),
-  bio: z
-    .string()
-    .min(10, "Bio must be at least 10 characters")
-    .max(200, "Bio must be at most 200 characters")
-    .optional(),
+  bio: z.string().max(200, "Bio must be at most 200 characters").optional(),
 });
 
 // Combined Schema
@@ -219,8 +215,8 @@ const OnboardingForm: React.FC = () => {
 
   // Institute and department options
   const instituteOptions = [
-    { label: "CSPIT ", value: "cspit" },
-    { label: "DEPSTAR ", value: "depstar" },
+    { label: "CSPIT ", value: "CSPIT" },
+    { label: "DEPSTAR ", value: "DEPSTAR" },
   ];
 
   const getDepartmentOptions = (institute: string) => {
@@ -229,18 +225,18 @@ const OnboardingForm: React.FC = () => {
       Array<{ label: string; value: string }>
     > = {
       cspit: [
-        { label: "Computer Science & Engineering", value: "cse" },
-        { label: "Information Technology", value: "it" },
-        { label: "Computer Engineering", value: "ce" },
-        { label: "Artificial Intelligence", value: "ai" },
-        { label: "Mechanical Engineering", value: "me" },
-        { label: "Civil Engineering", value: "civil" },
-        { label: "Electrical Engineering", value: "ee" },
+        { label: "Computer Science & Engineering", value: "CSE" },
+        { label: "Information Technology", value: "IT" },
+        { label: "Computer Engineering", value: "CE" },
+        { label: "Artificial Intelligence", value: "AI" },
+        { label: "Mechanical Engineering", value: "ME" },
+        { label: "Civil Engineering", value: "CIVIL" },
+        { label: "Electrical Engineering", value: "EE" },
       ],
       depstar: [
-        { label: "Computer Science & Engineering", value: "cse" },
-        { label: "Information Technology", value: "it" },
-        { label: "Computer Engineering", value: "ce" },
+        { label: "Computer Science & Engineering", value: "CSE" },
+        { label: "Information Technology", value: "IT" },
+        { label: "Computer Engineering", value: "CE" },
       ],
     };
     return departmentMap[institute] || [];
@@ -290,6 +286,40 @@ const OnboardingForm: React.FC = () => {
 
   // Initialize form values after hydration to avoid SSR mismatch
   useEffect(() => {
+    // Prefill from Supabase auth metadata (e.g., Google) if available
+    (async () => {
+      try {
+        const supabase = await createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user && user.user_metadata) {
+          const meta: any = user.user_metadata;
+          const fullName: string = meta.full_name || meta.name || "";
+          const derivedFirst =
+            meta.given_name ||
+            meta.first_name ||
+            (fullName ? fullName.split(" ")[0] : "");
+          const derivedLast =
+            meta.family_name ||
+            meta.last_name ||
+            (fullName ? fullName.split(" ").slice(1).join(" ") : "");
+
+          // Only set if fields are empty to avoid overriding user input or stored values
+          const currentFirst = personalDetailsForm.getValues("first_name");
+          const currentLast = personalDetailsForm.getValues("last_name");
+          if (!currentFirst && derivedFirst) {
+            personalDetailsForm.setValue("first_name", String(derivedFirst));
+          }
+          if (!currentLast && derivedLast) {
+            personalDetailsForm.setValue("last_name", String(derivedLast));
+          }
+        }
+      } catch (e) {
+        // best-effort prefill; ignore errors
+      }
+    })();
+
     const stepData0 = getStepData(0);
     const stepData1 = getStepData(1);
     const stepData2 = getStepData(2);

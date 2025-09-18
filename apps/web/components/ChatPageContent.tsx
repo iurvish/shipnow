@@ -38,7 +38,7 @@ export default function ChatPageContent() {
   // Show loading state while user is being fetched
   if (userLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
         <div className="mx-auto mb-4">
           <Loader className="h-8 w-8 text-primary" />
         </div>
@@ -49,7 +49,7 @@ export default function ChatPageContent() {
   // Show error state if user is not authenticated
   if (!sessionUser && !userLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
             Please log in to search for people
@@ -81,9 +81,9 @@ export default function ChatPageContent() {
             {userName}
           </span>
         </h1>
-        <p className="text-xl text-muted-foreground font-mono">
+        {/* <p className="text-xl text-muted-foreground font-mono">
           How can I help you today?
-        </p>
+        </p> */}
       </div>
 
       {/* Main Input Field */}
@@ -96,7 +96,7 @@ export default function ChatPageContent() {
       </div>
 
       {/* Suggestion Cards */}
-      <div className="w-full max-w-4xl flex justify-center">
+      {/* <div className="w-full max-w-4xl flex justify-center">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-fit">
           {suggestions.map((suggestion, index) => {
             const IconComponent = suggestion.icon;
@@ -119,7 +119,7 @@ export default function ChatPageContent() {
             );
           })}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -147,7 +147,7 @@ date_of_birth: z
                    !username.includes('._') && !username.includes('_.'),
       { message: "Username cannot have consecutive dots or underscores" }
     ),
-  bio: z.string().min(10, "Bio must be at least 10 characters").max(200, "Bio must be at most 200 characters").optional(),
+  bio: z.string().max(200, "Bio must be at most 200 characters").optional(),
 });
 
 
