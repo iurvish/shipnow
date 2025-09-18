@@ -10,6 +10,7 @@ import {
   Linkedin,
 } from "lucide-react";
 import { useSimpleArtifact } from "../../hooks/use-user-detail-panel";
+import Image from "next/image";
 
 interface PersonCardProps {
   person: DatabasePerson;
@@ -77,7 +78,16 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
                   "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
               }}
             >
-              <User className="w-8 h-8 text-primary" />
+              {person.avatar_url ? (
+                <Image
+                  src={person.avatar_url}
+                  alt="Profile Picture"
+                  width={64}
+                  height={64}
+                />
+              ) : (
+                <User className="w-8 h-8 text-primary" />
+              )}{" "}
             </div>
             <div className="py-2 inline-flex flex-col justify-start items-start gap-2">
               <div className="justify-start leading-none">

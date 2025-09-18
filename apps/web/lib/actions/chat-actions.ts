@@ -26,6 +26,7 @@ const DatabasePersonSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   email: z.string(),
+  avatar_url: z.string().nullable().optional(),
   bio: z.string().nullable(),
   personal_details: z.object({
     university: z.string(),
@@ -190,7 +191,7 @@ function buildDynamicCypherQuery(currentUserId: string, params: SearchPeoplePara
   // Portfolio filtering
   if (params.has_portfolio === true) {
     conditions.push(`
-      WHERE targetUser.portfolioUrl IS NOT NULL
+      WHERE targetUser.portfolioUrl = true
     `);
   }
   
@@ -237,7 +238,7 @@ async function fetchDetailedProfiles(userIds: string[]): Promise<DatabasePerson[
   const { data: profiles, error } = await supabase
     .from("users")
     .select(`
-      id, first_name, last_name, email, bio,
+      id, first_name, last_name, email, bio, avatar_url,
       personal_details(university, department, degree_level, date_of_birth),
       technical_profiles(skills, github, portfolio, linkedin)
     `)
@@ -263,6 +264,7 @@ async function fetchDetailedProfiles(userIds: string[]): Promise<DatabasePerson[
       first_name: user.first_name ? String(user.first_name) : "",
       last_name: user.last_name ? String(user.last_name) : "",
       email: String(user.email),
+      avatar_url: user.avatar_url ? String(user.avatar_url) : null,
       bio: user.bio ? String(user.bio) : null,
       personal_details: personalDetail ? {
         university: String(personalDetail.university || ''),

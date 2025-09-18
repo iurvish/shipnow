@@ -31,6 +31,7 @@ import ChatMessages, { ChatMessage } from "../shared/chat-messages";
 import AIInputSearch from "@/components/shared/ai-input-search-simple";
 import { ChatResponse } from "@/lib/actions/chat-actions";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/client";
 import type { Project } from "@/lib/types";
@@ -86,6 +87,7 @@ export function SimpleArtifactPanel() {
   const [selectedProjectFull, setSelectedProjectFull] =
     useState<Project | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
     const run = async () => {
@@ -283,21 +285,30 @@ export function SimpleArtifactPanel() {
                           "polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%)",
                       }}
                     >
-                      <User className="w-8 h-8 text-primary" />
+                      {userData.avatar_url ? (
+                        <Image
+                          src={userData.avatar_url}
+                          alt="Profile Picture"
+                          width={64}
+                          height={64}
+                        />
+                      ) : (
+                        <User className="w-8 h-8 text-primary" />
+                      )}
                     </div>
                     <div className="py-2 flex flex-col justify-start items-start gap-2">
                       <div className="justify-start">
-                        <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                        <span className="text-neutral-50 text-3xl font-bold font-mono leading-none capitalize">
                           {userData.first_name}
                         </span>
                         <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
                           {" "}
                         </span>
-                        <span className="text-neutral-50 text-3xl font-bold font-mono leading-none">
+                        <span className="text-neutral-50 text-3xl font-bold font-mono leading-none capitalize">
                           {userData.last_name}
                         </span>
                       </div>
-                      <div className="justify-start text-zinc-400 text-base font-normal font-mono leading-none">
+                      <div className="justify-start text-zinc-400 text-base font-normal font-mono leading-none lowercase">
                         {userData.email}
                       </div>
                     </div>

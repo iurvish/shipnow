@@ -19,10 +19,10 @@ export interface AuraDBUserProfile {
   userId: string;
   name: string;
   email: string;
-  avatarUrl?: string | null;
-  githubUrl?: string | null;
-  portfolioUrl?: string | null;
-  linkedinUrl?: string | null;
+  avatarUrl?: boolean;
+  githubUrl?: boolean;
+  portfolioUrl?: boolean;
+  linkedinUrl?: boolean;
   dateOfBirth?: string | null;
   bio?: string | null;
   username: string;
@@ -75,10 +75,10 @@ export function transformOnboardingDataForAuraDB(
     userId,
     name,
     email,
-    avatarUrl: onboardingData.profilePhoto || null,
-    githubUrl: onboardingData.github || null,
-    portfolioUrl: onboardingData.portfolio || null,
-    linkedinUrl: onboardingData.linkedin || null,
+    avatarUrl: Boolean(onboardingData.profilePhoto),
+    githubUrl: Boolean(onboardingData.github),
+    portfolioUrl: Boolean(onboardingData.portfolio),
+    linkedinUrl: Boolean(onboardingData.linkedin),
     dateOfBirth: onboardingData.date_of_birth || null,
     bio: onboardingData.bio || null,
     username: onboardingData.username,
