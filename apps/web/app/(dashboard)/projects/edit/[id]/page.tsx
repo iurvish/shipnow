@@ -120,7 +120,7 @@ export default function EditProjectPage({
   if (isLoading) {
     return (
       <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-[400px] animate-spin">
           <Loader className="h-8 w-8 animate-spin" />
         </div>
       </div>

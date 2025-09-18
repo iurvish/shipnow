@@ -39,8 +39,8 @@ export default function ChatPageContent() {
   if (userLoading) {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
-        <div className="mx-auto mb-4">
-          <Loader className="h-8 w-8 text-primary" />
+        <div className="mx-auto mb-4 ">
+          <Loader className="h-8 w-8 text-primary animate-spin" />
         </div>
       </div>
     );

@@ -90,75 +90,58 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-border/40">
       <SidebarHeader className="border-b border-border/40 p-4">
-        {loading ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-5 rounded" />
-              <Skeleton className="h-5 w-20" />
-            </div>
-            <Skeleton className="h-8 w-8 rounded" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <HomeIcon className="size-5" />
+            <span className="text-base font-semibold">Chatbot</span>
           </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <HomeIcon className="size-5" />
-              <span className="text-base font-semibold">Chatbot</span>
-            </div>
-            <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-              <Link href="/chat">
-                <Plus className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        )}
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+            <Link href="/chat">
+              <Plus className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4">
         {/* Projects Section */}
         <div className="mb-6">
-          {loading ? (
-            <div className="space-y-2 px-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-10 w-full" />
+          <>
+            <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Portfolio
             </div>
-          ) : (
-            <>
-              <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Portfolio
-              </div>
-              <SidebarMenu className="mt-2">
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link
-                      href="/projects"
-                      className={cn(
-                        "relative w-full justify-start text-left h-auto p-3 hover:bg-accent/50 group transition-colors rounded-none",
-                        pathname?.startsWith("/dashboard/projects") &&
-                          "bg-accent/80"
-                      )}
-                    >
-                      <ActiveDecorator
-                        isActive={
-                          pathname?.startsWith("/dashboard/projects") ?? false
-                        }
-                      />
-                      <div className="flex items-start gap-3 w-full">
-                        <FolderOpen className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">
-                            My Projects
-                          </div>
-                        </div>
-                        <div className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity">
-                          <Plus className="h-3 w-3" />
+            <SidebarMenu className="mt-2">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/projects"
+                    className={cn(
+                      "relative w-full justify-start text-left h-auto p-3 hover:bg-accent/50 group transition-colors rounded-none",
+                      pathname?.startsWith("/dashboard/projects") &&
+                        "bg-accent/80"
+                    )}
+                  >
+                    <ActiveDecorator
+                      isActive={
+                        pathname?.startsWith("/dashboard/projects") ?? false
+                      }
+                    />
+                    <div className="flex items-start gap-3 w-full">
+                      <FolderOpen className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          My Projects
                         </div>
                       </div>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </>
-          )}
+                      <div className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity">
+                        <Plus className="h-3 w-3" />
+                      </div>
+                    </div>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </>
         </div>
 
         {/* Chat History */}
@@ -208,7 +191,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/40 p-4">
-        <UserMenu user={userData} />
+        <UserMenu user={userData} loading={loading} />
       </SidebarFooter>
     </Sidebar>
   );
