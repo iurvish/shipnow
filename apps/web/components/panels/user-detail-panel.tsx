@@ -286,11 +286,10 @@ export function SimpleArtifactPanel() {
                       }}
                     >
                       {userData.avatar_url ? (
-                        <Image
+                        <img
                           src={userData.avatar_url}
                           alt="Profile Picture"
-                          width={64}
-                          height={64}
+                          className="w-16 h-16 object-cover"
                         />
                       ) : (
                         <User className="w-8 h-8 text-primary" />
