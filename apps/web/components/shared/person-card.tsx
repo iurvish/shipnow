@@ -79,11 +79,10 @@ export function PersonCard({ person, isSelected = false }: PersonCardProps) {
               }}
             >
               {person.avatar_url ? (
-                <Image
+                <img
                   src={person.avatar_url}
                   alt="Profile Picture"
-                  width={64}
-                  height={64}
+                  className="w-16 h-16 object-cover"
                 />
               ) : (
                 <User className="w-8 h-8 text-primary" />
