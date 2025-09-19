@@ -1,10 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      "ik.imagekit.io",
-      "randomuser.me",
-      "gwatgzypdlugafnvvttt.supabase.co",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ik.imagekit.io",
+      },
+      {
+        protocol: "https",
+        hostname: "randomuser.me",
+      },
+      {
+        protocol: "https",
+        hostname: "gwatgzypdlugafnvvttt.supabase.co",
+      },
     ],
   },
 };

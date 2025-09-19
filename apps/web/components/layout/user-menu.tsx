@@ -108,10 +108,10 @@ export function UserMenu({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                {/* <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
                   Account
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
