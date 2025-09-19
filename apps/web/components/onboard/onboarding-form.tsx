@@ -224,7 +224,7 @@ const OnboardingForm: React.FC = () => {
       string,
       Array<{ label: string; value: string }>
     > = {
-      cspit: [
+      CSPIT: [
         { label: "Computer Science & Engineering", value: "CSE" },
         { label: "Information Technology", value: "IT" },
         { label: "Computer Engineering", value: "CE" },
@@ -233,7 +233,7 @@ const OnboardingForm: React.FC = () => {
         { label: "Civil Engineering", value: "CIVIL" },
         { label: "Electrical Engineering", value: "EE" },
       ],
-      depstar: [
+      DEPSTAR: [
         { label: "Computer Science & Engineering", value: "CSE" },
         { label: "Information Technology", value: "IT" },
         { label: "Computer Engineering", value: "CE" },

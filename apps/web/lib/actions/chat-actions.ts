@@ -334,7 +334,7 @@ export async function generatePeopleSuggestions(
       - "Python backend" → skills: ["Python", "Django", "Flask", "FastAPI"]
       - skills: Array of technical skills (use exact database format)
       - university: University name (use "CURRENT_USER_UNIVERSITY" for user's university)
-      - department: Department name (use "CURRENT_USER_DEPARTMENT" for user's department)
+      - department: Department name (use "CURRENT_USER_DEPARTMENT" for user's department) 
       - projectTags: Array of project technologies/frameworks
       - age_greater_than: Minimum age as number
       - has_portfolio: Boolean if must have portfolio
