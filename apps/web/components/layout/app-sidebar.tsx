@@ -92,8 +92,8 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-border/40 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <HomeIcon className="size-5" />
-            <span className="text-base font-semibold">Chatbot</span>
+            <img src="/logo.svg" alt="logo" className="w-8 h-8" />
+            <span className="text-base font-semibold">CrewMate AI</span>
           </div>
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
             <Link href="/chat">

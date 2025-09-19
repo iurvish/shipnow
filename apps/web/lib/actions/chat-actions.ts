@@ -310,36 +310,38 @@ export async function generatePeopleSuggestions(
     
     const llmResponse = await generateObject({
       model: google("gemini-2.0-flash-001"),
-      system: `You are an expert people search assistant. Analyze the user's query and determine if they want to search for people or have a general conversation.
+  system: `You are an expert people search assistant. Analyze the user's query and determine if they want to search for people or have a general conversation.
       
-      If it's a people search, extract structured parameters. If it's general conversation, provide a helpful response.
+  IMPORTANT: If the user query contains words like 'search for', 'find', 'show', 'list', or is asking for people with a skill, role, or job title (e.g. 'Search for UX designers', 'Find React developers', 'Show backend engineers'), ALWAYS treat it as a people_search, even if the skill or role is not in the database. Do NOT treat these as general conversation.
       
-      AVAILABLE SKILLS IN DATABASE (use exact format):
-      ${availableSkills}, and more...
+  If it's a people search, extract structured parameters. If it's general conversation, provide a helpful response.
       
-      SKILL FORMAT RULES:
-      - Use exact proper case: "React" (not "react"), "Next.js" (not "nextjs"), "TypeScript" (not "typescript")
-      - For "Representational State Transfer" → use "REST API"
-      - For "NoSQL document database" → use "MongoDB"  
-      - For "graph database" → use "Neo4j"
-      - For "container orchestration" → use "Kubernetes"
+  AVAILABLE SKILLS IN DATABASE (use exact format):
+  ${availableSkills}, and more...
       
-      Current user context:
-      - University: ${userContext.university || 'Unknown'}
-      - Department: ${userContext.department || 'Unknown'}
-      - Skills: ${userContext.skills.join(', ') || 'None'}
+  SKILL FORMAT RULES:
+  - Use exact proper case: "React" (not "react"), "Next.js" (not "nextjs"), "TypeScript" (not "typescript")
+  - For "Representational State Transfer" → use "REST API"
+  - For "NoSQL document database" → use "MongoDB"  
+  - For "graph database" → use "Neo4j"
+  - For "container orchestration" → use "Kubernetes"
       
-      For people searches, extract and EXPAND skills with related technologies:
-      - "React developers" → skills: ["React", "Next.js", "JavaScript", "TypeScript"]
-      - "Python backend" → skills: ["Python", "Django", "Flask", "FastAPI"]
-      - skills: Array of technical skills (use exact database format)
-      - university: University name (use "CURRENT_USER_UNIVERSITY" for user's university)
-      - department: Department name (use "CURRENT_USER_DEPARTMENT" for user's department) 
-      - projectTags: Array of project technologies/frameworks
-      - age_greater_than: Minimum age as number
-      - has_portfolio: Boolean if must have portfolio
-      - projectNames: Array of project names (match any, partial contains)
-      - projectFeatures: Array of project features (match any, contains)`,
+  Current user context:
+  - University: ${userContext.university || 'Unknown'}
+  - Department: ${userContext.department || 'Unknown'}
+  - Skills: ${userContext.skills.join(', ') || 'None'}
+      
+  For people searches, extract and EXPAND skills with related technologies:
+  - "React developers" → skills: ["React", "Next.js", "JavaScript", "TypeScript"]
+  - "Python backend" → skills: ["Python", "Django", "Flask", "FastAPI"]
+  - skills: Array of technical skills (use exact database format)
+  - university: University name (use "CURRENT_USER_UNIVERSITY" for user's university)
+  - department: Department name (use "CURRENT_USER_DEPARTMENT" for user's department) 
+  - projectTags: Array of project technologies/frameworks
+  - age_greater_than: Minimum age as number
+  - has_portfolio: Boolean if must have portfolio
+  - projectNames: Array of project names (match any, partial contains)
+  - projectFeatures: Array of project features (match any, contains)`,
       messages: [
         {
           role: "user", 
