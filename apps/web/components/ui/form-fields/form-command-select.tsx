@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, forwardRef } from "react";
+import React, { useState, forwardRef, useEffect } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import {
   Command,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OptionType {
   label: string;
@@ -48,6 +49,7 @@ const FormCommandSelect = forwardRef<HTMLButtonElement, FormCommandSelectProps>(
     ref
   ) => {
     const [open, setOpen] = useState(false);
+    const isMobile = useIsMobile();
 
     const selectedOption = options.find((option) => option.value === value);
 
@@ -84,6 +86,11 @@ const FormCommandSelect = forwardRef<HTMLButtonElement, FormCommandSelectProps>(
           style={{
             width: "var(--radix-popover-trigger-width)",
             maxWidth: "var(--radix-popover-trigger-width)",
+          }}
+          onOpenAutoFocus={(e) => {
+            if (isMobile) {
+              e.preventDefault();
+            }
           }}
         >
           <Command className="min-w-full">
