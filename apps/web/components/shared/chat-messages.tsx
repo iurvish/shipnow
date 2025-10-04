@@ -3,7 +3,6 @@
 import React from "react";
 import ChatItem from "@/components/shared/chat-item";
 import { ChatResponse } from "@/lib/actions/chat-actions";
-import AIInputSearch from "./ai-input-search";
 
 interface ChatMessage {
   id: string;

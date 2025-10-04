@@ -7,9 +7,9 @@ interface ChatHistoryStore {
   error: string | null;
   
   // Actions
-  fetchChatHistory: (userId: string) => Promise<void>;
+  fetchChatHistory: () => Promise<void>;
   addNewChat: (slug: string, messageTitle: string) => void;
-  refreshHistory: (userId: string) => Promise<void>;
+  refreshHistory: () => Promise<void>;
   clearHistory: () => void;
 }
 
@@ -18,13 +18,12 @@ export const useChatHistoryStore = create<ChatHistoryStore>((set, get) => ({
   loading: false,
   error: null,
 
-  fetchChatHistory: async (userId: string) => {
-    if (!userId) return;
-    
+  fetchChatHistory: async () => {
     set({ loading: true, error: null });
 
     try {
-      const result = await getChatHistory(userId);
+      // getChatHistory now uses DAL internally, no userId needed
+      const result = await getChatHistory();
 
       if (result.success && result.chats) {
         set({ 
@@ -62,8 +61,8 @@ export const useChatHistoryStore = create<ChatHistoryStore>((set, get) => ({
     }));
   },
 
-  refreshHistory: async (userId: string) => {
-    await get().fetchChatHistory(userId);
+  refreshHistory: async () => {
+    await get().fetchChatHistory();
   },
 
   clearHistory: () => {
