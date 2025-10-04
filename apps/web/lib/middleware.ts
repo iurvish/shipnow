@@ -39,7 +39,10 @@ export async function updateSession(request: NextRequest) {
 
   // Define protected routes
   const protectedRoutes = ['/onboarding', '/chat', '/protected', '/projects' ]
-  const authRoutes = ['/auth/login', '/auth/sign-up', '/auth/forgot-password']
+  // Routes that authenticated users should NOT access (will be redirected away)
+  const unauthenticatedOnlyRoutes = ['/auth/login', '/auth/sign-up']
+  // Routes that authenticated users CAN access for password reset/confirmation
+  const authUtilityRoutes = ['/auth/forgot-password', '/auth/update-password', '/auth/confirm']
 
   if (!user) {
     // User is not authenticated
@@ -50,7 +53,21 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
   } else {
-    // User is authenticated, check onboarding status
+    // User is authenticated
+    
+    // Redirect authenticated users away from login/sign-up pages
+    if (unauthenticatedOnlyRoutes.some(route => pathname.startsWith(route))) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/chat'
+      return NextResponse.redirect(url)
+    }
+    
+    // Allow access to auth utility routes (password reset, confirm) regardless of onboarding status
+    if (authUtilityRoutes.some(route => pathname.startsWith(route))) {
+      return supabaseResponse
+    }
+    
+    // Check onboarding status for other routes
     try {
       const { data: userData } = await supabase
         .from('users')
@@ -62,7 +79,7 @@ export async function updateSession(request: NextRequest) {
 
       if (!isOnboarded) {
         // User is not onboarded
-        if (pathname !== '/onboarding' && !authRoutes.some(route => pathname.startsWith(route))) {
+        if (pathname !== '/onboarding') {
           // Redirect to onboarding if not already there
           const url = request.nextUrl.clone()
           url.pathname = '/onboarding'
