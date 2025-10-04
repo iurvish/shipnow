@@ -13,8 +13,54 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Shipyard",
-  description: "Find your co-founder",
+  title: "CrewMate AI | Find Your Co-Founder & Startup Team",
+  description:
+    "CrewMate AI helps you find the perfect co-founder and build your startup team. Discover top talent, connect, and collaborate instantly.",
+  keywords: [
+    "CrewMate AI",
+    "find co-founder",
+    "startup team",
+    "AI matchmaking",
+    "startup talent",
+    "business partner",
+    "collaboration",
+    "entrepreneur",
+    "startup networking",
+  ],
+  openGraph: {
+    title: "CrewMate AI | Find Your Co-Founder & Startup Team",
+    description:
+      "Discover and connect with top startup talent using CrewMate AI.",
+    url: "https://yourdomain.com",
+    siteName: "CrewMate AI",
+    images: [
+      {
+        url: "https://yourdomain.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "CrewMate AI - Find Your Co-Founder",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CrewMate AI | Find Your Co-Founder & Startup Team",
+    description:
+      "Discover and connect with top startup talent using CrewMate AI.",
+    images: ["https://yourdomain.com/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+    },
+  },
 };
 
 export default function RootLayout({
