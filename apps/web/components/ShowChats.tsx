@@ -24,6 +24,7 @@ import {
 import { useChatHistoryStore } from "@/stores/chat-history-store";
 import { useChatCacheStore } from "@/stores/chat-cache-store";
 import { Loader } from "lucide-react";
+import { scrollToBottom } from "@/lib/scroll-utils";
 
 interface ShowChatsProps {
   slug: string;
@@ -66,12 +67,10 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     }
   }, [isLoading, setLoading]);
 
-  // Auto scroll to bottom when messages change
+  // Auto scroll to bottom when messages change using scrollIntoView
   useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
+    // Use the utility function to scroll the last message into view without animation
+    scrollToBottom(messagesContainerRef.current, false);
   }, [messages]);
 
   // Load existing chat data when component mounts (with caching)
@@ -354,8 +353,9 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
   // If we have cached data, don't show loading even if user is being re-fetched
   const hasCachedData = slug && getCachedChat(slug) && isCacheValid(slug);
   const needsUserForFresh = !hasCachedData && userLoading;
-  const shouldShowLoading = !initialMessage && (chatLoading || needsUserForFresh);
-  
+  const shouldShowLoading =
+    !initialMessage && (chatLoading || needsUserForFresh);
+
   if (shouldShowLoading) {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
