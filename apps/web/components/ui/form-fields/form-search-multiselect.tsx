@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { getSkillByValue } from "@/lib/config/skills";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OptionType {
   label: string;
@@ -50,7 +51,7 @@ const FormSearchMultiSelect = forwardRef<
     const [searchValue, setSearchValue] = useState("");
     const selectedContainerRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
-
+    const isMobile = useIsMobile();
     const selected = options.filter((option) => value.includes(option.value));
 
     const handleSelect = (item: OptionType) => {
@@ -139,6 +140,11 @@ const FormSearchMultiSelect = forwardRef<
         <PopoverContent
           className="w-[var(--radix-popover-trigger-width)]  p-0 max-h-72  overflow-hidden"
           align="start"
+          onOpenAutoFocus={(e) => {
+            if (isMobile) {
+              e.preventDefault();
+            }
+          }}
         >
           <div className="p-2 border-b">
             <Input

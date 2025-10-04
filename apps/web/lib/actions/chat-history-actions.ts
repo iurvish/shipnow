@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/server";
+import { getUserChatsData } from "@/lib/dal";
 
 export interface ChatHistoryItem {
   id: string;
@@ -16,38 +16,14 @@ export interface ChatHistoryResponse {
   error?: string;
 }
 
-export async function getChatHistory(userId: string): Promise<ChatHistoryResponse> {
+/**
+ * Get chat history for the current authenticated user.
+ * Uses the DAL for proper caching and auth verification.
+ */
+export async function getChatHistory(userId?: string): Promise<ChatHistoryResponse> {
   try {
-    if (!userId) {
-      return {
-        success: false,
-        error: 'User ID is required',
-      };
-    }
-
-    // Create server client for server actions
-    const supabase = await createClient();
-
-    // Fetch chats for the user, ordered by updated_at descending
-    const { data: chats, error } = await supabase
-      .from('chats')
-      .select(`
-        id,
-        slug,
-        title,
-        created_at,
-        updated_at
-      `)
-      .eq('user_id', userId)
-      .order('updated_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching chat history:', error);
-      return {
-        success: false,
-        error: 'Failed to fetch chat history',
-      };
-    }
+    // Use DAL which handles auth verification and caching
+    const chats = await getUserChatsData();
 
     return {
       success: true,

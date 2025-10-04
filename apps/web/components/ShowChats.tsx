@@ -22,7 +22,9 @@ import {
   useSimpleArtifact,
 } from "@/hooks/use-user-detail-panel";
 import { useChatHistoryStore } from "@/stores/chat-history-store";
+import { useChatCacheStore } from "@/stores/chat-cache-store";
 import { Loader } from "lucide-react";
+import { scrollToBottom } from "@/lib/scroll-utils";
 
 interface ShowChatsProps {
   slug: string;
@@ -43,6 +45,10 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     setOnAIResponse,
   } = useSimpleArtifact();
 
+  // Chat cache for avoiding repeated fetches
+  const { getCachedChat, setChatCache, addMessageToCache, isCacheValid } =
+    useChatCacheStore();
+
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get("initialMessage");
   const initialMessageProcessedRef = useRef(false);
@@ -61,18 +67,36 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     }
   }, [isLoading, setLoading]);
 
-  // Auto scroll to bottom when messages change
+  // Auto scroll to bottom when messages change using scrollIntoView
   useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
+    // Use the utility function to scroll the last message into view without animation
+    scrollToBottom(messagesContainerRef.current, false);
   }, [messages]);
 
-  // Load existing chat data when component mounts
+  // Load existing chat data when component mounts (with caching)
   useEffect(() => {
     const loadChatData = async () => {
-      if (!slug || userLoading) return;
+      if (!slug) return;
+
+      // Check cache first (even if user is loading)
+      const cached = getCachedChat(slug);
+      if (cached && isCacheValid(slug)) {
+        // Use cached data
+        setChat(cached.chat);
+        const formattedMessages = cached.messages.map((msg: any) => ({
+          id: msg.id,
+          content: msg.content,
+          role: msg.role,
+          chatResponse: msg.metadata,
+          timestamp: new Date(msg.created_at),
+        }));
+        setMessages(formattedMessages);
+        setChatLoading(false);
+        return;
+      }
+
+      // Only wait for user to load if we need to fetch fresh data
+      if (userLoading) return;
 
       setChatLoading(true);
 
@@ -88,16 +112,17 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
             await getChatMessages(existingChat.id);
 
           if (messagesSuccess && chatMessages) {
+            // Cache the data
+            setChatCache(slug, existingChat, chatMessages);
+
             // Convert database messages to ChatMessage format
-            const formattedMessages: ChatMessage[] = chatMessages.map(
-              (msg: any) => ({
-                id: msg.id,
-                content: msg.content,
-                role: msg.role,
-                chatResponse: msg.metadata,
-                timestamp: new Date(msg.created_at),
-              })
-            );
+            const formattedMessages = chatMessages.map((msg: any) => ({
+              id: msg.id,
+              content: msg.content,
+              role: msg.role,
+              chatResponse: msg.metadata,
+              timestamp: new Date(msg.created_at),
+            }));
             setMessages(formattedMessages);
           }
         }
@@ -109,7 +134,131 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     };
 
     loadChatData();
-  }, [slug, userLoading]);
+  }, [slug, userLoading, getCachedChat, isCacheValid, setChatCache]);
+
+  const handleSubmit = useCallback(
+    async (userInput: string, isInitialMessage = false) => {
+      if (!sessionUser?.id) return;
+
+      // Only add user message if it's not the initial message (already added)
+      if (!isInitialMessage) {
+        // Generate temporary ID for user message
+        const tempUserMessageId = `user-${Date.now()}`;
+
+        // Immediately add user message
+        const newUserMessage: ChatMessage = {
+          id: tempUserMessageId,
+          content: userInput,
+          role: "user",
+          timestamp: new Date(),
+        };
+        setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+      }
+
+      // Don't add empty assistant message - let ChatMessages handle loading state
+      setIsLoading(true);
+
+      try {
+        let currentChatId = chat?.id;
+
+        // Create new chat if we don't have one
+        if (!currentChatId) {
+          const { chat: newChat, success } = await createChatWithFirstMessage(
+            sessionUser.id,
+            userInput,
+            slug
+          );
+
+          if (success && newChat) {
+            setChat(newChat);
+            currentChatId = newChat.id;
+
+            // Cache the new chat and first message
+            // Note: createChatWithFirstMessage creates both chat and first message
+            // We'll fetch fresh data after AI response to ensure cache consistency
+          }
+        } else {
+          // Save user message to existing chat
+          const userSaveResult = await saveChatMessage(
+            currentChatId,
+            "user",
+            userInput
+          );
+          if (userSaveResult.success && userSaveResult.messageId) {
+            // Cache the user message
+            const userMessageData = {
+              id: userSaveResult.messageId,
+              chat_id: currentChatId,
+              role: "user" as const,
+              content: userInput,
+              metadata: {},
+              created_at: new Date().toISOString(),
+            };
+            addMessageToCache(slug, userMessageData);
+          }
+        }
+
+        // Generate AI response
+        const response = await generatePeopleSuggestions(
+          userInput,
+          sessionUser.id
+        );
+
+        // Save AI response message
+        if (currentChatId) {
+          const aiSaveResult = await saveChatMessage(
+            currentChatId,
+            "assistant",
+            response.message || "Here are the people I found:",
+            response
+          );
+          if (aiSaveResult.success && aiSaveResult.messageId) {
+            // Cache the AI message
+            const aiMessageData = {
+              id: aiSaveResult.messageId,
+              chat_id: currentChatId,
+              role: "assistant" as const,
+              content: response.message || "Here are the people I found:",
+              metadata: response,
+              created_at: new Date().toISOString(),
+            };
+            addMessageToCache(slug, aiMessageData);
+          }
+        }
+
+        // Add the assistant message with the actual response
+        const aiMessage: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          content:
+            response.message ||
+            (response.query_type === "people_search"
+              ? "Here are the people I found:"
+              : ""),
+          role: "assistant",
+          chatResponse: response,
+          timestamp: new Date(),
+        };
+        setMessages((prevMessages) => [...prevMessages, aiMessage]);
+
+        // Note: URL cleanup is done earlier in processInitialMessage for initial messages
+      } catch (error) {
+        console.error("Error sending data:", error);
+
+        // Add error message
+        const errorMessage: ChatMessage = {
+          id: `ai-error-${Date.now()}`,
+          content:
+            "Sorry, something went wrong while searching for people. Please try again.",
+          role: "assistant",
+          timestamp: new Date(),
+        };
+        setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [sessionUser?.id, chat?.id, slug]
+  );
 
   // Process initial message when page loads
   useEffect(() => {
@@ -159,99 +308,7 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     };
 
     processInitialMessage();
-  }, [initialMessage, chatLoading, sessionUser?.id, userLoading]);
-
-  const handleSubmit = useCallback(
-    async (userInput: string, isInitialMessage = false) => {
-      if (!sessionUser?.id) return;
-
-      // Only add user message if it's not the initial message (already added)
-      if (!isInitialMessage) {
-        // Generate temporary ID for user message
-        const tempUserMessageId = `user-${Date.now()}`;
-
-        // Immediately add user message
-        const newUserMessage: ChatMessage = {
-          id: tempUserMessageId,
-          content: userInput,
-          role: "user",
-          timestamp: new Date(),
-        };
-        setMessages((prevMessages) => [...prevMessages, newUserMessage]);
-      }
-
-      // Don't add empty assistant message - let ChatMessages handle loading state
-      setIsLoading(true);
-
-      try {
-        let currentChatId = chat?.id;
-
-        // Create new chat if we don't have one
-        if (!currentChatId) {
-          const { chat: newChat, success } = await createChatWithFirstMessage(
-            sessionUser.id,
-            userInput,
-            slug
-          );
-
-          if (success && newChat) {
-            setChat(newChat);
-            currentChatId = newChat.id;
-          }
-        } else {
-          // Save user message to existing chat
-          await saveChatMessage(currentChatId, "user", userInput);
-        }
-
-        // Generate AI response
-        const response = await generatePeopleSuggestions(
-          userInput,
-          sessionUser.id
-        );
-
-        // Save AI response message
-        if (currentChatId) {
-          await saveChatMessage(
-            currentChatId,
-            "assistant",
-            response.message || "Here are the people I found:",
-            response
-          );
-        }
-
-        // Add the assistant message with the actual response
-        const aiMessage: ChatMessage = {
-          id: `ai-${Date.now()}`,
-          content:
-            response.message ||
-            (response.query_type === "people_search"
-              ? "Here are the people I found:"
-              : ""),
-          role: "assistant",
-          chatResponse: response,
-          timestamp: new Date(),
-        };
-        setMessages((prevMessages) => [...prevMessages, aiMessage]);
-
-        // Note: URL cleanup is done earlier in processInitialMessage for initial messages
-      } catch (error) {
-        console.error("Error sending data:", error);
-
-        // Add error message
-        const errorMessage: ChatMessage = {
-          id: `ai-error-${Date.now()}`,
-          content:
-            "Sorry, something went wrong while searching for people. Please try again.",
-          role: "assistant",
-          timestamp: new Date(),
-        };
-        setMessages((prevMessages) => [...prevMessages, errorMessage]);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [sessionUser?.id, chat?.id, slug]
-  );
+  }, [initialMessage, chatLoading, sessionUser?.id, userLoading, handleSubmit]);
 
   const handleUserMessage = useCallback(
     (content: string) => {
@@ -292,8 +349,14 @@ const ShowChats = ({ slug }: ShowChatsProps) => {
     }
   }, [setOnAIResponse, handleAIResponse]);
 
-  // Show loading state only when no initial message and user/chat is loading
-  if (!initialMessage && (userLoading || chatLoading)) {
+  // Show loading state only when no initial message and actually loading data (not just user session)
+  // If we have cached data, don't show loading even if user is being re-fetched
+  const hasCachedData = slug && getCachedChat(slug) && isCacheValid(slug);
+  const needsUserForFresh = !hasCachedData && userLoading;
+  const shouldShowLoading =
+    !initialMessage && (chatLoading || needsUserForFresh);
+
+  if (shouldShowLoading) {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
         <div className="mx-auto mb-4">

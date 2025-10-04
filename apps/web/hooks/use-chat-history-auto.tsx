@@ -17,17 +17,18 @@ export const useChatHistory = () => {
   // Auto-fetch chat history when user is available
   useEffect(() => {
     if (user?.id && !userLoading) {
-      fetchChatHistory(user.id);
+      // Call without userId - DAL handles auth
+      fetchChatHistory();
     } else if (!user && !userLoading) {
       // Clear history if user logs out
       clearHistory();
     }
   }, [user?.id, userLoading, fetchChatHistory, clearHistory]);
 
-  // Wrapper functions that include userId
+  // Wrapper functions
   const refresh = () => {
     if (user?.id) {
-      refreshHistory(user.id);
+      refreshHistory();
     }
   };
 

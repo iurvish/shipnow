@@ -171,9 +171,9 @@ export function AppSidebar() {
                             {chat.title}
                           </div>
                         </div>
-                        <div className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity">
+                        {/* <div className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity">
                           <MoreHorizontal className="h-3 w-3" />
-                        </div>
+                        </div> */}
                       </div>
                     </Link>
                   </SidebarMenuButton>

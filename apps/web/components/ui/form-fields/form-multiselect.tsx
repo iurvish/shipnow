@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface OptionType {
   label: string;
@@ -46,7 +47,7 @@ export const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
   const { control } = useFormContext();
   const [open, setOpen] = useState(false);
   const selectedContainerRef = useRef<HTMLDivElement>(null);
-
+  const isMobile = useIsMobile();
   return (
     <FormField
       control={control}
@@ -129,6 +130,11 @@ export const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
                 <PopoverContent
                   className="w-full p-0"
                   style={{ width: selectedContainerRef.current?.offsetWidth }}
+                  onOpenAutoFocus={(e) => {
+                    if (isMobile) {
+                      e.preventDefault();
+                    }
+                  }}
                 >
                   <div className="max-h-60 overflow-auto">
                     {options
