@@ -41,6 +41,8 @@ export default function HeroSection() {
             projectId="K7xzrAoejHe2lHXqTJzm"
             lazyLoad={true}
             production={true}
+            dpi={0.8}
+            fps={30}
             className="[grid-area:1/1] h-full w-full"
           />
 
