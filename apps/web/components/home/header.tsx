@@ -10,7 +10,7 @@ const menuItems = [
   // { name: "Features", href: "#link" },
   // { name: "Solution", href: "#link" },
   // { name: "Pricing", href: "#link" },
-  { name: "About", href: "#link" },
+  { name: "Meet Creator", href: "https://urvishh.me/" },
 ];
 
 export const HeroHeader = () => {
@@ -64,6 +64,7 @@ export const HeroHeader = () => {
                     <Link
                       href={item.href}
                       className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                      target="_blank"
                     >
                       <span>{item.name}</span>
                     </Link>
