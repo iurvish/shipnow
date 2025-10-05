@@ -14,7 +14,7 @@ import {
   MediaVolumeRange,
 } from "media-chrome/react";
 import type { ComponentProps } from "react";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -123,6 +123,7 @@ export const VideoPlayerContent = ({
 
 export const VideoDemo = () => {
   const [showVideoPopOver, setShowVideoPopOver] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const SPRING = {
     mass: 0.1,
@@ -131,6 +132,15 @@ export const VideoDemo = () => {
   const x = useSpring(0, SPRING);
   const y = useSpring(0, SPRING);
   const opacity = useSpring(0, SPRING);
+
+  useEffect(() => {
+    // Ensure video plays on mobile
+    if (videoRef.current) {
+      videoRef.current.play().catch((error) => {
+        console.log("Autoplay prevented:", error);
+      });
+    }
+  }, []);
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     opacity.set(1);
@@ -166,13 +176,15 @@ export const VideoDemo = () => {
           <Play className="size-4 fill-white" /> Play
         </motion.div>
         <video
+          ref={videoRef}
           autoPlay
           muted
           playsInline
           loop
+          preload="auto"
           className="h-full w-full object-cover rounded-lg"
         >
-          <source src="/demo.mp4" />
+          <source src="/demo.mp4" type="video/mp4" />
         </video>
       </div>
     </section>
