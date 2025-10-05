@@ -7,6 +7,7 @@ import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { AnimatedGroup } from "@/components/motion-primitives/animated-groups";
 import { HeroHeader } from "./header";
 import UnicornScene from "unicornstudio-react/next";
+import { Skiper67 } from "./video";
 
 const transitionVariants = {
   item: {
@@ -32,7 +33,7 @@ export default function HeroSection() {
   return (
     <>
       <HeroHeader />
-      <main className="overflow-x-clip">
+      <main className="overflow-x-clip ">
         {/* Using min-h-screen allows the section to grow on smaller devices */}
         <section className="grid isolate min-h-screen items-start">
           {/* Unicorn Scene will stretch to the full height of the section */}
@@ -146,13 +147,15 @@ export default function HeroSection() {
                 {/* Container is now responsive and clips overflow */}
                 <div className="relative mt-12 overflow-hidden px-2 sm:mt-16 md:mt-20 flex w-full items-center justify-center max-sm:px-3 mb-12">
                   <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 relative mx-auto max-w-6xl overflow-hidden rounded-2xl border border-white/10 p-4 shadow-lg shadow-zinc-950/15 ring-1 flex  ">
-                    <Image
+                    {/* <Image
                       className=" rounded-2xl aspect-auto flex "
                       src="/hero.png"
                       alt="app screen"
                       width={2100}
                       height={1700}
-                    />
+                    /> */}
+
+                    <Skiper67 />
                   </div>
                 </div>
               </AnimatedGroup>
