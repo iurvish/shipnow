@@ -121,7 +121,7 @@ export const VideoPlayerContent = ({
   <video className={cn("mb-0 mt-0", className)} {...props} />
 );
 
-export const Skiper67 = () => {
+export const VideoDemo = () => {
   const [showVideoPopOver, setShowVideoPopOver] = useState(false);
 
   const SPRING = {

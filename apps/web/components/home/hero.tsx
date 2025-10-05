@@ -7,7 +7,7 @@ import { TextEffect } from "@/components/motion-primitives/text-effect";
 import { AnimatedGroup } from "@/components/motion-primitives/animated-groups";
 import { HeroHeader } from "./header";
 import UnicornScene from "unicornstudio-react/next";
-import { Skiper67 } from "./video";
+import { VideoDemo } from "./video";
 
 const transitionVariants = {
   item: {
@@ -79,7 +79,7 @@ export default function HeroSection() {
                     as="h1"
                     className="mx-auto mt-8 max-w-5xl text-balance text-4xl font-semibold md:text-6xl lg:text-7xl   tracking-tighter"
                   >
-                    Build Your Professional Network with AI
+                    Turn Ideas into Reality with the Right People
                   </TextEffect>
                   <TextEffect
                     per="line"
@@ -89,9 +89,9 @@ export default function HeroSection() {
                     as="p"
                     className="mx-auto mt-8 max-w-3xl  tracking-tighter text-lg max-sm:max-w-full max-sm:text-base text-wrap"
                   >
-                    Connect with like-minded professionals, discover hidden
-                    opportunities, and grow your career with our intelligent
-                    networking platform.
+                    Find teammates, co-founders, and projects that match your
+                    goals — powered by AI that connects you to people who help
+                    you build, learn, and grow.
                   </TextEffect>
 
                   <AnimatedGroup
@@ -155,7 +155,7 @@ export default function HeroSection() {
                       height={1700}
                     /> */}
 
-                    <Skiper67 />
+                    <VideoDemo />
                   </div>
                 </div>
               </AnimatedGroup>
