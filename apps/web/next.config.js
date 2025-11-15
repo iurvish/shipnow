@@ -14,6 +14,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "gwatgzypdlugafnvvttt.supabase.co",
       },
+
+      {
+        protocol: "https",
+        hostname: "organic-haddock-7199.upstash.io",
+      },
     ],
   },
 };
